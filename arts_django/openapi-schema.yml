@@ -1,0 +1,419 @@
+openapi: 3.0.2
+info:
+  title: ''
+  version: ''
+paths:
+  /api/{version}/runtimes/:
+    get:
+      operationId: listRuntimes
+      description: 'Returns a list of Runtimes.
+
+        GET runtime/'
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    uuid:
+                      type: string
+                      format: uuid
+                      readOnly: true
+                    name:
+                      type: string
+                      maxLength: 255
+                    apis:
+                      type: string
+                      readOnly: true
+                    max_nmodules:
+                      type: integer
+                    nmodules:
+                      type: integer
+                  required:
+                  - name
+          description: ''
+  /api/{version}/runtimes/{uuid}/:
+    get:
+      operationId: RetrieveRuntime
+      description: 'GET runtime/:id/
+
+        PUT runtime/:id/
+
+        DELETE runtime/:id/'
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this runtime.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  uuid:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                  name:
+                    type: string
+                    maxLength: 255
+                  apis:
+                    type: string
+                    readOnly: true
+                  max_nmodules:
+                    type: integer
+                  nmodules:
+                    type: integer
+                required:
+                - name
+          description: ''
+    put:
+      operationId: UpdateRuntime
+      description: 'GET runtime/:id/
+
+        PUT runtime/:id/
+
+        DELETE runtime/:id/'
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this runtime.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: &id001
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                max_nmodules:
+                  type: integer
+                nmodules:
+                  type: integer
+              required:
+              - name
+          application/x-www-form-urlencoded:
+            schema: *id001
+          multipart/form-data:
+            schema: *id001
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  uuid:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                  name:
+                    type: string
+                    maxLength: 255
+                  apis:
+                    type: string
+                    readOnly: true
+                  max_nmodules:
+                    type: integer
+                  nmodules:
+                    type: integer
+                required:
+                - name
+          description: ''
+    patch:
+      operationId: PartialUpdateRuntime
+      description: 'GET runtime/:id/
+
+        PUT runtime/:id/
+
+        DELETE runtime/:id/'
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this runtime.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: &id002
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                max_nmodules:
+                  type: integer
+                nmodules:
+                  type: integer
+          application/x-www-form-urlencoded:
+            schema: *id002
+          multipart/form-data:
+            schema: *id002
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  uuid:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                  name:
+                    type: string
+                    maxLength: 255
+                  apis:
+                    type: string
+                    readOnly: true
+                  max_nmodules:
+                    type: integer
+                  nmodules:
+                    type: integer
+                required:
+                - name
+          description: ''
+    delete:
+      operationId: DestroyRuntime
+      description: 'GET runtime/:id/
+
+        PUT runtime/:id/
+
+        DELETE runtime/:id/'
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      - name: uuid
+        in: path
+        required: true
+        description: A UUID string identifying this runtime.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: ''
+  /wasm_files/:
+    get:
+      operationId: listWASMFiles
+      description: GET wasm_files/
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    uuid:
+                      type: string
+                      format: uuid
+                      readOnly: true
+                    description:
+                      type: string
+                      maxLength: 255
+          description: ''
+    post:
+      operationId: CreateWASMFiles
+      description: GET wasm_files/
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: &id003
+              properties:
+                description:
+                  type: string
+                  maxLength: 255
+          application/x-www-form-urlencoded:
+            schema: *id003
+          multipart/form-data:
+            schema: *id003
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  uuid:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                  description:
+                    type: string
+                    maxLength: 255
+          description: ''
+  /api/{version}/auth/login/:
+    post:
+      operationId: CreateUser
+      description: POST auth/login/
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: &id004
+              properties:
+                username:
+                  type: string
+                  description: Required. 150 characters or fewer. Letters, digits
+                    and @/./+/-/_ only.
+                  pattern: ^[\w.@+-]+\Z
+                  maxLength: 150
+                email:
+                  type: string
+                  format: email
+                  maxLength: 254
+              required:
+              - username
+          application/x-www-form-urlencoded:
+            schema: *id004
+          multipart/form-data:
+            schema: *id004
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Required. 150 characters or fewer. Letters, digits
+                      and @/./+/-/_ only.
+                    pattern: ^[\w.@+-]+\Z
+                    maxLength: 150
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 254
+                required:
+                - username
+          description: ''
+  /api/{version}/auth/register/:
+    post:
+      operationId: CreateUser
+      description: POST auth/register/
+      parameters:
+      - name: version
+        in: path
+        required: true
+        description: ''
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: &id005
+              properties:
+                username:
+                  type: string
+                  description: Required. 150 characters or fewer. Letters, digits
+                    and @/./+/-/_ only.
+                  pattern: ^[\w.@+-]+\Z
+                  maxLength: 150
+                email:
+                  type: string
+                  format: email
+                  maxLength: 254
+              required:
+              - username
+          application/x-www-form-urlencoded:
+            schema: *id005
+          multipart/form-data:
+            schema: *id005
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                    description: Required. 150 characters or fewer. Letters, digits
+                      and @/./+/-/_ only.
+                    pattern: ^[\w.@+-]+\Z
+                    maxLength: 150
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 254
+                required:
+                - username
+          description: ''
+  /api-token-auth/:
+    post:
+      operationId: CreateJSONWebToken
+      description: 'API View that receives a POST with a user''s username and password.
+
+
+        Returns a JSON Web Token that can be used for authenticated requests.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema: &id006
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  writeOnly: true
+              required:
+              - username
+              - password
+          application/x-www-form-urlencoded:
+            schema: *id006
+          multipart/form-data:
+            schema: *id006
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  username:
+                    type: string
+                required:
+                - username
+          description: ''

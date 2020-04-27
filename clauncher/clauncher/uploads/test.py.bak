@@ -1,0 +1,8 @@
+import time
+fruits = ["Apple", "Banana", "Cherry", "Blackberries", "Clementine", "Figs", "Mango", "Nectarine", "Pineapple", "Strawberries", "Watermelon", "Tangerine"]
+
+while True:
+  for f in fruits:
+    print(f)
+    time.sleep(1)
+
