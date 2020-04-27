@@ -20,7 +20,7 @@
   */
  void timer_callback(void * ctx) {
    // setup timer (5 s)
-   cwlib_set_timer(5000, & timer_callback, NULL);
+   cwlib_set_timer(5000, &timer_callback, NULL);
 
    printf("Hello from WASM timer!\n");
  }
