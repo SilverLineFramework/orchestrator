@@ -1,3 +1,0 @@
-[submodule "clauncher-js/wasmer-js"]
-	path = clauncher-js/wasmer-js
-	url = https://github.com/wasmerio/wasmer-js.git
