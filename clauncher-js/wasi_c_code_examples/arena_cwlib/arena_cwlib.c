@@ -1,43 +1,40 @@
  /** @file cwlib_example.c
- *  @brief Example showing how an ARENA WASM module looks like
- * 
- *  Uses CONIX WASI (cwlib), a WASI wrapper that exposes a simple pubsub enabled event-based 
- *  interface for WASM modules
- *
- * Copyright (C) Wiselab CMU. 
- * @date April, 2020
- */
-#include <stdio.h>
-#include <unistd.h>
+  *  @brief Example showing how an ARENA WASM module looks like
+  * 
+  *  Uses CONIX WASI (cwlib), a WASI wrapper that exposes a simple pubsub enabled event-based 
+  *  interface for WASM modules
+  *
+  * Copyright (C) Wiselab CMU. 
+  * @date April, 2020
+  */
+ #include <stdio.h>
 
-#include "cwlib.h"
+ #include <unistd.h>
 
-// Declare timer event handler function 
-void timer_callback(void *ctx);
+ #include "cwlib.h"
 
-int main(int argc, char **argv)
-{
-    printf("Hello, WASI!\n");
+ /**
+  * Timer event handler function 
+  * 
+  * @param ctx user provided context to pass the handler
+  */
+ void timer_callback(void * ctx) {
+   // setup timer (5 s)
+   cwlib_set_timer(5000, & timer_callback, NULL);
 
-    // setup timer (5 s)
-    cwlib_set_timer(5000, &timer_callback, NULL);
+   printf("Hello from WASM timer!\n");
+ }
 
-    // create an event loop 
-	for (;;) {
-	   cwlib_poll(1000);
-	}
+ int main(int argc, char ** argv) {
+   printf("Hello, WASI!\n");
 
-    return 0;
-}
+   // setup timer (5 s)
+   cwlib_set_timer(5000, & timer_callback, NULL);
 
-/**
- * Timer event handler function 
- * 
- * @param ctx user provided context to pass the handler
- */
-void timer_callback(void *ctx) {
-    // setup timer (5 s)
-    cwlib_set_timer(5000, &timer_callback, NULL);
+   // create an event loop 
+   for (;;) {
+     cwlib_poll(1000);
+   }
 
-	printf("Hello from WASM timer!\n");	
-}
+   return 0;
+ }
