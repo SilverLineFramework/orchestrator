@@ -29,7 +29,7 @@
    printf("Hello, WASI!\n");
 
    // setup timer (5 s)
-   cwlib_set_timer(5000, & timer_callback, NULL);
+   cwlib_set_timer(5000, &timer_callback, NULL);
 
    // create an event loop 
    for (;;) {
