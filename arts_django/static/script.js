@@ -375,14 +375,20 @@ function onMessageArrived(message) {
 
     if (message.destinationName == ctl_topic) {
         //console.log(message.payloadString);
-        var msg_req = JSON.parse(message.payloadString);
+        try {
+            var msg_req = JSON.parse(message.payloadString);
+        } catch(err) {
+            console.log ("Error parsing message:", message.payloadString, err);
+            return;
+        }
         //console.log(msg_req.uuid)
         //console.log(pending_uuid)
         //console.log(msg_req.type)
         if (pending_uuid == msg_req.object_id && msg_req.type == 'arts_resp') {
                 console.log(msg_req.data)
                 if (msg_req.data.result == 'ok') {
-                    mod_instance = JSON.parse(msg_req.data.details);
+                    //mod_instance = JSON.parse(msg_req.data.details);
+                    mod_instance = msg_req.data.details;
                     // Print output for the user in the messages div
                     status_box.value += 'Created: ' + mod_instance + '\n';
                     //stdout_txt[mod_instance.uuid] = "";
