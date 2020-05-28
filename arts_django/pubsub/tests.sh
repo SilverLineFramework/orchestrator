@@ -6,7 +6,10 @@
 ######
 
 # create a new runtime
-mosquitto_pub -h 'oz.andrew.cmu.edu' -t 'realm/proc/reg' -m '{ "object_id": "64c41912-4daf-11ea-b77f-2e728ce88821", "action": "create", "type": "arts_req", "data": { "type":"runtime", "name": "runtime1" } }'
+mosquitto_pub -h 'oz.andrew.cmu.edu' -t 'realm/proc/reg' -m '{"object_id":"50c2f088-a5b6-48c5-bbc7-4a693b0117c9","action":"create","type":"arts_req","data":{"type":"runtime","object_id":"5f937916-d29d-4f66-801e-3d69f57728e2","name":"rt1","max_nmodules":10,"apis":["wasi:unstable"]}}'
+
+# response
+# {"object_id": "50c2f088-a5b6-48c5-bbc7-4a693b0117c9", "type": "arts_resp", "data": {"result": "ok", "details": {"uuid": "5f937916-d29d-4f66-801e-3d69f57728e2", "name": "rt1", "apis": "['wasi:unstable']", "max_nmodules": 1, "nmodules": 0, "children": []}}}
 
 # delete a runtime (need to pass an existing runtime uuid in data.object_id)
 mosquitto_pub -h 'oz.andrew.cmu.edu' -t 'realm/proc/reg' -m '{ "object_id": "64c41912-4daf-11ea-b77f-2e728ce88465", "action": "delete", "type": "arts_req", "data": { "type":"runtime", "object_id": "bff0f0b4-5fa5-400f-b492-79c6566df6c2" } }'
