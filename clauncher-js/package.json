@@ -4,7 +4,7 @@
   "description": "CONIX Browser WASM Launcher; Connect to ARTS and launch WASI WASM modules",
   "main": "index.js",
   "scripts": {
-    "collect-static": "cp wasi_c_code_examples/wasm/* static/",
+    "collect-static": "cp ../wasm-apps/wasm-files/* static/",
     "dev": "npm run collect-static && parcel index.html",
     "build": "parcel build index.html --public-url ./",
     "deploy": "rsync -alPvvz ./dist wiselab@spatial.andrew.cmu.edu:/home/wiselab/docker-compose-services/www/clauncher-js",
@@ -18,12 +18,14 @@
   "devDependencies": {
     "jest": "^26.0.1",
     "parcel-bundler": "^1.12.4",
-    "parcel-plugin-static-files-copy": "^2.3.1"
+    "parcel-plugin-static-files-copy": "^2.3.1",
+    "typescript": "^3.9.3"
   },
   "dependencies": {
     "@wasmer/wasm-transformer": "^0.10.2",
     "@wasmer/wasmfs": "^0.10.2",
     "paho-mqtt": "^1.1.0",
+    "path-browserify": "^1.0.1",
     "ts-node": "^8.9.0",
     "uuid": "^7.0.3"
   }
