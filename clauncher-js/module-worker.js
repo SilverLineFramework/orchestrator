@@ -1,16 +1,17 @@
 /**
- * @fileoverview Worker to instantiate a WASM Module
+ * @fileoverview Worker to instantiate WASM Module
  *
  * Copyright (C) Wiselab CMU.
  * @date April, 2020
  */
+import { WasmFs } from "@wasmer/wasmfs";
 import { WASI } from "/wasmer-js/packages/wasi/src";
 import browserBindings from "/wasmer-js/packages/wasi/src/bindings/browser.ts";
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 
 import * as WorkerMessages from "/worker-msgs.js";
-import moduleIO from "/moduleio.js"
 import * as CSI from "/csi.js";
+import moduleIO from "/moduleio.js"
 
 onmessage = async function (e) {
   if (e.data.type == WorkerMessages.msgType.start) {
@@ -45,12 +46,15 @@ onmessage = async function (e) {
       bindings: {
         ...browserBindings,
         fs: mio.wasmFs.fs,
-        mio: mio // moduleIO's attachIO() will attach the read/write functions for channels when wasi path_open is called  
+        mio: mio // attachIO will attach the read/write functions for channels when wasi path_open is called  
       },
     });
 
     //console.log(wasi);
 
+    // wrap wasi path_open to attach our channel IO
+    mio.wrapPathOpen(wasi);
+    
     // Set imports
     let imports = wasi.getImports(wasmModule);
     imports.env = CSI.getImports();

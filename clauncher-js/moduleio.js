@@ -6,11 +6,12 @@
  */
 import { WasmFs } from "@wasmer/wasmfs";
 import SharedArrayCircularBuffer from "/sa-cbuffer.js";
+import * as WorkerMessages from "/worker-msgs.js";
 
 /**
  * Gets stdin from shared buffer (filled by the mqtt worker) and sends stdout/stderr to mqtt worker
  */
-export default class moduleStdIO {
+export default class moduleIO {
   constructor(params) {
 
     // create wasmFs instance
@@ -79,9 +80,31 @@ export default class moduleStdIO {
     return chDirs;
   }
 
-  // called by wasi path_open; attach the read/write functions for channels
+  // wrap wasi path_open call to attach our IO calls to channels
+  wrapPathOpen(wasi) {
+    let _this=this;
+    const prevPathOpen = wasi.wasiImport['path_open'];
+    wasi.wasiImport['path_open'] = function(...args) {
+      let result = prevPathOpen(...args);
+      if (result == 0) {
+        const p = Buffer.from(
+          wasi.memory.buffer,
+          args[2],
+          args[3]
+        ).toString();
+        console.log("path open", p);
+        const newfd = [...wasi.FD_MAP.keys()].reverse()[0];
+        const f = wasi.FD_MAP.get(newfd);
+        const dir = wasi.FD_MAP.get(args[0]);        
+        _this.attachIO(dir.path, p, f.real, newfd);
+      }
+      return result;
+    }
+  }
+
+  // attach the read/write functions for channels
   attachIO(path, fn, realfd, fd) {
-    //console.log("attachIO",path, fn, realfd, fd);
+    console.log("attachIO",path, fn, realfd, fd);
 
     let ch = this.channels[path];
     if (ch == undefined) return;
@@ -89,7 +112,7 @@ export default class moduleStdIO {
     this.readFlag[fd] = true;
     let fullPath = path+fn;
     if (fn === "data") {
-        // create a shared buffer to be used by both workers as a circular buffer
+        // create a shared circuler buffer to be used by both workers 
         let sb = SharedArrayCircularBuffer.createSharedBuffer();
         this.cb[fd] = new SharedArrayCircularBuffer(sb, fullPath); 
         // ask IOWorker to start a new channel stream
@@ -112,7 +135,6 @@ export default class moduleStdIO {
         this.wasmFs.volume.fds[readlfd].write = this.writeInfoCtl.bind(this, newfd, ch);
       }
     }
-
   }
 
   logError(module, msg) {

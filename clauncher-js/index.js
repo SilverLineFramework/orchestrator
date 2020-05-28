@@ -16,12 +16,13 @@ LogPanel.log("Hi " + namePrompt + ".");
 RuntimeMngr.init({ onInitCallback: runtimeInitDone, name: namePrompt });
 
 function runtimeInitDone() {
-
   console.log("Runtime init done.");
+
+  setTimeout( function () {
+    //let fn = "stdinread.wasm";
+    //let fn = "counter.wasm";
+    let fn = "signalfd.wasm";
+    RuntimeMngr.mc.moduleCreateTestMsg(fn); 
+  }, 1000);  
 }
 
-setTimeout( function () {
-  let fn = "stdinread.wasm";
-  //let fn = "counter.wasm";
-  RuntimeMngr.mc.moduleCreateTestMsg(fn); 
-}, 1000);
