@@ -6,6 +6,8 @@
   "scripts": {
     "collect-static": "cp wasi_c_code_examples/wasm/* static/",
     "dev": "npm run collect-static && parcel index.html",
+    "build": "parcel build index.html --public-url ./",
+    "deploy": "rsync -alPvvz ./dist wiselab@spatial.andrew.cmu.edu:/home/wiselab/docker-compose-services/www/clauncher-js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,11 +16,11 @@
     "last 1 Chrome versions"
   ],
   "devDependencies": {
+    "jest": "^26.0.1",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-static-files-copy": "^2.3.1"
   },
   "dependencies": {
-    "@wasmer/wasi": "^0.10.2",
     "@wasmer/wasm-transformer": "^0.10.2",
     "@wasmer/wasmfs": "^0.10.2",
     "paho-mqtt": "^1.1.0",
