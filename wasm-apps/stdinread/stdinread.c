@@ -15,13 +15,12 @@ int main(void)
     int timeout_msecs = 2000;
     int retval;
 
-    fds[0].fd = fileno(stdin);
+    fds[0].fd = 0; // = fileno(stdin)
     fds[0].events = POLLIN;
 
     while (1)
     {
         retval = poll(fds, 1, timeout_msecs);
-
         if (retval > 0)
         {
             if (read(0, buf, sizeof(buf)) > 0)
