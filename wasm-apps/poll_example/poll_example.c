@@ -1,3 +1,12 @@
+ /** @file poll_example.c
+  *  @brief Example showing poll on stdin, signalfd and a channel
+  * 
+  *  The runtime has setup acess to a channel under /ch/light
+  *  Signals are indicated though a file also setup by the runtime
+  *
+  * Copyright (C) Wiselab CMU. 
+  * @date April, 2020
+  */
 #include <stdio.h>
 #include <poll.h>
 #include <unistd.h>
@@ -6,6 +15,7 @@
 
 #define LINE_MAX 255
 
+// file descriptor indexes
 enum FDIs
 {
     FDI_stdin = 0,
