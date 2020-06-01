@@ -23,11 +23,12 @@ var mc = [];
 var mod = [];
 
 onmessage = async function (e) {
+
   if (e.data.type == WorkerMessages.msgType.start) {
     let modData = e.data.arts_mod_instance_data;
 
-    // save the shared buffer instance
-    mod[modData.uuid] = { cb: e.data.shared_cb };
+    // save ctl topic
+    mod[modData.uuid] = { ctl_topic: e.data.arts_mod_instance_data.ctl_topic };
 
     // start mqtt client and subscribe to stdin topic
     // (one per module; this way the server can distinguish the module traffic)
@@ -42,8 +43,6 @@ onmessage = async function (e) {
 
     await mod[modData.uuid].mc.connect();
 
-    //console.log(modData);
-    
     // create circular buffer from previously created shared array buffer (for stdin)
     mod[modData.uuid].cb=[];
     mod[modData.uuid].cb[modData.stdin_topic] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, modData.stdin_topic);
@@ -60,33 +59,58 @@ onmessage = async function (e) {
     mod[modUuid].mc.publish(e.data.dst, e.data.msg);
     return;
   }
-  
-  if (e.data.type == WorkerMessages.msgType.new_iostream) {
-    console.log(e.data)
-    
-    if (e.data.ch.type == "pubsub") {
-      let modUuid = e.data.mod_uuid;
+  if (e.data.type == WorkerMessages.msgType.new_stream) {
+
+    let modUuid = e.data.mod_uuid;
+        
+    if (e.data.channel.type === "pubsub") {
 
       // create circular buffer from previously created shared array buffer
-      mod[modUuid].cb[e.data.ch.params.topic] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, e.data.path+'/data');
+      mod[modUuid].cb[e.data.channel.params.topic] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, e.data.path+'/data');
 
       // subscribe to topic
-      mod[modUuid].mc.subscribe(e.data.ch.params.topic);
+      mod[modUuid].mc.subscribe(e.data.channel.params.topic);
+    } else if (e.data.channel.type === "signalfd") {
+
+      // create circular buffer from previously created shared array buffer
+      //mod[modUuid].sfdCb = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
+      mod[modUuid].cb[mod[modUuid].ctl_topic] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
+      console.log(mod[modUuid]);
+      // subscribe to topic
+      mod[modUuid].mc.subscribe(mod[modUuid].ctl_topic);
     } else {
       // todo
-      console.log(e.data.ch.type, ": Channel type not implemented.")
+      console.log(e.data.channel.type, ": Channel type not implemented.")
     }
 
+    return;
+  }
+
+  if (e.data.type == WorkerMessages.msgType.signal) {
+    console.log(e.data)
+    let modUuid = e.data.mod_uuid;
+
+    // signalfd_siginfo struct is 128 bytes
+    let bytes = new Uint8Array(128);
+    bytes[0] = e.data.signo; // we only set the first byte (ssi_signo) indicating the signal number
+
+    mod[modUuid].cb[mod[modUuid].ctl_topic].push(bytes);
+  
     return;
   }
   
 };
 
 function onMqttMessage(modUuid, message) {
-  //console.log ("IO worker received: " + message.payloadString );
+  //console.log ("IO worker received: " + message.payloadString , message.destinationName);
 
-  // message to module stdin
-  //if (message.destinationName.startsWith(stdin_topic_prefix) == false)
+  if (message.destinationName == mod[modUuid].ctl_topic) {
+    // signalfd_siginfo struct is 128 bytes
+    let bytes = new Uint8Array(128);
+    bytes[0] = e.data.signo; // we only set the first byte (ssi_signo) indicating the signal number
+
+    mod[modUuid].cb[mod[modUuid].ctl_topic].push(bytes);
+  }
 
   // convert received message to a byte array and push to shared buffer
   let bytes = new TextEncoder().encode(message.payloadString + "\n");

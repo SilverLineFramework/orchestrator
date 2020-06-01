@@ -16,7 +16,7 @@ import moduleIO from "/moduleio.js"
 onmessage = async function (e) {
   if (e.data.type == WorkerMessages.msgType.start) {
     let wasmFilePath = "./" + e.data.arts_mod_instance_data.filename;
-    console.log("Starting new module: " + wasmFilePath);
+    console.log("Starting new module",  e.data.arts_mod_instance_data);
 
     // Fetch our Wasm File
     const response = await fetch(wasmFilePath);
@@ -33,7 +33,7 @@ onmessage = async function (e) {
     
     // Instantiate new WASI Instance
     let wasi = new WASI({
-      preopenDirectories: {'.': '.', '/': '/', ...mio.channelDirectories()},
+      preopenDirectories: {'/sys/': '/sys/', ...mio.channelDirectories()},
       // Arguments passed to the Wasm Module
       // The first argument is usually the filepath to the executable WASI module
       // we want to run.
@@ -54,7 +54,7 @@ onmessage = async function (e) {
 
     // wrap wasi path_open to attach our channel IO
     mio.wrapPathOpen(wasi);
-    
+
     // Set imports
     let imports = wasi.getImports(wasmModule);
     imports.env = CSI.getImports();
@@ -65,6 +65,10 @@ onmessage = async function (e) {
       ...imports,
     });
 
-    wasi.start(instance); // Start the transformed WASI instance
+    try {
+      wasi.start(instance); // Start the transformed WASI instance
+    } catch(e) {
+      console.log(e);
+    }
   }
 };

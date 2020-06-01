@@ -87,7 +87,7 @@ export default class MqttClient {
     _this.settings.clientid +
     '"}, "filename": "' +
     fn +
-    '", "fileid": "na", "filetype": "WA", "args": "", "channels":[{ "path":"/ch/light","type":"pubsub","mode":"w", "params":{ "topic":"kitchen/light" }}]}}}';
+    '", "fileid": "na", "filetype": "WA", "args": "", "channels":[{ "path":"/ch/light","type":"pubsub","mode":"rw", "params":{ "topic":"kitchen/light" }}]}}}';
     let msg = new Paho.Message(str_msg);
     msg.destinationName = "realm/proc/control/" + _this.settings.clientid;
     _this.settings.onMessageCallback(msg);

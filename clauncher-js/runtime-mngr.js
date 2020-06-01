@@ -49,7 +49,7 @@ export async function init(settings) {
   await mc.connect();
 
   mc.subscribe(runtime.dbg_topic + "/#");
-  registerRuntime(); 
+  //registerRuntime(); // TMP: do not register
 
   // create the module io worker
   ioworker = new Worker("moduleio-worker.js");
@@ -112,11 +112,13 @@ function onMqttMessage(message) {
       //console.log(rcvModInstance);
 
       // add topics where the module
-      rcvModInstance.reg_topic = runtime.reg_topic; // runtime's reg topic
+      rcvModInstance.reg_topic = runtime.reg_topic; // runtime's reg topic; used to send module delete msg
       rcvModInstance.stdin_topic =
         runtime.dbg_topic + "/stdin/" + rcvModInstance.uuid; // under runtime's dbg topic
       rcvModInstance.stdout_topic =
         runtime.dbg_topic + "/stdout/" + rcvModInstance.uuid; // under runtime's dbg topic
+      rcvModInstance.ctl_topic =
+      runtime.ctl_topic + "/" + rcvModInstance.uuid; // under runtime's dbg topic
 
       // create a shared buffer to be used by both workers as a circular buffer
       let sb = SharedArrayCircularBuffer.createSharedBuffer();

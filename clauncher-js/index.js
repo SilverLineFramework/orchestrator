@@ -23,6 +23,5 @@ function runtimeInitDone() {
     //let fn = "counter.wasm";
     let fn = "signalfd.wasm";
     RuntimeMngr.mc.moduleCreateTestMsg(fn); 
-  }, 1000);  
+  }, 2000);  
 }
-
