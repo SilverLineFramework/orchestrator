@@ -27,8 +27,8 @@ onmessage = async function (e) {
   if (e.data.type == WorkerMessages.msgType.start) {
     let modData = e.data.arts_mod_instance_data;
 
-    // save ctl topic
-    mod[modData.uuid] = { ctl_topic: e.data.arts_mod_instance_data.ctl_topic };
+    // object to store module info
+    mod[modData.uuid] = { };
 
     // start mqtt client and subscribe to stdin topic
     // (one per module; this way the server can distinguish the module traffic)
@@ -73,11 +73,8 @@ onmessage = async function (e) {
     } else if (e.data.channel.type === "signalfd") {
 
       // create circular buffer from previously created shared array buffer
-      //mod[modUuid].sfdCb = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
-      mod[modUuid].cb[mod[modUuid].ctl_topic] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
-      console.log(mod[modUuid]);
-      // subscribe to topic
-      mod[modUuid].mc.subscribe(mod[modUuid].ctl_topic);
+      mod[modUuid].cb[mod["signalfd"] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
+      
     } else {
       // todo
       console.log(e.data.channel.type, ": Channel type not implemented.")
@@ -92,9 +89,9 @@ onmessage = async function (e) {
 
     // signalfd_siginfo struct is 128 bytes
     let bytes = new Uint8Array(128);
-    bytes[0] = e.data.signo; // we only set the first byte (ssi_signo) indicating the signal number
+    bytes[0] = e.data.signo; // set the first byte (ssi_signo) indicating the signal number
 
-    mod[modUuid].cb[mod[modUuid].ctl_topic].push(bytes);
+    mod[modUuid].cb["signalfd"].push(bytes);
   
     return;
   }
@@ -103,14 +100,6 @@ onmessage = async function (e) {
 
 function onMqttMessage(modUuid, message) {
   //console.log ("IO worker received: " + message.payloadString , message.destinationName);
-
-  if (message.destinationName == mod[modUuid].ctl_topic) {
-    // signalfd_siginfo struct is 128 bytes
-    let bytes = new Uint8Array(128);
-    bytes[0] = e.data.signo; // we only set the first byte (ssi_signo) indicating the signal number
-
-    mod[modUuid].cb[mod[modUuid].ctl_topic].push(bytes);
-  }
 
   // convert received message to a byte array and push to shared buffer
   let bytes = new TextEncoder().encode(message.payloadString + "\n");

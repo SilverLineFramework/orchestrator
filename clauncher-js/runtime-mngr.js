@@ -117,8 +117,6 @@ function onMqttMessage(message) {
         runtime.dbg_topic + "/stdin/" + rcvModInstance.uuid; // under runtime's dbg topic
       rcvModInstance.stdout_topic =
         runtime.dbg_topic + "/stdout/" + rcvModInstance.uuid; // under runtime's dbg topic
-      rcvModInstance.ctl_topic =
-      runtime.ctl_topic + "/" + rcvModInstance.uuid; // under runtime's dbg topic
 
       // create a shared buffer to be used by both workers as a circular buffer
       let sb = SharedArrayCircularBuffer.createSharedBuffer();
