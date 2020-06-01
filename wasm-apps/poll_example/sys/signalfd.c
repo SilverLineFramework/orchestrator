@@ -21,20 +21,5 @@
   */
 int signalfd(int fd, const sigset_t *mask, int flags) {
     if (fd != -1) return -1; /* only support creating a new fd */
-    return open("/signalfd", O_RDONLY, 0660);
+    return open("/sys/signals", O_RDONLY, 0660);
 }
-
-/*
-            s = read(sfd, &fdsi, sizeof(struct signalfd_siginfo));
-               if (s != sizeof(struct signalfd_siginfo))
-                   handle_error("read");
-
-               if (fdsi.ssi_signo == SIGINT) {
-                   printf("Got SIGINT\n");
-               } else if (fdsi.ssi_signo == SIGQUIT) {
-                   printf("Got SIGQUIT\n");
-                   exit(EXIT_SUCCESS);
-               } else {
-                   printf("Read unexpected signal\n");
-               }
-*/               

@@ -3,7 +3,7 @@
 # https://github.com/wasienv/wasienv
 
 # NOTE: if defined, will copy wasm files to WASM_OUT_FOLDER (does *not* end with a '/')
-WASM_OUT_FOLDER=../wasm
+WASM_OUT_FOLDER=../wasm-files
 
 # the compiler
 CC=~/.wasienv/bin/wasicc
