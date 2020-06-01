@@ -73,7 +73,7 @@ onmessage = async function (e) {
     } else if (e.data.channel.type === "signalfd") {
 
       // create circular buffer from previously created shared array buffer
-      mod[modUuid].cb[mod["signalfd"] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
+      mod[modUuid].cb[mod["signalfd"]] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
       
     } else {
       // todo
