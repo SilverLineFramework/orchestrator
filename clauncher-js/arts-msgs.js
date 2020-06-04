@@ -38,7 +38,24 @@ export function rt(rt, msg_action) {
 export function mod(mod, msg_action) {
     let msg = req(msg_action);
 
-    msg.data = mod;
+    let modDetails = {
+        uuid: mod.uuid !== undefined ? mod.uuid : uuidv4(),
+        name: mod.name !== undefined ? "mod-" + Math.round(Math.random() * 10000) + "@" + navigator.product + "-" + mod.name: "rt-" + Math.round(Math.random() * 10000) + "@" + navigator.product,
+        parent: mod.parent !== undefined ? mod.parent : "{}",
+        filename: mod.filename !== undefined ? mod.filename : "",
+        fileid: mod.fileid !== undefined ? mod.fileid : "na",
+        filetype: mod.filetype !== undefined ? mod.filetype : "WA",
+        args: mod.args !== undefined ? mod.args : "",
+        channels: mod.channels !== undefined ? mod.channels : "[]",
+        wait_state: mod.wait_state !== undefined ? mod.wait_state : "false",
+        memory: mod.memory !== undefined ? mod.memory : ""
+    }
+
+    msg.data = {
+        type: ObjType.mod,
+        details: modDetails
+      };
+    
     return msg;
 }
 
