@@ -67,6 +67,9 @@ export default class moduleIO {
   // setup channels
   setupChannelsFromModArgs(modData) {
     let modCh = modData.channels;
+    if (modCh == undefined) return;
+    if (modCh.length == 0) return;
+
     // create channels
     modCh.forEach((ch) => {
       if (ch.path.slice(-1) != "/") ch.path += "/";

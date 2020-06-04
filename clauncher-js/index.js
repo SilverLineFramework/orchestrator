@@ -23,7 +23,7 @@ function runtimeInitDone() {
   setTimeout( function () {
     //let fn = "stdinread.wasm";
     //let fn = "counter.wasm";
-    let fn = "signalfd.wasm";
+    let fn = "poll_example.wasm";
     let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6b";
     let rt_uuid = RuntimeMngr.runtime.uuid;
     let modCreateMsg = ARTSMessages.mod( {
@@ -32,15 +32,30 @@ function runtimeInitDone() {
       filename: fn,
       channels: [{ path: "/ch/light", type: "pubsub", mode: "rw", params: { topic: "kitchen/light" }}]
     }, ARTSMessages.Action.create);
+    // simulate the arrival of a module create message
     RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modCreateMsg); 
   }, 1000);  
+/*
+  setTimeout( function () {
+    //let fn = "stdinread.wasm";
+    //let fn = "counter.wasm";
+    let fn = "counter.wasm";
+    let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6c";
+    let rt_uuid = RuntimeMngr.runtime.uuid;
+    let modCreateMsg = ARTSMessages.mod( {
+      uuid: mod_uuid,
+      parent: { uuid:  rt_uuid },
+      filename: fn
+    }, ARTSMessages.Action.create);
+    // simulate the arrival of a module create message
+    RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modCreateMsg); 
+  }, 2000);  
+*/
 
 /*
   setTimeout( function () {
       RuntimeMngr.signal("44c72c87-c4ec-4759-b587-30ddc8590f6b", SIGNO.QUIT);
   }, 2000);  
 */
+
 }
-
-
-

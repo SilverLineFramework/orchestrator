@@ -84,18 +84,26 @@ onmessage = async function (e) {
   }
 
   if (e.data.type == WorkerMessages.msgType.signal) {
-    console.log(e.data)
     let modUuid = e.data.mod_uuid;
 
     // signalfd_siginfo struct is 128 bytes
     let bytes = new Uint8Array(128);
     bytes[0] = e.data.signo; // set the first byte (ssi_signo) indicating the signal number
 
-    mod[modUuid].cb["signalfd"].push(bytes);
+    mod[modUuid].cb[mod["signalfd"]].push(bytes);
   
     return;
   }
-  
+
+  if (e.data.type == WorkerMessages.msgType.mem) {
+    let modUuid = e.data.mod_uuid;
+
+    //console.log(e.data.mem);
+ 
+    
+    return;
+  }
+
 };
 
 function onMqttMessage(modUuid, message) {

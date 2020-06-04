@@ -9,6 +9,8 @@ import { WASI } from "/wasmer-js/packages/wasi/src";
 import browserBindings from "/wasmer-js/packages/wasi/src/bindings/browser.ts";
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 
+import * as Base64 from 'base64-arraybuffer'
+
 import * as WorkerMessages from "/worker-msgs.js";
 import * as CSI from "/csi.js";
 import moduleIO from "/moduleio.js"
@@ -50,8 +52,6 @@ onmessage = async function (e) {
       },
     });
 
-    //console.log(wasi);
-
     // wrap wasi path_open to attach our channel IO
     mio.wrapPathOpen(wasi);
 
@@ -62,13 +62,22 @@ onmessage = async function (e) {
 
     // Instantiate the WebAssembly module
     let instance = await WebAssembly.instantiate(wasmModule, {
-      ...imports,
+      ...imports, 
     });
-
     try {
       wasi.start(instance); // Start the transformed WASI instance
     } catch(e) {
-      console.log(e);
+      // WASI throws exception on non-zero return; ignore
+      //console.log(e);  
     }
+
+    //console.log(instance.globals);
+    let mem = Base64.encode(instance.exports.memory.buffer);
+
+    mio.IOWorkerPort.postMessage({
+      type: WorkerMessages.msgType.mem,
+      mod_uuid: e.data.arts_mod_instance_data.uuid,
+      mem: mem
+    });
   }
 };
