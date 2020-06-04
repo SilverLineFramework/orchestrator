@@ -53,7 +53,7 @@ int main(void)
     }
 
     // try sending a message to channel
-    if (write(fds[FDI_ch_light].fd, "message", 8) != 8)
+    if (write(fds[FDI_ch_light].fd, "message\n", 8) != 8)
     {
         printf("error writing to /ch/light/data\n");
     }
@@ -93,9 +93,11 @@ int main(void)
                 else
                 {
                     // read stdin/channel
-                    if (read(fds[i].fd, buf, sizeof(buf)) > 0)
+                    int n = read(fds[i].fd, buf, sizeof(buf));
+                    if (n > 0)
                     {
-                        printf("rcvd: %s", buf);
+                        buf[n]='\0';
+                        printf("rcvd: %s\n", buf);
                     }
                 }
             }
