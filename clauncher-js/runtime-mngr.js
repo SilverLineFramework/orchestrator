@@ -11,7 +11,7 @@ import * as WorkerMessages from "/worker-msgs.js";
 import * as LogPanel from "/log-panel.js";
 import SharedArrayCircularBuffer from "/sa-cbuffer.js";
 
-var runtime;
+export var runtime;
 export var mc;
 var ioworker;
 
@@ -55,6 +55,15 @@ export async function init(settings) {
   ioworker = new Worker("moduleio-worker.js");
 
   if (runtime.onInitCallback != undefined) runtime.onInitCallback();
+}
+
+export function signal(modUuid, signo) {
+    ioworker.postMessage(
+    {
+        type: WorkerMessages.msgType.signal,
+        mod_uuid: modUuid,
+        signo: signo
+    });
 }
 
 // register runtime
@@ -103,10 +112,8 @@ function onMqttMessage(message) {
   if (message.destinationName.startsWith(runtime.ctl_topic)) {
     var msg_ctl = JSON.parse(message.payloadString);
     console.log(msg_ctl);
-    if (msg_ctl.type != ARTSMessages.Type.resp) {
-      if (msg_ctl.action == ARTSMessages.Action.create) {
-        var rcvModInstance = msg_ctl.data.details;
-      }
+    if (msg_ctl.type != ARTSMessages.Action.create) {
+      var rcvModInstance = msg_ctl.data.details;
 
       runtime.modules[rcvModInstance.uuid] = rcvModInstance;
       //console.log(rcvModInstance);
@@ -138,7 +145,7 @@ function onMqttMessage(message) {
           shared_array_buffer: sb,
       }, [channel.port1]); 
 
-      // start an mqtt client for the module std io
+      // start an mqtt client for the module io
       ioworker.postMessage(
       {
           type: WorkerMessages.msgType.start,
@@ -146,6 +153,10 @@ function onMqttMessage(message) {
           worker_port: channel.port2,
           shared_array_buffer: sb,
       },[channel.port2]); 
+
+      // save module worker
+      //runtime.modules[rcvModInstance.uuid].mworker=mworker;
+    
     }
   }
 

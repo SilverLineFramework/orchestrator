@@ -81,15 +81,11 @@ export default class MqttClient {
     });
   }
 
-  // simulate a module creation message for testing purposes
-  moduleCreateTestMsg(fn) {
-    let str_msg = '{"object_id": "fcb2780b-abdd-43b6-bc13-895baa2075a2", "action": "create", "type": "arts_req", "data": {"type": "module", "details": {"uuid": "44c72c87-c4ec-4759-b587-30ddc8590f6b", "name": "test", "parent": {"uuid": "' +
-    _this.settings.clientid +
-    '"}, "filename": "' +
-    fn +
-    '", "fileid": "na", "filetype": "WA", "args": "", "channels":[{ "path":"/ch/light","type":"pubsub","mode":"rw", "params":{ "topic":"kitchen/light" }}]}}}';
-    let msg = new Paho.Message(str_msg);
-    msg.destinationName = "realm/proc/control/" + _this.settings.clientid;
+  // simulate message publication for testing purposes
+  simulatePublish(topic, payload) {
+    if (typeof payload !== "string") payload = JSON.stringify(payload);
+    let msg = new Paho.Message(payload);
+    msg.destinationName = topic;
     _this.settings.onMessageCallback(msg);
   }
 
