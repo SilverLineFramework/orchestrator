@@ -26,18 +26,11 @@ export default class moduleIO {
       ),
     };
 
-    // flag for reads to the fd
-    this.readFlag = [];
-    this.readFlag[0] = true;
-
     // store channel info
     this.channels = [];
 
-    // save module uuid and stdout topic
-    this.modData = {
-      uuid: params.mod_data.uuid,
-      stdout_topic: params.mod_data.stdout_topic,
-    };
+    // save module data
+    this.modData = params.mod_data;
 
     // stdout/stderr write calls
     this.wasmFs.volume.fds[1].write = this.writePubsubStream.bind(
@@ -151,7 +144,6 @@ export default class moduleIO {
     if (ch == undefined) return; // not a valid channel
 
     let fullPath = path + fn;
-    //this.readFlag[realfd] = true;
     this.iob[realfd] = { rflag: true };
     if (fn === "data") {
       // create a shared circuler buffer to be used by both workers

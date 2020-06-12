@@ -26,7 +26,7 @@ export function rt(rt, msg_action) {
 
     msg.data = {
         type: ObjType.rt,
-        object_id: rt.uuid,
+        uuid: rt.uuid,
         name: rt.name,
         max_nmodules: rt.max_nmodules,
         apis: rt.apis,
@@ -38,7 +38,8 @@ export function rt(rt, msg_action) {
 export function mod(mod, msg_action) {
     let msg = req(msg_action);
 
-    let modDetails = {
+    msg.data = {
+        type: ObjType.mod,
         uuid: mod.uuid !== undefined ? mod.uuid : uuidv4(),
         name: mod.name !== undefined ? mod.name: mod.filename !== undefined ? mod.filename + "@" + navigator.product: "mod-" + Math.round(Math.random() * 10000) + "@" + navigator.product,
         parent: mod.parent !== undefined ? mod.parent : "{}",
@@ -48,12 +49,7 @@ export function mod(mod, msg_action) {
         args: mod.args !== undefined ? mod.args : "",
         channels: mod.channels !== undefined ? mod.channels : [],
         wait_state: mod.wait_state !== undefined ? mod.wait_state : "false",
-        memory: mod.memory !== undefined ? mod.memory : ""
-    }
-
-    msg.data = {
-        type: ObjType.mod,
-        details: modDetails
+        memory: mod.memory
       };
     
     return msg;

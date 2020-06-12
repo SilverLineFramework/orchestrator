@@ -9,21 +9,21 @@ LogPanel.init('log_panel');
 
 // get name
 let namePrompt = ""
-//namePrompt = prompt(
-//  `Enter a name to identify your client\n`
-//);
+namePrompt = prompt(
+  `Enter a name to identify your client\n`
+);
 
 LogPanel.log("Hi " + namePrompt + ".");
 
 RuntimeMngr.init({ onInitCallback: runtimeInitDone, name: namePrompt });
 
 function runtimeInitDone() {
-  console.log("Runtime init done.");
-
+  LogPanel.log("Runtime init done.");
+/*
   setTimeout( function () {
     //let fn = "stdinread.wasm";
-    //let fn = "counter.wasm";
-    let fn = "poll_example.wasm";
+    let fn = "counter.wasm";
+    //let fn = "poll_example.wasm";
     let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6b";
     let rt_uuid = RuntimeMngr.runtime.uuid;
     let modCreateMsg = ARTSMessages.mod( {
@@ -35,10 +35,9 @@ function runtimeInitDone() {
     // simulate the arrival of a module create message
     RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modCreateMsg); 
   }, 1000);  
+*/
 /*
   setTimeout( function () {
-    //let fn = "stdinread.wasm";
-    //let fn = "counter.wasm";
     let fn = "counter.wasm";
     let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6c";
     let rt_uuid = RuntimeMngr.runtime.uuid;
@@ -51,11 +50,10 @@ function runtimeInitDone() {
     RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modCreateMsg); 
   }, 2000);  
 */
-
 /*
   setTimeout( function () {
       RuntimeMngr.signal("44c72c87-c4ec-4759-b587-30ddc8590f6b", SIGNO.QUIT);
-  }, 2000);  
+  }, 10000);  
 */
 
 }

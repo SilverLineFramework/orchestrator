@@ -1,8 +1,9 @@
 export var msgType = {
     start: 0,
-    pub_msg: 1,
-    sub_msg: 2,
-    new_stream: 3,
-    signal: 4,
-    mem: 5
+    stop:1,
+    pub_msg: 2,
+    sub_msg: 3,
+    new_stream: 4,
+    signal: 5,
+    finish: 6
 }

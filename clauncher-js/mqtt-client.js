@@ -89,11 +89,19 @@ export default class MqttClient {
     _this.settings.onMessageCallback(msg);
   }
 
+  disconnect() {
+    try {
+      this.mqttc.disconnect();
+    } catch (err) {
+      if (this.settings.dbg == true) console.log("MQTT Disconnected.");
+    }
+  }
+
   reConnect() {
     try {
       this.mqttc.disconnect();
     } catch (err) {
-      if (this.settings.dbg == true) console.log("Not connected..");
+      if (this.settings.dbg == true) console.log("MQTT Disconnected.");
     }
     clientConnect();
   }

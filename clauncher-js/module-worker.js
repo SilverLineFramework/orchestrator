@@ -33,6 +33,12 @@ onmessage = async function (e) {
     // instance to handle the IO for the new module; creates wasmFs intance
     let mio = new moduleIO({shared_array_buffer: e.data.shared_array_buffer, worker_port: e.data.worker_port, mod_data: e.data.arts_mod_instance_data});
     
+    // if we are restoring the state of the program, set CWLIB_JTEL to indicate that to the module (JTEL = Jump To Event Loop)
+    let wasi_env = {};
+    if (e.data.memory !== undefined) {
+      wasi_env = {CWLIB_JTEL: 1};
+    }
+
     // Instantiate new WASI Instance
     let wasi = new WASI({
       preopenDirectories: {'/sys/': '/sys/', ...mio.channelDirectories()},
@@ -42,7 +48,7 @@ onmessage = async function (e) {
       args: [wasmFilePath],
 
       // Environment variables that are accesible to the WASI module
-      env: {},
+      env: wasi_env,
 
       // Bindings used by the WASI instance (fs, path, etc...)
       bindings: {
@@ -64,20 +70,41 @@ onmessage = async function (e) {
     let instance = await WebAssembly.instantiate(wasmModule, {
       ...imports, 
     });
-    try {
-      wasi.start(instance); // Start the transformed WASI instance
-    } catch(e) {
-      // WASI throws exception on non-zero return; ignore
-      //console.log(e);  
+
+    let mem;
+
+    // Restore memory contents, if provided 
+    if (e.data.memory !== undefined) { 
+      let mem = Base64.decode(e.data.memory); 
+      let size = mem.byteLength - instance.exports.memory.buffer.byteLength;
+      if (size > 0) { // need to adjust memory size
+        let nb = size / 64000;
+        console.log("blocks",nb);
+        instance.exports.memory.grow(nb);
+      }
+      // restore bytes
+      let sv = new BigUint64Array(mem);
+      let tv = new BigUint64Array(instance.exports.memory.buffer);
+      for (let i=0; i<instance.exports.memory.buffer.byteLength/BigUint64Array.BYTES_PER_ELEMENT; i++) {
+        tv[i] = sv[i];
+      }
     }
 
-    //console.log(instance.globals);
-    let mem = Base64.encode(instance.exports.memory.buffer);
+    // Start the WASI instance
+    try {
+      wasi.start(instance); 
+    } catch(e) {
+      // WASI throws exception on non-zero return; ignore
+      console.log(e);  
+    }
 
-    mio.IOWorkerPort.postMessage({
-      type: WorkerMessages.msgType.mem,
+    // Get instance memory and send finish message
+    mem = Base64.encode(instance.exports.memory.buffer);
+
+    this.postMessage({
+      type: WorkerMessages.msgType.finish,
       mod_uuid: e.data.arts_mod_instance_data.uuid,
-      mem: mem
+      memory: mem
     });
   }
 };

@@ -48,14 +48,19 @@ onmessage = async function (e) {
     mod[modData.uuid].cb[modData.stdin_topic] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, modData.stdin_topic);
 
     // listen for messages on worker port
-    e.data.worker_port.onmessage = onmessage;
-
+    mod[modData.uuid].worker_port = e.data.worker_port;
+    
+    // set event handler to receive messages from the worker; (when the module finishes)
+    //mod[modData.uuid].worker_port.addEventListener('message', onmessage);
+    mod[modData.uuid].worker_port.onmessage = onmessage;
+    //this.worker_port.onmessage = onmessage;
     return;
   }
 
   if (e.data.type == WorkerMessages.msgType.pub_msg) {
     //console.log("publish:", e.data.msg, "->", e.data.dst);
     let modUuid = e.data.mod_uuid;
+    if (mod[modUuid] === undefined) return; // TODO: save messages sent after signal 
     mod[modUuid].mc.publish(e.data.dst, e.data.msg);
     return;
   }
@@ -73,7 +78,7 @@ onmessage = async function (e) {
     } else if (e.data.channel.type === "signalfd") {
 
       // create circular buffer from previously created shared array buffer
-      mod[modUuid].cb[mod["signalfd"]] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
+      mod[modUuid].cb["signalfd"] = new SharedArrayCircularBuffer(e.data.shared_array_buffer, "signalfd");
       
     } else {
       // todo
@@ -86,21 +91,23 @@ onmessage = async function (e) {
   if (e.data.type == WorkerMessages.msgType.signal) {
     let modUuid = e.data.mod_uuid;
 
+    console.log("sending signal");
     // signalfd_siginfo struct is 128 bytes
     let bytes = new Uint8Array(128);
     bytes[0] = e.data.signo; // set the first byte (ssi_signo) indicating the signal number
 
-    mod[modUuid].cb[mod["signalfd"]].push(bytes);
+    if (mod[modUuid].cb["signalfd"] === undefined) {
+      console.log("WASM module must open signalfd.");
+      return;
+    }
+    mod[modUuid].cb["signalfd"].push(bytes);
   
-    return;
-  }
+    // disconnect mqtt client
+    mod[modUuid].mc.disconnect();
 
-  if (e.data.type == WorkerMessages.msgType.mem) {
-    let modUuid = e.data.mod_uuid;
+    // free data about this module
+    delete mod[modUuid];
 
-    //console.log(e.data.mem);
- 
-    
     return;
   }
 
