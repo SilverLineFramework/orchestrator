@@ -92,7 +92,7 @@ class RuntimeDetailView(generics.RetrieveUpdateDestroyAPIView):
             a_rt = self.queryset.get(pk=kwargs["pk"])
             serializer = RuntimeSerializer()
             updated_rt = serializer.update(a_rt, request.data)
-            return Response(RuntimeSerializer(updated_song).data)
+            return Response(RuntimeSerializer(updated_rt).data)
         except Runtime.DoesNotExist:
             return Response(
                 data={
@@ -109,7 +109,7 @@ class RuntimeDetailView(generics.RetrieveUpdateDestroyAPIView):
         except Runtime.DoesNotExist:
             return Response(
                 data={
-                    "message": "Song with id: {} does not exist".format(kwargs["pk"])
+                    "message": "Runtime with id: {} does not exist".format(kwargs["pk"])
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
@@ -119,9 +119,57 @@ class ListModulesView(generics.ListCreateAPIView):
     Returns a list of Modules.
     GET module/
     """
-    #queryset = Runtime.objects.all()
     queryset = Module.objects.all()#.prefetch_related('parent')
     serializer_class = ModuleSerializer
+
+class ModuleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET module/:id/
+    PUT module/:id/
+    DELETE module/:id/
+    """
+    queryset = Module.objects.all()
+    serializer_class = ModuleSerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            a_mod = self.queryset.get(pk=kwargs["pk"])
+            return Response(ModuleSerializer(a_mod).data)
+        except Module.DoesNotExist:
+            return Response(
+                data={
+                    "message": "Module with uuid: {} does not exist".format(kwargs["pk"])
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    #@validate_request_data
+    def put(self, request, *args, **kwargs):
+        try:
+            a_mod = self.queryset.get(pk=kwargs["pk"])
+            serializer = ModuleSerializer()
+            updated_mod = serializer.update(a_mod, request.data)
+            return Response(ModuleSerializer(updated_mod).data)
+        except Module.DoesNotExist:
+            return Response(
+                data={
+                    "message": "Module with uuid: {} does not exist".format(kwargs["pk"])
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            a_mod = self.queryset.get(pk=kwargs["pk"])
+            a_mod.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Module.DoesNotExist:
+            return Response(
+                data={
+                    "message": "Module with id: {} does not exist".format(kwargs["pk"])
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
     
 class LoginView(generics.CreateAPIView):
     """
