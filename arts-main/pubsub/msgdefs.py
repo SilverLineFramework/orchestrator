@@ -6,8 +6,8 @@ class ARTSResponse(dict):
         dict.__init__(self, object_id=str(r_uuid), type='arts_resp', data={ 'result': result, 'details': details})
 
 class ARTSRequest(dict):
-    def __init__(self, action, type, details):
-        dict.__init__(self, object_id=str(uuid.uuid4()), action=action, type='arts_req', data={ 'type': type, 'details': details})
+    def __init__(self, action, rdata):
+        dict.__init__(self, object_id=str(uuid.uuid4()), action=action, type='arts_req', data=rdata)
 
 class ARTSReg(dict):
     def __init__(self, reg_uuid, rt_uuid, rt_name, action):

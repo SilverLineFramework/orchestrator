@@ -1,3 +1,9 @@
+'''
+Handle pubsub messages
+
+Message definitions:
+https://docs.google.com/presentation/d/1HJaQPFMV_sUyMLoiXciZn9KVTCNXCgQ5LeNxbp_Vf2U/edit?usp=sharing
+''' 
 import paho.mqtt.client as mqtt
 from arts_core.models import Runtime, Module, Link
 from arts_core.serializers import RuntimeSerializer, ModuleSerializer, LinkSerializer
@@ -14,13 +20,6 @@ class ARTSMQTTCtl():
         self.scheduler = scheduler
     
     def on_reg_message(self, msg):
-        '''
-        Register runtime messages:
-            { "object_id": "<request uuid; randomly generated>", "action": "create",  "type": "arts_req",  "data": { "type":"runtime", "name": "runtime1" } } 
-                response to same topic: { "object_id": "<request uuid>","type": "arts_resp",  "data": { "result": "ok|error" "details": "{<serialized instance>}|<error_msg>" } } 
-            { "object_id":"<request uuid>", "action": "delete" }
-                response to same topic: { "object_id": "<request uuid>", "type": "arts_resp",  "data": { "result": "ok|error", "details": "{<serialized instance>}|<error_msg>" } } 
-        ''' 
         try:
             str_payload = str(msg.payload.decode("utf-8","ignore"))
             if (str_payload[0] == "'"):
@@ -39,9 +38,10 @@ class ARTSMQTTCtl():
          
         if (reg_msg['action'] == 'create'):                
             if (reg_msg['data']['type'] == 'runtime'):
+                print("***", reg_msg);
                 try:
                     reg_data = reg_msg['data']
-                    rt_uuid = reg_data.get("object_id", Runtime._meta.get_field('uuid').default) 
+                    rt_uuid = reg_data.get("uuid", Runtime._meta.get_field('uuid').default) 
                     rt_name = reg_data.get("name", Runtime._meta.get_field('name').default) 
                     rt_max_nmodules = reg_data.get("max_nmodules", Runtime._meta.get_field('max_nmodules').default) 
                     rt_apis = reg_data.get("apis", Runtime._meta.get_field('apis').default)  
@@ -64,9 +64,10 @@ class ARTSMQTTCtl():
                     self.mqtt_client.publish(msg.topic, resp)
             
         if (reg_msg['action'] == 'delete'):
-            if (reg_msg['data']['type'] == 'runtime'):         
+            if (reg_msg['data']['type'] == 'runtime'):    
+                print(reg_msg)  
                 try:
-                    a_uuid = uuid.UUID(reg_msg['data']['object_id'])
+                    a_uuid = uuid.UUID(reg_msg['data']['uuid'])
                     a_rt = Runtime.objects.get(pk=a_uuid)
                 except Exception as err:
                     resp = json.dumps(ARTSResponse(reg_msg['object_id'],Result.err, 'Runtime ({0}) could not be deleted; {1}'.format(str(a_uuid),err)))
@@ -77,40 +78,28 @@ class ARTSMQTTCtl():
                     print(resp)
                     print('Deleted; Publishing: ', resp, ' to: ', msg.topic + "/" + str(a_uuid))
                     self.mqtt_client.publish(msg.topic, resp)
-
-            if (reg_msg['data']['type'] == 'module'):         
-                try:
-                    a_uuid = uuid.UUID(reg_msg['data']['object_id'])
-                    a_mod = Module.objects.get(pk=a_uuid)
-                except Exception as err:
-                    resp = json.dumps(ARTSResponse(reg_msg['object_id'],Result.err, 'Module ({0}) could not be deleted; {1}'.format(str(a_uuid),err)))
-                    print(resp)
-                    self.mqtt_client.publish(msg.topic, resp)
-                else:
-                    resp = json.dumps(ARTSResponse(reg_msg['object_id'], Result.ok, ModuleSerializer(a_mod, many=False).data))
-                    a_mod.delete()
-                    print(resp)
-                    print('Deleted; Publishing: ', resp, ' to: ', msg.topic + "/" + str(a_uuid))
-                    self.mqtt_client.publish(msg.topic, resp)
                 
     def on_ctl_message(self, msg):
-        '''
-        ARTS Control messages (sent from clients, asking to CRD modules):
-            { "object_id":"<request uuid>", "action": "create", "type": "module", "data": { "type":"module", "name": "<module name>", "filename": ".wasm file", "fileid": "file id", "filetype": "PY|WASM", "parent_object_id": "<runtime uuid where to run; optional>", "args": "module args"} }
-                response to same topic: { "object_id": "<request uuid>", "type": "arts_resp",  "data": { "result": "ok|error", "details": "{<serialized instance>}|<error_msg>" } } 
-            { "object_id":"<module uuid>", "action": "delete", "type": "module" }
-                response to same topic: { "object_id": "<request uuid>", "type": "arts_resp",  "data": { "result": "ok|error", "details": "{<serialized instance>}|<error_msg>" } } 
-            { "object_id":"<module uuid>", "action": "update", "type": "module" "data": { "parent": "<runtime uuid where to run; optional>"} }
-                response to same topic: { "object_id": "<request uuid>", "type": "arts_resp",  "data": { "result": "ok|error", "details": "{<serialized instance>}|<error_msg>" } }                 
-        '''
-        
-        ctl_msg = json.loads(str(msg.payload.decode("utf-8","ignore"))) # convert json payload to a python string, then to dictionary
-        
+        try:
+            str_payload = str(msg.payload.decode("utf-8","ignore"))
+            if (str_payload[0] == "'"):
+                str_payload = str_payload[1:len(str_payload)-1]
+            ctl_msg = json.loads(str_payload) # convert json payload to a python string, then to dictionary
+        except Exception as err:
+            try:
+                resp = ARTSResponse('could_not_parse', Result.err, 'Could not process request; {0}'.format(err))
+            except Exception as err1:
+                print(err1)
+            print(json.dumps(resp))
+            self.mqtt_client.publish(msg.topic, json.dumps(resp))
+                        
         if (ctl_msg['action'] == 'create'):
             if (ctl_msg['data']['type'] == 'module'):
                 parent_rt=None
-                if ('parent_object_id' in ctl_msg['data']):
-                    parent_rt = Runtime.objects.get(pk=ctl_msg['data']['parent_object_id']) # honor parent, if given
+                print(ctl_msg);
+                
+                if ('parent' in ctl_msg['data']):
+                    parent_rt = Runtime.objects.get(pk=ctl_msg['data']['parent']['uuid']) # honor parent, if given
                 else:
                     try:
                         parent_rt = self.scheduler.schedule_new_module()
@@ -139,7 +128,7 @@ class ARTSMQTTCtl():
                     self.mqtt_client.publish(msg.topic, resp)
                 else:
                     # request module start
-                    mod_req = json.dumps(ARTSRequest(Action.create, 'module', ModuleSerializer(a_mod, many=False).data ))
+                    mod_req = json.dumps(ARTSRequest(Action.create, ModuleSerializer(a_mod, many=False).data ))
                     print('Requesting module creation to parent: ', mod_req, ' to: ', msg.topic + "/" + str(parent_rt.uuid))
                     self.mqtt_client.publish(msg.topic + "/" + str(parent_rt.uuid), mod_req)
                     
@@ -149,8 +138,38 @@ class ARTSMQTTCtl():
                 resp = json.dumps(ARTSResponse(ctl_msg['object_id'], Result.ok, ModuleSerializer(a_mod, many=False).data ))
                 print('Created Module; Publishing: ', resp, ' to: ', msg.topic)
                 self.mqtt_client.publish(msg.topic, resp)
+
+        if (ctl_msg['action'] == 'delete'):
+            if (ctl_msg['data']['type'] == 'module'):
+                snd_rt = None
+                old_rt_uuid = None
+                try:
+                    a_uuid = uuid.UUID(ctl_msg['data']['uuid'])
+                    a_mod = Module.objects.get(pk=a_uuid)
+                    old_rt_uuid = a_mod.parent.uuid
+                    if ('send_to_runtime' in ctl_msg['data']):
+                        snd_rt = Runtime.objects.get(pk=ctl_msg['data']['send_to_runtime']) # get parent runtime, if given
+                except Exception as err:
+                    resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Module ({0}) could not be deleted; {1}'.format(str(a_uuid),err)))
+                    self.mqtt_client.publish(msg.topic, resp)
+                else:
+                    # request module delete
+                    new_req = ARTSRequest(Action.delete, ModuleSerializer(a_mod, many=False).data );
+                    if (snd_rt != None):
+                        a_mod.parent = snd_rt
+                        new_req['send_to_runtime'] = str(snd_rt.uuid)
+                        
+                    mod_req = json.dumps(new_req)
+                    print('Requesting module delete to parent: ', mod_req, ' to: ', msg.topic + "/" + str(old_rt_uuid))
+                    self.mqtt_client.publish(msg.topic + "/" + str(old_rt_uuid), mod_req)
+                        
+                    # TODO: check if module was deleted at the runtime (read back result on the mqtt topic)
                     
-            #if (reg_msg['action'] == 'create'):
-        
+                    if (snd_rt == None):
+                        a_mod.delete()
+                    else:
+                        a_mod.save()
+                        
+                        
     def on_dbg_message(self, msg):
         print('on_dbg_message:'+msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
