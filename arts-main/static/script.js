@@ -1,6 +1,6 @@
 var reload_interval_milli = 5000
 
-var topic = 'realm/proc/control';
+var reg_topic = 'realm/proc/reg';
 var ctl_topic = 'realm/proc/control';
 var dbg_topic = 'realm/proc/debug';
 var stdout_topic = dbg_topic+'/stdout';
@@ -20,10 +20,22 @@ document.addEventListener('DOMContentLoaded', function() {
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
     runtime_select = document.getElementById('runtime_select');
-    loadTreeData();
+    sendrt_select = document.getElementById('sendto_runtime_select');
+    delrt_select = document.getElementById('del_runtime_select');
+    module_select = document.getElementById('module_select');
+    
     startConnect();
-    setTimeout(loadTreeData, reload_interval_milli); // reload data periodically
 });
+
+function statusMsg(msg) {
+    status_box.value += msg;
+    status_box.scrollTop = status_box.scrollHeight;
+}
+
+function stdoutMsg(msg) {
+    stdout_box.value += msg;
+    stdout_box.scrollTop = stdout_box.scrollHeight;
+}
 
 function displayTree(treeData) {
     // Set the dimensions and margins of the diagram
@@ -47,9 +59,6 @@ function displayTree(treeData) {
                 + margin.left + "," + margin.top + ")");
     //}
 
-    //d3.select("g.parent").selectAll("*").remove();
-    //root.remove();
-    
     var i = 0,
         duration = 750,
         root;
@@ -67,9 +76,18 @@ function displayTree(treeData) {
 
     while (runtime_select.options.length > 0) {                
         runtime_select.remove(0);
+        sendrt_select.remove(0);
+        delrt_select.remove(0);
+    }  
+
+    while (module_select.options.length > 0) {                
+        module_select.remove(0);
     }  
 
     runtime_select.options[runtime_select.options.length] = new Option('Schedule', '');
+    sendrt_select.options[sendrt_select.options.length] = new Option('No migration', '');
+    delrt_select.options[delrt_select.options.length] = new Option('Select Runtime', '');
+    module_select.options[module_select.options.length] = new Option('Select Module', '');
 
     // Define the div for the tooltip
     var div = d3.select("body").append("div")	
@@ -110,24 +128,30 @@ function displayTree(treeData) {
         .attr('class', 'node')
         .attr("transform", function(d) {
 
-            if("undefined" === typeof(d.data["filename"])){
-                if("string" === typeof(d.data["uuid"])){
+            if (d.data.type === "runtime") {
+                // runtime
                     //runtimes[d.data.uuid] = { uuid: d.data.uuid, name: d.data.name }
-                    runtime_select.options[runtime_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
-                }
+                runtime_select.options[runtime_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
+                sendrt_select.options[sendrt_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
+                delrt_select.options[delrt_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
+            } else if (d.data.type === "module") {
+                // module
+                module_select.options[module_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
             }
 
             return "translate(" + source.y0 + "," + source.x0 + ")";
 
         })
         .on('click', click);
-
+    
     // Add Circle for the nodes
     nodeEnter.append('circle')
         .attr('class', 'node')
         .attr('r', 1e-6)
         .style("fill", function(d) {
-            return d._children ? "lightsteelblue" : "#fff";
+            if (d.data.type === "runtime" ) return "#fff";
+            if (d.data.type === "module" ) return "lightsteelblue";
+            return "steelblue"
         });
 
     // Add labels for the nodes
@@ -140,26 +164,28 @@ function displayTree(treeData) {
             return d.children || d._children ? "end" : "start";
         })
         .on("mouseover", function(d) {	
-                if("undefined" === typeof(d.data["filename"])){
-                    // runtime
-                    disp_text = d.data.uuid  + "<br/>" + "nmodules:" + d.data.nmodules  + "<br/>";
-                }else{
-                    // module
-                    disp_text = d.data.uuid  + "<br/>" + "filename:" + d.data.filename  + "<br/>";
+                disp_text="d.data.name";
+                if (d.data.type === "runtime") {
+                    disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "nmodules:" + d.data.nmodules  + "<br/>";
+                } else if (d.data.type === "module") {
+                    disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "filename:" + d.data.filename  + "<br/>";
                 }            	
                 div.transition()		
                     .duration(200)		
                     .style("opacity", .9);		
                 div	.html(disp_text)	
                     .style("left", (d3.event.pageX) + "px")		
-                    .style("top", (d3.event.pageY - 28) + "px");	
+                    .style("top", (d3.event.pageY - 40) + "px");	
                 })					
             .on("mouseout", function(d) {		
                 div.transition()		
                     .duration(500)		
                     .style("opacity", 0);	
             })
-        .text(function(d) { return d.data.name; });
+        .text(function(d) { 
+            if (d.data.type) return d.data.name + " ("+d.data.type+")";
+             return d.data.name;
+        });
 
     // UPDATE
     var nodeUpdate = nodeEnter.merge(node);
@@ -173,9 +199,15 @@ function displayTree(treeData) {
 
     // Update the node attributes and style
     nodeUpdate.select('circle.node')
-        .attr('r', 10)
+        .attr('r', function(d) {
+            if (d.data.type === "runtime" ) return 10;
+            if (d.data.type === "module" ) return 5;
+            return 15
+        })
         .style("fill", function(d) {
-            return d._children ? "lightsteelblue" : "#fff";
+            if (d.data.type === "runtime" ) return "#fff";
+            if (d.data.type === "module" ) return "lightsteelblue";
+            return "steelblue"
         })
         .attr('cursor', 'pointer');
 
@@ -253,16 +285,25 @@ function displayTree(treeData) {
         d._children = null;
       }
 
-    if (selected_mod != undefined) {
-        console.log("Unsubscribing from:"+ stdout_topic + "/" + selected_mod.uuid)
-        mqttc.unsubscribe(stdout_topic + "/" + selected_mod.uuid);
-    }
-    selected_mod = d.data;
-    console.log("Subscribing:"+ stdout_topic + "/" + selected_mod.uuid)
-    mqttc.subscribe(stdout_topic + "/" + selected_mod.uuid);
-    stdout_box.value = "";
-    module_label.innerHTML = "Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")" + " :";
-    //console.log(d.data)
+      if (d.data.type === "runtime") { // runtime clicked
+        runtime_select.value = d.data.uuid;
+        delrt_select.value = d.data.uuid;
+        sendrt_select = d.data.uuid;
+      } else if (d.data.type === "module") {// module clicked
+        if (selected_mod != undefined) {
+            console.log("Unsubscribing from:"+ stdout_topic + "/" + selected_mod.uuid)
+            mqttc.unsubscribe(stdout_topic + "/" + selected_mod.uuid);
+        }
+        module_select.value = d.data.uuid;
+        selected_mod = d.data;
+        console.log("Subscribing:"+ stdout_topic + "/" + selected_mod.uuid)
+        mqttc.subscribe(stdout_topic + "/" + selected_mod.uuid);
+        stdout_box.value = "";
+        module_label.innerHTML = "Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")" + " :";
+        statusMsg("Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")\n");
+
+        //console.log(d.data)
+      }
   }
 }
 
@@ -286,17 +327,18 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
 }
 
 async function loadTreeData() {
-    setTimeout(loadTreeData, reload_interval_milli); // reload data periodically   
     c_data = await sendRequest('GET', '/api/v1/runtimes/');     
     td = {
-        "name": "arena", "t": "t1",
+        "name": "realm", "t": "t1",
         "children" : c_data
     }
     if (_.isEqual(treeData, td) == false) {
         treeData=td;
         displayTree(treeData);
     }
+    console.log("set_timeout", reload_interval_milli);
 
+    setTimeout(loadTreeData, reload_interval_milli); // reload data periodically   
 }
 
 // Called after DOMContentLoaded
@@ -308,8 +350,8 @@ function startConnect() {
     port = document.getElementById('mqtt_port').value;
 
     // Print output for the user in the messages div
-    status_box.value += 'Connecting to: ' + host + ' on port: ' + port + '\n';
-    status_box.value += 'Using the following mqttc value: ' + clientID + '\n';
+    statusMsg('Connecting to: ' + host + ' on port: ' + port + '\n');
+    statusMsg('Using the following mqttc value: ' + clientID + '\n');
 
     // Initialize new Paho client connection
     mqttc = new Paho.MQTT.Client(host, Number(port), clientID);
@@ -337,7 +379,7 @@ function reConnect() {
 // Called when the client connects
 function onConnect() {
     // Print output for the user in the messages div
-    status_box.value += 'Subscribing to: ' + ctl_topic + '\n';
+    statusMsg('Subscribing to: ' + ctl_topic + '\n');
 
     // Subscribe to the requested topic
     mqttc.subscribe(ctl_topic);
@@ -347,30 +389,20 @@ function onConnect() {
 function onConnectionLost(responseObject) {
     console.log('Disconnected...');
 
-    status_box.value += 'Disconnected.\n';
+    statusMsg('Disconnected.\n');
     if (responseObject.errorCode !== 0) {
-        status_box.value += 'ERROR: ' + responseObject.errorMessage + '\n';
+        statusMsg('ERROR: ' + responseObject.errorMessage + '\n');
+        alert(responseObject.errorMessage);
     }
 }
 
 // Called when a message arrives
 function onMessageArrived(message) {
-    status_box.value += 'Received: ' + message.payloadString + '\n';
- 
-    //console.log(message);
-    //console.log("Dbg msg");
-//ff93c36f-74a0-478d-8d29-4ab6412d5f8c
+    statusMsg('Received: ' + message.payloadString + '\n');
+
     if (message.destinationName.startsWith(stdout_topic)) {
-        /*
-        mod_uuid = message.destinationName.substring(message.destinationName.length-36);
-        console.log("uuid:"+mod_uuid);
-        if (stdout_txt[mod_uuid] == undefined) stdout_txt[mod_uuid] = "";
-        stdout_txt[mod_uuid] = message.payloadString + '\n' + stdout_txt[mod_uuid];
-        if (selected_mod.uuid == mod_uuid){
-            stdout_box.value = message.payloadString + '\n' + stdout_box.value;
-        }
-        */
-        stdout_box.value = message.payloadString + '\n' + stdout_box.value;
+        stdoutMsg(message.payloadString + '\n');
+        return;
     }
 
     if (message.destinationName == ctl_topic) {
@@ -381,30 +413,25 @@ function onMessageArrived(message) {
             console.log ("Error parsing message:", message.payloadString, err);
             return;
         }
-        //console.log(msg_req.uuid)
-        //console.log(pending_uuid)
-        //console.log(msg_req.type)
         if (pending_uuid == msg_req.object_id && msg_req.type == 'arts_resp') {
                 console.log(msg_req.data)
                 if (msg_req.data.result == 'ok') {
-                    //mod_instance = JSON.parse(msg_req.data.details);
                     mod_instance = msg_req.data.details;
                     // Print output for the user in the messages div
-                    status_box.value += 'Created: ' + mod_instance + '\n';
-                    //stdout_txt[mod_instance.uuid] = "";
-                    //mqttc.subscribe(stdout_topic + "/" + mod_instance.uuid);
+                    statusMsg('Ok: ' + mod_instance + '\n');
                 } else {
                     // Print output for the user in the messages div
-                    status_box.value += 'Error: ' + msg_req.data.details + '\n';
+                    statusMsg(status_box.value += 'Error: ' + msg_req.data.details + '\n');
+                    alert(msg_req.data.details);
                 } 
         }
     }
 }
 
-// Called when the disconnection button is pressed
+// Called when the disconnect button is pressed
 function startDisconnect() {
     mqttc.disconnect();
-    status_box.value += 'Disconnected\n';
+    statusMsg('Disconnected\n');
 }
 
 function uuidv4() {
@@ -419,7 +446,7 @@ function createModule() {
     fid = document.getElementById('fileid').value;
     ft = document.getElementById('filetype').value;
     args = document.getElementById('args').value;
-    modid = document.getElementById('runtime_select').value;
+    parentid = document.getElementById('runtime_select').value;
 
     pending_uuid = uuidv4();
 
@@ -428,7 +455,7 @@ function createModule() {
         action: "create",
         type: "arts_req", 
         data: { 
-            type: "module", 
+            type: "module",
             name: mname, 
             filename: fn, 
             fileid: fid,
@@ -437,10 +464,9 @@ function createModule() {
         }
     } 
 
-    console.log(modid);
-    if (modid.length > 0) {
+    if (parentid.length > 0) {
         console.log('adding parent');
-        req.data.parent_object_id = modid
+        req.data.parent = { uuid: parentid }
     }
 
     req_json = JSON.stringify(req);
@@ -451,3 +477,70 @@ function createModule() {
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 } 
+
+function deleteModule(rtuuid) {
+    //module = JSON.parse(document.getElementById('module_select').value);
+    mid = document.getElementById('module_select').value;
+    sendtoid = document.getElementById('sendto_runtime_select').value;
+
+    if (mid == undefined) {
+        alert("Need to select an existing module.");
+        return;
+    }
+
+    pending_uuid = uuidv4();
+
+    req = { 
+        object_id: pending_uuid, 
+        action: "delete",
+        type: "arts_req", 
+        data: {
+            type: "module",
+            uuid: mid
+        }
+    } 
+
+    if (sendtoid.length > 0) {
+        console.log('adding send to runtime');
+        req.data.send_to_runtime = sendtoid;
+    }
+
+    //rt_ctl_topic = ctl_topic + "/" + module.parent.uuid;
+
+    req_json = JSON.stringify(req);
+    console.log("Publishing ("+ctl_topic+"):"+req_json);
+    message = new Paho.MQTT.Message(req_json);
+    message.destinationName = req_json;
+    mqttc.send(ctl_topic, req_json); 
+
+    setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
+} 
+
+function deleteRuntime() {
+    rtid = document.getElementById('del_runtime_select').value;
+    
+    if (rtid.length < 1) {
+        alert("Need to select an existing runtime.");
+        return;
+    }
+
+    pending_uuid = uuidv4();
+
+    req = { 
+        object_id: pending_uuid, 
+        action: "delete",
+        type: "arts_req", 
+        data: { 
+            type: "runtime", 
+            uuid: rtid
+        }
+    }
+
+    req_json = JSON.stringify(req);
+    console.log("Publishing ("+reg_topic+"):"+req_json);
+    message = new Paho.MQTT.Message(req_json);
+    message.destinationName = req_json;
+    mqttc.send(reg_topic, req_json); 
+
+    setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
+}

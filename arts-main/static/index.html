@@ -17,39 +17,70 @@
         <div id="panel" class="panel"></div>
 		<div id="config" class="config">
 			<div class="preamble">
-				<span class="label label-info">CONIX Vizualization Demo</span>
-				<p/>
-					<button class="button" onclick="loadTreeData()">Refresh</button><p/>
+				Runtime Vizualization/Control
             </div>
-			<div id="create_mod_div" class="preamble">
-                <p>Create Module:</p>
+            
+            <div class="tab">
+                <button id="mod_tablink" class="tablinks" onclick="openTab(event, 'modules')">Modules</button>
+                <button class="tablinks" onclick="openTab(event, 'runtimes')">Runtimes</button>
+                <button class="tablinks" onclick="openTab(event, 'misc')">Misc/Demos</button>
+            </div>
+			<div id="modules" class="tabcontent">
+                <p class="label">Create Module:</p>
                 <select id="file_select" onchange="onFileSelectChange('file_select')">
+                    <option value='{ "name": "counter", "filename": "counter.wasm", "fileid":"na", "filetype": "WA"}'>counter (wasm)</option>
+                    <option value='{ "name": "helloworld", "filename": "helloworld.wasm", "fileid":"na", "filetype": "WA"}'>hello (wasm)</option>
                     <option value='{ "name": "test", "filename": "test.zip", "fileid":"1mcJhBvnNqs1CpNsZG2QUjhk3_8SS7Q7U", "filetype": "PY"}'>test (python)</option>
                     <option value='{ "name": "hello", "filename": "hello.zip", "fileid":"19IU7-03XnKYVuyNuz4xCZkSPQ4pFZsDw", "filetype": "PY"}'>hello (python)</option>
-                    <option value='{ "name": "helloworld", "filename": "helloworld.wasm", "fileid":"na", "filetype": "WA"}'>hello (wasm)</option>
-                    <option value='{ "name": "counter", "filename": "counter.wasm", "fileid":"na", "filetype": "WA"}'>counter (wasm)</option>
                 </select><p/>
                 <table>
-                <tr><td>Name:</td><td><input type="text" size=40 id="mname" value=""></td></tr>
-                <tr><td>Filename:</td><td><input type="text" size=40 id="filename" value=""></td></tr>
-                <tr><td>Fileid:</td><td><input type="text" size=40 id="fileid" value=""></td></tr>
-                <tr><td>Filetype:</td><td><input type="text" size=40 id="filetype" value=""></td></tr>
-                <tr><td>Args:</td><td><input type="text" size=40 id="args" value=""></td></tr>
-                <tr><td>Runtime:</td><td><select id="runtime_select"></select></td></tr>
+                <tr><td>Name:</td><td><input type="text" id="mname" value=""></td></tr>
+                <tr><td>Filename:</td><td><input type="text" id="filename" value=""></td></tr>
+                <tr><td>Fileid:</td><td><input type="text" id="fileid" value=""></td></tr>
+                <tr><td>Filetype:</td><td><input type="text" id="filetype" value=""></td></tr>
+                <tr><td>Args:</td><td><input type="text" id="args" value=""></td></tr>
+                <tr><td>Runtime:</td><td><select class="small" id="runtime_select"></select></td></tr>
                 </table>
                 <button onclick="createModule()">Create</button>
-            </div>    
-			<div id="stdout_div" class="preamble">
-                <p id="module_label">Module Stdout</p>
-                <textarea id="stdout-box" rows="10" cols="50"></textarea>
+                <br/><br/>
+                <p class="label">Delete/Migrate Module:</p>
+                Module:<select class="small" id="module_select"></select><br/>
+                Migrate to:<select class="small" id="sendto_runtime_select"></select>
+                <button onclick="deleteModule()">Delete/Migrate</button>
+                <br/><br/>
+                <p class="label" id="module_label">Module Stdout: <p class="small">(Select module by clicking on it on the tree)<p/></p>
+                <textarea id="stdout-box" rows="10" cols="50"></textarea>            
             </div>
+
+            <div id="runtimes" class="tabcontent">
+                <p class="label">Delete Runtime:</p>
+                Runtime:<select class="small" id="del_runtime_select"></select>
+                <button class="button" onclick="deleteRuntime()">Delete</button><p/>                  
+                Delete the runtime from ARTS database; does not terminate the runtime itself
+            </div>                                
+
+            <div id="misc" class="tabcontent">
+                <p class="label">MQTT</p>
+                <p style="display:inline">Server: </p>
+                <input type="text" size=27 id="mqtt_server" value="oz.andrew.cmu.edu">:
+                <input type="text" size=4 id="mqtt_port" value="9001">
+                <button onclick="reConnect()">Connect</button>
+                
+                <p class="label">Force tree refresh</p>
+                <button class="button" onclick="loadTreeData()">Force Refresh</button><p/>                  
+
+                <p class="label">Demos</p>
+                <ul>
+                 <li/><span class="small"><button class="button" onclick="demo1()">Migrate Counter</button><p/>Start counter.wasm (program that outputs a counter value). After 5 seconds, migrate to a random runtime. </span>                        
+                <li/><span class="small"><button class="button" onclick="alert('Coming soon!')">Migrate physics</button><p/>Start physics.wasm (program that creates cubes with physics in the arena). After 2 seconds, migrate to a random runtime.</span>
+                               
+                </ul>
+            </div>
+
 			<div class="status">
-				<p style="display:inline">Server: </p>
-				<input type="text" size=27 id="mqtt_server" value="oz.andrew.cmu.edu">:
-				<input type="text" size=4 id="mqtt_port" value="9001">
-				<button onclick="reConnect()">Connect</button>
-				<p/>
-				<textarea id="status-box" rows="10" cols="50"></textarea>
+
+                <textarea id="status-box" rows="10"></textarea>                    
+
 			</div>
 							
 			<!-- demo src-->
@@ -59,12 +90,29 @@
                 onFileSelectChange('file_select');
                 function onFileSelectChange(sid) {
                   var v = JSON.parse(document.getElementById(sid).value);
-                  console.log(v)
                   document.getElementById("mname").value = v.name;
                   document.getElementById("filename").value = v.filename;
                   document.getElementById("fileid").value = v.fileid;
                   document.getElementById("filetype").value = v.filetype;
                 }
+
+                function openTab(evt, tabName) {
+                    var i, tabcontent, tablinks;
+                    tabcontent = document.getElementsByClassName("tabcontent");
+                    for (i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].style.display = "none";
+                    }
+                    tablinks = document.getElementsByClassName("tablinks");
+                    for (i = 0; i < tablinks.length; i++) {
+                    tablinks[i].className = tablinks[i].className.replace(" active", "");
+                    }
+                    document.getElementById(tabName).style.display = "block";
+                    evt.currentTarget.className += " active";
+                }
+
+                document.getElementById("mod_tablink").click();
+                loadTreeData(); 
+
             </script>   
                         
 		</div>
