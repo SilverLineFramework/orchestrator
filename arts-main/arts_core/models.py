@@ -22,6 +22,10 @@ class Runtime(models.Model):
     # current number of modules
     nmodules = models.IntegerField(default=0)
 
+    @property
+    def type(self):
+        return "runtime"
+ 
     def save(self, *args, **kwargs):
         if (isinstance(self.uuid, uuid.UUID) == False):
             self.uuid = uuid.uuid4()
@@ -47,6 +51,10 @@ class Module(models.Model):
     # arguments to pass to the module at startup
     args = models.CharField(max_length=255, blank=True, default='')
     
+    @property
+    def type(self):
+        return "module"
+        
     def save(self, *args, **kwargs):
         if (self.parent.nmodules >= self.parent.max_nmodules):
             raise Exception('Parent reached maximimum number of modules ({})'.format(self.parent.max_nmodules))

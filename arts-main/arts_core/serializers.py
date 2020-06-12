@@ -5,18 +5,17 @@ import json
 
 class ModuleListingField(serializers.RelatedField):
     def to_representation(self, value):
-        return { 'name': value.name, 'uuid': str(value.uuid), 'filename': value.filename}
+        return { 'type': value.type, 'parent': { 'uuid': str(value.parent.uuid) }, 'name': value.name, 'uuid': str(value.uuid), 'filename': value.filename}
 
 class RuntimeSerializer(serializers.ModelSerializer):
     """
     Serializes the runtime data
     """
     children = ModuleListingField(many=True, read_only=True)
-    #children = serializers.StringRelatedField(many=True)
     
     class Meta:
         model = Runtime
-        fields = ("uuid", "name", "apis", "max_nmodules", "nmodules", "children")
+        fields = ("type", "uuid", "name", "apis", "max_nmodules", "nmodules", "children")
 
 class ParentListingField(serializers.RelatedField):
     def to_representation(self, value):
@@ -35,7 +34,7 @@ class ModuleSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Module
-        fields = ("uuid", "name", "parent", "filename", "fileid", "filetype", "args")
+        fields = ("type", "uuid", "name", "parent", "filename", "fileid", "filetype", "args")
         
 class LinkSerializer(serializers.ModelSerializer):
     """
