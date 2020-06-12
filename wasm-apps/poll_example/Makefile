@@ -18,7 +18,7 @@ LFLAGS=
 LIBS=
 
 # includes
-INCLUDES=-Isys
+INCLUDES=-I../cwlib
 
 # libraries (e.g.: -lmylib -lm)
 LIBS= 
@@ -29,7 +29,7 @@ LIBS=
 CFLAGS=-Wl,--allow-undefined -Wl,--export-dynamic 
 
 # source files (NOTE: we assume that there is a $(MAIN).c)
-SRCS=$(shell ls *.c| grep -v -e $(MAIN).c) sys/signalfd.c
+SRCS=$(shell ls *.c| grep -v -e $(MAIN).c) ../cwlib/sys/signalfd.c
 
 OBJS=$(SRCS:.c=.o)
 
@@ -47,5 +47,5 @@ $(MAIN).wasm: $(MAIN).c $(OBJS)
 	$(CC) -c $< -o $@ $(CFLAGS) $(LIBS)
 
 clean:
-	rm *wasm $(WASM_OUT_FOLDER)/*wasm sys/*.o 
+	rm *wasm $(WASM_OUT_FOLDER)/*wasm ../cwlib/sys/*.wasm
 
