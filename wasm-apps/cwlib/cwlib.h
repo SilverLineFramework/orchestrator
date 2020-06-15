@@ -10,42 +10,83 @@
 
 #ifndef _CSI_
 #define _CSI_
+#include <unistd.h>
+
+#define BUF_MAX 1000
 
 // Macro to declare function as an export
 #define WASM_EXPORT __attribute__( ( visibility( "default" ) ) )
 
 /**
- * Timer event handler function to be defined by the (cwlib) user; 
+ * Loop iteration callback function to be defined by the (cwlib) user; 
  * 
  * @param ctx user provided context to pass the handler
  */
-typedef void (*cwlib_timer_handler_t)(void *ctx);
+typedef void (*cwlib_loop_calback_t)(void *ctx);
+
 
 /**
- * Generic event handler function to be defined by the (cwlib) user; 
+ * Channel event handler function to be defined by the (cwlib) user; 
  * 
- * @param ev_type type of the event
- * @param ev_data event-specific data
+ * @param buf event-specific data read from the channel
+ * @param count size of data read
  * @param ctx user provided context to pass the handler
  */
-typedef void (*cwlib_event_handler_t)(int ev_type, void *ev_data, void *ctx);
+typedef void (*cwlib_channel_handler_t)(void *buf, size_t count, void *ctx);
 
 /**
- * Setup a timer callback 
- * 
- * @param delay_ms interval in milliseconds
- * @param callback the time callback
- * @param ctx user provided context to pass to the timer
+ * @struct channel
+ * @brief Hold info about a channel
  */
-int cwlib_set_timer(int delay_ms, cwlib_timer_handler_t timer_callback, void *ctx);
+typedef struct channel {
+   char *path; /*!< channel path; cwlib allocated  */
+   int flags; /*!< channel creation flags */
+   mode_t mode; /*!< channel mode bits */
+   int fdi; /*!<  index in fds array */
+   cwlib_channel_handler_t handler; /*!< channel callback when new data is received */
+   void *ctx; /*!< user provided context for channel callback */
+} t_channel;
 
 /**
- * Polls timers and files. Performs callbacks appropriately
- * Cwlib user should call cwlib_poll() in a loop
+ * Init cwlib
+ * Setup signalfd; check if we have to jump to the event loop
+ * 
+ * @param loop_callback callback for event loop iteration
+ * @param callback_ctx user provided callback context
+ */
+int cwlib_init(cwlib_loop_calback_t loop_callback, void *callback_ctx);
+
+/**
+ * Setup a channel
+ * 
+ * @param chpath opens the channel specified by pathname
+ * @param flags must include one of O_RDONLY, O_WRONLY, or O_RDWR. file creation flags and file status flags can be used, similar to open()
+ * @param mode file mode bits applied when a new file is created, similar to open()
+ * @param ch_handler handler to be called when new data is available on this channel
+ * @param ctx user-specified data to be given to handler
+ */
+int cwlib_open_channel(const char *chpath, int flags, mode_t mode, cwlib_channel_handler_t ch_handler, void *ctx);
+
+/**
+ * Setup a callback every event loop iteration
+ * 
+ * @param loop_callback callback for event loop iteration
+ * @param callback_ctx user provided callback context
+ */
+int cwlib_set_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx);
+
+/**
+ * Polls files and performs callbacks appropriately
  *
  * @param sleep_s amount of time, in milliseconds, to sleep if we have no events to wait
  * 
  */
-void cwlib_poll(int sleep_ms);
+int cwlib_loop(int sleep_ms);
+
+/**
+ * @internal Setup channels after migration
+ * 
+ */
+static int reopen_channels();
 
 #endif

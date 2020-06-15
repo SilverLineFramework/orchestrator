@@ -8,84 +8,205 @@
  * @date April, 2020
  */
 #include <unistd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <poll.h>
+#include <stdbool.h>
+#include <string.h>
 
+#include "sys/signalfd.h"
 #include "cwlib.h"
-#include "cwlib_utils.h"
 
-//TMP some globals to hold the subscription for a timer (should be an array)
-__wasi_subscription_t g_sub = {
-  .type = __WASI_EVENTTYPE_CLOCK,
-  .u.clock.clock_id = __WASI_CLOCK_REALTIME,
-  .u.clock.flags = 0,
+// file descriptor indexes
+enum FDIs
+{
+    FDI_signalfd=0,
+    FDI_channels_start,
+    FDI_MAX=10
 };
-int g_nevents=0;
-cwlib_event_handler_t g_timer_callback;
-void *g_ctx;
+
+// array of all fds we are going wait for (with poll()), including channels
+struct pollfd g_fds[FDI_MAX];
+
+// count of fds
+int g_nfds=0;
+
+// information about channels
+t_channel g_channels[FDI_MAX-FDI_channels_start];
+
+// user callback for each event loop (temp fix until we have timer-based callbacks setup by the user)
+cwlib_loop_calback_t g_loop_callback = NULL;
+
+// user provided context for the event loop callback
+void *g_loop_calback_ctx = NULL;
+
+// event loop sleep time if we have no events to wait
+const int dft_g_el_sleep_ms = 5000;
+int g_el_sleep_ms = dft_g_el_sleep_ms;
+
+// flag indicating if we received a quit signal
+bool g_quit_pending = 0;
 
 /**
- * Setup a timer callback 
+ * Init cwlib
+ * Setup signalfd; check if we have to jump to the event loop
  * 
- * @param delay_ms interval in milliseconds
- * @param callback the time callback
- * @param ctx user provided context to pass to the timer
+ * @param loop_callback callback for event loop iteration
+ * @param callback_ctx user provided callback context
  */
-cwlib_set_timer(int delay_ms, cwlib_timer_handler_t timer_callback, void *ctx) {
-  // TODO: fix to properly count timeout
-  g_sub.u.clock.timeout = delay_ms * NSEC_PER_MS;
+int cwlib_init(cwlib_loop_calback_t loop_callback, void *callback_ctx) 
+{
+  // add signalfd
+  g_fds[FDI_signalfd].fd = signalfd(-1, NULL, 0); // mask and flags are ignored
+  g_fds[FDI_signalfd].events = POLLRDNORM;
+  if (g_fds[FDI_signalfd].fd < 0)
+  {
+      printf("error opening signalfd\n");
+      return -1;
+  }
+  g_nfds = 1;
 
-  g_timer_callback = timer_callback;
+  g_loop_callback = loop_callback;
+  g_loop_calback_ctx = callback_ctx;
 
-  g_nevents=1;
+  char *v = getenv("CWLIB_JTEL"); // presence of env variable Jump To Event Loop (JTEL) indicates we should jump
+  if (v != NULL) { 
+    g_el_sleep_ms = g_el_sleep_ms > 0 ? g_el_sleep_ms : dft_g_el_sleep_ms;
+    // reopen channels
+    reopen_channels();
+    // call event loop
+    cwlib_loop(g_el_sleep_ms); 
+  }
+
+  return 0;
 }
 
 /**
- * Polls timers and files and performs callbacks appropriately
+ * Setup a channel
+ * 
+ * @param path opens the channel specified by pathname
+ * @param flags must include one of O_RDONLY, O_WRONLY, or O_RDWR. file creation flags and file status flags can be used, similar to open()
+ * @param mode file mode bits applied when a new file is created, similar to open()
+ * @param handler handler to be called when new data is available on this channel
+ * @param ctx user-specified data to be given to handler
+ */
+int cwlib_open_channel(const char *path, int flags, mode_t mode, cwlib_channel_handler_t handler, void *ctx) {
+    if (g_nfds < FDI_channels_start) return -1;
+    if (g_nfds == FDI_MAX) return -1;
+    
+    // add channel to fd list
+    g_fds[g_nfds].fd = open(path, flags, mode);
+    if (flags & O_RDONLY) g_fds[g_nfds].events = POLLRDNORM;
+    if (flags & O_WRONLY) g_fds[g_nfds].events = POLLWRNORM;
+    if (flags & O_RDWR) g_fds[g_nfds].events = POLLWRNORM | POLLRDNORM;
+    if (g_fds[g_nfds].fd < 0)
+    {
+        printf("error opening channel %s\n", path);
+        return -1;
+    }
+    
+    // save channel data
+    int nch = g_nfds-FDI_channels_start;
+    g_channels[nch].path = malloc(strlen(path)+1);
+    memcpy(g_channels[nch].path, path, strlen(path)+1);
+    g_channels[nch].flags = flags;
+    g_channels[nch].mode = mode;
+    g_channels[nch].fdi = g_nfds;
+    g_channels[nch].handler = handler;
+    g_channels[nch].ctx = ctx;
+    g_nfds++;
+
+    return 0;
+}
+
+/**
+ * @internal Setup channels after migration
+ * 
+ */
+int reopen_channels() {
+    for (int i = FDI_channels_start; i < g_nfds; i++) {
+      // call open again
+      g_fds[g_channels[i].fdi].fd = open(g_channels[i].path, g_channels[i].flags, g_channels[i].mode); 
+      if (g_fds[g_channels[i].fdi].fd < 0)
+      {
+          printf("error opening channel %s\n", g_channels[i].path);
+          return -1;
+      }
+    }
+    
+    return 0;
+}
+
+/**
+ * Setup a callback every event loop iteration
+ * 
+ * @param loop_callback callback for event loop iteration
+ * @param callback_ctx user provided callback context
+ */
+int cwlib_set_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx)  {
+  g_loop_callback = loop_callback;
+  g_loop_calback_ctx = callback_ctx;
+}
+
+/**
+ * Polls files and performs callbacks appropriately
  *
  * @param sleep_s amount of time, in milliseconds, to sleep if we have no events to wait
  * 
  */
-void cwlib_poll(int sleep_ms) {
-  size_t nevents;
-  __wasi_event_t ev;
+int cwlib_loop(int sleep_ms) {
+    if (g_nfds < FDI_channels_start) return -1;
 
-  // if no timer to wait for, sleep
-  if (g_nevents == 0) {
-    sleep(sleep_ms/1000); // TODO: setup a sub and poll for a timer instead
-    return;
-  }
+    char buf[BUF_MAX];
 
-  // call __wasi_poll_oneoff
-  __wasi_errno_t error = __wasi_poll_oneoff(&g_sub, &ev, g_nevents, &nevents);
-  
-  // TODO: check ev and perform respective callback  
-  // for now, only calls timer
-  if (nevents > 0) {
-    g_events=0;
-    g_timer_callback(__WASI_EVENTTYPE_CLOCK, NULL, g_ctx); // timer does not provide any data
-  }
+    while (1)
+    {
+        int retval = poll(g_fds, g_nfds, sleep_ms);
+        if (retval > 0)
+        {
+            // event in one of the fds
+            for (int i = 0; i < g_nfds; i++)
+            {
+                if (i == FDI_signalfd)
+                {
+                    struct signalfd_siginfo fdsi;           
+                    // signal
+                    ssize_t s = read(g_fds[i].fd, &fdsi, sizeof(struct signalfd_siginfo));
+                    if (s > 0 && s != sizeof(struct signalfd_siginfo))
+                    {
+                        printf("error reading signalfd\n");
+                    }
+                    else if (s > 0)
+                    {
+                        // SIGQUIT indicates a module migration; we save this state; only exit when all fds are empty
+                        if (fdsi.ssi_signo == SIGQUIT)
+                        {
+                            // save last sleep value
+                            g_quit_pending = true;
+                        }
+                        else if (fdsi.ssi_signo == SIGKILL) exit(EXIT_SUCCESS);
+                    }
+                }
+                else
+                {
+                    // read channel
+                    int n = read(g_fds[i].fd, buf, sizeof(buf));
+                    if (n > 0)
+                    {
+                        int ich = i-FDI_channels_start;
+                        g_channels[ich].handler(buf, n, g_channels[ich].ctx);
+                    }
+                }
+            }
+        } else {
+          // all fds are empty; check if we should quit
+          if (g_quit_pending) {
+            g_el_sleep_ms = sleep_ms; // save the last sleep value to call the event loop again
+            g_quit_pending = false;
+            exit(EXIT_SUCCESS);
+          }
+        }
+        g_loop_callback(g_loop_calback_ctx);
+    }
+
 }
-
-
-
-
-/*
-    //sleep(1);
-    int seconds=5;
-  struct timespec ts = {.tv_sec = seconds, .tv_nsec = 0};
-
-     // Prepare polling subscription (https://github.com/wasmerio/wasmer/blob/master/lib/wasi/src/syscalls/types.rs)
-     __wasi_subscription_t sub = {
-      .type = __WASI_EVENTTYPE_CLOCK,
-      .u.clock.clock_id = __WASI_CLOCK_REALTIME,
-      .u.clock.flags = 0,
-    };
-
-  if (!timespec_to_timestamp_clamp(&ts, &sub.u.clock.timeout))
-    return 1;
-
-    size_t nevents;
-    __wasi_event_t ev;
-    __wasi_errno_t error = __wasi_poll_oneoff(&sub, &ev, 1, &nevents);
-    printf("Done!\n");
-
-*/

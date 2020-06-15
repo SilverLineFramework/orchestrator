@@ -16,12 +16,9 @@ int t=0;
 
 int main(int argc, char **argv)
 {
-    CWLIB_CHK_START(); // this must be right at the start of main
-
-    int i;
     struct pollfd fds[1];
 
-    // add signalfd
+    // setup signalfd at the start of main
     fds[0].fd = signalfd(-1, NULL, 0); // mask and flags are ignored
     fds[0].events = POLLRDNORM;
     if (fds[0].fd < 0)
@@ -30,8 +27,12 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    printf("i=%d, t=%d\n", i, t);
-    i = 0;
+    CWLIB_CHK_START(); // this must be right after signalfd
+
+    // init code here
+    int i = 0;
+
+    // start ev loop
     while (1)
     {
         int retval = poll(fds, 1, 100); // TODO: check poll timeout (buggy in browser)

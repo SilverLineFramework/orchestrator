@@ -32,7 +32,7 @@ int main(void)
 
     // add stdin
     fds[FDI_stdin].fd = fileno(stdin);
-    fds[FDI_stdin].events = POLLIN;
+    fds[FDI_stdin].events = POLLRDNORM;
 
     // add signalfd
     fds[FDI_signalfd].fd = signalfd(-1, NULL, 0); // mask and flags are ignored
