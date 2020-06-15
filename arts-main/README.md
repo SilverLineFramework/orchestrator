@@ -1,9 +1,13 @@
-- make run
-
 **Dependencies**: python 3, pip3, virtualenv (and requirements.txt; check if path in Makefile is correct)
 
-Admin:
-http://localhost:8000/admin/
+**Setup:**
+- Create db: ```make migrate```
+- Create admin user: ```python manage.py createsuperuser --email admin@example.com --username admin```
 
-Vizualize:
-http://localhost:8000/static/index.html
+**Execute:**
+- ```make run```
+
+**UIs:**
+
+- Admin: http://localhost:8000/admin/
+- Vizualize: http://localhost:8000/static/index.html
