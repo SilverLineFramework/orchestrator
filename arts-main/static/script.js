@@ -1,4 +1,4 @@
-var reload_interval_milli = 5000
+var reload_interval_milli = 3000
 
 var reg_topic = 'realm/proc/reg';
 var ctl_topic = 'realm/proc/control';
