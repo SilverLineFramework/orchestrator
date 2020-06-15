@@ -33,7 +33,7 @@ class Runtime(models.Model):
         super(Runtime, self).save(*args, **kwargs)
     
     def __str__(self):
-        return str({'uuid':str(self.uuid), 'name': self.name, 'apis': str(self.apis), 'max_nmodules': self.max_nmodules, 'nmodules': self.nmodules})
+        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'apis': str(self.apis), 'max_nmodules': self.max_nmodules, 'nmodules': self.nmodules})
 
 class Module(models.Model):
     # module uuid
@@ -50,6 +50,8 @@ class Module(models.Model):
     filetype = models.CharField(max_length=10, choices=FileType.choices, default=FileType.WA)
     # arguments to pass to the module at startup
     args = models.CharField(max_length=255, blank=True, default='')
+    # channels
+    channels = models.CharField(max_length=1000, default=[""], blank=True)
     
     @property
     def type(self):
@@ -61,7 +63,7 @@ class Module(models.Model):
         super(Module, self).save(*args, **kwargs)
             
     def __str__(self):
-        return str({ 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args })
+        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args, 'channels': self.channels })
     
 class Link(models.Model):
     # link uuid

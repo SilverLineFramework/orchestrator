@@ -117,12 +117,14 @@ class ARTSMQTTCtl():
                     mod_fileid = ctl_data.get('fileid', Module._meta.get_field('fileid').default)
                     mod_filetype = ctl_data.get('filetype', Module._meta.get_field('filetype').default)
                     mod_args = ctl_data.get('args', Module._meta.get_field('args').default)
+                    mod_channels = ctl_data.get('channels', Module._meta.get_field('channels').default)
                     a_mod = Module.objects.create(name=mod_name, 
                                                   filename=mod_filename, 
                                                   fileid=mod_fileid, 
                                                   filetype=mod_filetype,
                                                   parent=parent_rt, 
-                                                  args=mod_args)
+                                                  args=mod_args,
+                                                  channels=mod_channels)
                 except Exception as err:
                     resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Module could not be created. {0}'.format(err)))
                     self.mqtt_client.publish(msg.topic, resp)
@@ -156,7 +158,9 @@ class ARTSMQTTCtl():
                     # request module delete
                     new_req = ARTSRequest(Action.delete, ModuleSerializer(a_mod, many=False).data );
                     if (snd_rt != None):
-                        a_mod.parent = snd_rt
+                        a_mod.parent.nmodules -= 1 # have to decrease number of modules
+                        a_mod.parent.save(update_fields=['nmodules'])
+                        a_mod.parent = snd_rt # later module save will increase number of modules (signals.py)
                         new_req['send_to_runtime'] = str(snd_rt.uuid)
                         
                     mod_req = json.dumps(new_req)
@@ -169,6 +173,7 @@ class ARTSMQTTCtl():
                         a_mod.delete()
                     else:
                         a_mod.save()
+                        
                         
                         
     def on_dbg_message(self, msg):

@@ -34,7 +34,7 @@ class ModuleSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Module
-        fields = ("type", "uuid", "name", "parent", "filename", "fileid", "filetype", "args")
+        fields = ("type", "uuid", "name", "parent", "filename", "fileid", "filetype", "args", "channels")
         
 class LinkSerializer(serializers.ModelSerializer):
     """
