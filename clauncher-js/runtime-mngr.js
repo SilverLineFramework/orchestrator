@@ -55,8 +55,8 @@ export async function init(settings) {
   // connect
   await mc.connect();
 
-  // subscribe to debug messages; for debug/viz purposes only
-  mc.subscribe(runtime.dbg_topic + "/#");
+  // subscribe to **all** debug messages; for debug/viz purposes only
+  //mc.subscribe(runtime.dbg_topic + "/#");
 
   // register runtime in ARTS
   registerRuntime(); 
@@ -131,15 +131,12 @@ function handleARTSMsg(msg) {
       mc.unsubscribe(runtime.reg_topic);
       runtime.ctl_topic += "/" + runtime.uuid + "/#";
       mc.subscribe(runtime.ctl_topic);
-      mc.subscribe(runtime.dbg_topic + "/#"); // TMP subscribe to all debug messages
   
       return;
   
     }
 
   }
-
-  console.log(msg);
 
   // below, only handle module requests
   if (msg.type != ARTSMessages.Type.req || msg.data.type != ARTSMessages.ObjType.mod) return;
@@ -202,6 +199,9 @@ function handleARTSMsg(msg) {
     // save worker
     runtime.modules[mod.uuid].mworker = mworker;
 
+    // subscribe to debug messages from the module; for debug/viz purposes only
+    mc.subscribe(runtime.dbg_topic + "/stdout/" + mod.uuid);
+
     return;
   }
 
@@ -237,6 +237,8 @@ function onWorkerMessage(e) {
     console.log("Could not find module.");
     return;
   }
+
+  mc.unsubscribe(runtime.dbg_topic + "/stdout/" + mod.uuid);
 
   // terminate the worker
   mod.mworker.terminate();

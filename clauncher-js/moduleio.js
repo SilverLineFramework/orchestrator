@@ -59,7 +59,15 @@ export default class moduleIO {
 
   // setup channels
   setupChannelsFromModArgs(modData) {
-    let modCh = modData.channels;
+    let modCh=undefined;
+    if (typeof modData.channels === 'string' || modData.channels instanceof String) {
+      try {
+        modCh = JSON.parse(modData.channels);
+      } catch(err) {
+        console.log('could not parse channels');
+      }
+    } else modCh = modData.channels;
+    
     if (modCh == undefined) return;
     if (modCh.length == 0) return;
 
