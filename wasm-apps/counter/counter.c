@@ -35,8 +35,7 @@ int main(int argc, char **argv)
     // start ev loop
     while (1)
     {
-        int retval = poll(fds, 1, 100); // TODO: check poll timeout (buggy in browser)
-        if (retval == 0) sleep(1900); // TMP!
+        int retval = poll(fds, 1, 2000); // TODO: check poll timeout (buggy in browser)
         if (retval > 0)
         {
             struct signalfd_siginfo fdsi;

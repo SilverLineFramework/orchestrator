@@ -1,5 +1,5 @@
  /** @file cwlib.h
- *  @brief Definitions for the CONIX WASM WASI Library
+ *  @brief Definitions for the CONIX WASM Library (CWLib)
  * 
  *  WASI wrapper to expose a simple pubsub enabled event-based interface for WASM modules.
  *
@@ -14,6 +14,15 @@
 
 #define BUF_MAX 1000
 
+// file descriptor indexes
+enum FDIs
+{
+  FDI_signalfd = 0,
+  FDI_channels_start,
+  FDI_MAX = 10
+};
+
+
 // Macro to declare function as an export
 #define WASM_EXPORT __attribute__( ( visibility( "default" ) ) )
 
@@ -23,7 +32,6 @@
  * @param ctx user provided context to pass the handler
  */
 typedef void (*cwlib_loop_calback_t)(void *ctx);
-
 
 /**
  * Channel event handler function to be defined by the (cwlib) user; 
@@ -50,11 +58,8 @@ typedef struct channel {
 /**
  * Init cwlib
  * Setup signalfd; check if we have to jump to the event loop
- * 
- * @param loop_callback callback for event loop iteration
- * @param callback_ctx user provided callback context
  */
-int cwlib_init(cwlib_loop_calback_t loop_callback, void *callback_ctx);
+int cwlib_init();
 
 /**
  * Setup a channel
@@ -73,7 +78,7 @@ int cwlib_open_channel(const char *chpath, int flags, mode_t mode, cwlib_channel
  * @param loop_callback callback for event loop iteration
  * @param callback_ctx user provided callback context
  */
-int cwlib_set_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx);
+int cwlib_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx);
 
 /**
  * Polls files and performs callbacks appropriately
@@ -82,11 +87,5 @@ int cwlib_set_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_c
  * 
  */
 int cwlib_loop(int sleep_ms);
-
-/**
- * @internal Setup channels after migration
- * 
- */
-static int reopen_channels();
 
 #endif
