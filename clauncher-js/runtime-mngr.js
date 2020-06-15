@@ -213,6 +213,7 @@ function handleARTSMsg(msg) {
     // save send_to_runtime
     runtime.modules[msg.data.uuid].send_to_runtime = msg.send_to_runtime;
 
+    console.time("Module Terminate/Serialize");    
     console.log("Posting kill to module uuid",  msg.data.uuid);
     // send signal to module through moduleio; worker will send message back when done (handled by onWorkerMessage)
     ioworker.postMessage(
@@ -252,15 +253,16 @@ function onWorkerMessage(e) {
   // module create msg
   let modCreateMsg = ARTSMessages.mod(mod, ARTSMessages.Action.create);
   modCreateMsg.data.memory = e.data.memory;
-  //mod
   
   // send module create msg
   if (mod.send_to_runtime !== runtime.uuid) {
+    console.time("Publish"); 
     mc.publish(dft_ctl_topic + "/" + mod.send_to_runtime, JSON.stringify(modCreateMsg));    
+    console.timeEnd("Publish"); 
   } else {
     // move to self ? allow for now... (useful for testing) 
     handleARTSMsg(modCreateMsg);
   }
 
-  
+  console.timeEnd("Module Terminate/Serialize");   
 }
