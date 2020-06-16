@@ -1,8 +1,8 @@
 /** @file cwlib.c
  *  @brief CONIX WASM Library (CWLib)
  * 
- *  WASI wrapper to expose a simple pubsub enabled event-based interface for WASM modules
- *  The event loop implemented by cwlib allows modules to migrate without need to move machine state
+ *  Event-based library to perform file-based IO (for pubsub and signals) for WASM modules using WASI. 
+ *  The event loop implemented by cwlib allows modules to migrate without need to move machine state.
  * 
  *  Modules must have a main() with a predefined structure:
  *    1. First call performed by main (before any declaration or any other call) must be to cwlib_init()

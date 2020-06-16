@@ -1,8 +1,7 @@
 /** @file cwlib_example.c
   *  @brief Example showing how an ARENA WASM module looks like
   * 
-  *  Uses CONIX WASM (cwlib), a WASI wrapper that exposes a simple pubsub enabled event-based 
-  *  interface for WASM modules
+  *  Uses CONIX WASM (cwlib), an event-based library to perform file-based IO (for pubsub and signals)
   * 
   *  The event loop implemented by cwlib allows modules to migrate without need to move machine state.
   *  This requires main() must have a predefined structure:
