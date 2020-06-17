@@ -5,8 +5,7 @@ Connects to mqtt; Routes mqtt messages to the view
 import paho.mqtt.client as mqtt
 import json
 import time
-
-CONFIG_FILE='pubsub/config.json'
+from django.conf import settings 
 
 class MqttListner(mqtt.Client):
 
@@ -15,8 +14,7 @@ class MqttListner(mqtt.Client):
         
         import pubsub.pubsubctl
         
-        with open(CONFIG_FILE) as json_file:
-            self.config = json.load(json_file)
+        self.config = settings.PUBSUB
         
         if (conn_subs):
             self.connect_and_subscribe()
@@ -47,7 +45,7 @@ class MqttListner(mqtt.Client):
         '''
         subscribe to each topic in the config file
         '''
-        self.connect(self.config['mqtt_server']['host'], 1883, 60)
+        self.connect(self.config['mqtt_server']['host'], self.config['mqtt_server']['port'], 60)
         for t in self.config['subscribe_topics']:
             print('Subscribing:', t['topic'])
             self.subscribe(t['topic'], 0)  

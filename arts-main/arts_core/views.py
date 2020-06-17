@@ -227,16 +227,3 @@ class RegisterUsers(generics.CreateAPIView):
             data=UserSerializer(new_user).data,
             status=status.HTTP_201_CREATED
         )
-
-
-def wasm_file_upload(request):
-    if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-    else:
-        form = DocumentForm()
-    return render(request, 'core/model_form_upload.html', {
-        'form': form
-    })            

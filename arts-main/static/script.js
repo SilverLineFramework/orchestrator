@@ -1,21 +1,30 @@
 var reload_interval_milli = 3000
 
-var reg_topic = 'realm/proc/reg';
-var ctl_topic = 'realm/proc/control';
-var dbg_topic = 'realm/proc/debug';
-var stdout_topic = dbg_topic+'/stdout';
+var cfg;
+
+// default values for topics 
+var topic = [];
+topic['reg'] = 'realm/proc/reg';
+topic['ctl'] = 'realm/proc/control';
+topic['dbg'] = 'realm/proc/debug';
+topic['stdout'] = topic['dbg']+'/stdout';
 
 var pending_uuid="";
 
 var stdout_txt=[];
 
-var selected_mod;
 var status_box;
 var stdout_box;
+var module_label;
+var runtime_select;
+var sendrt_select;
+var delrt_select;
+var module_select;
+
 var treeData;
 var mqttc;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -24,6 +33,22 @@ document.addEventListener('DOMContentLoaded', function() {
     delrt_select = document.getElementById('del_runtime_select');
     module_select = document.getElementById('module_select');
     
+    document.getElementById("mod_tablink").click();
+
+    cfg = await sendRequest('GET', '/config/');     
+    console.log(cfg); // {"mqtt_server":{"host":"oz.andrew.cmu.edu","port":1883,"ws_port":9001},"subscribe_topics":[{"topic":"realm/proc/reg","on_message":"on_reg_message"},{"topic":"realm/proc/control","on_message":"on_ctl_message"},{"topic":"realm/proc/debug","on_message":"on_dbg_message"}]}
+
+    cfg.subscribe_topics.forEach( t => {
+        topic[t.name] = t.topic;
+    });
+
+    document.getElementById('mqtt_server').value = cfg.mqtt_server.host;
+    document.getElementById('mqtt_port').value = cfg.mqtt_server.ws_port;
+
+    loadTreeData();
+    
+    setInterval(loadTreeData, reload_interval_milli);  // reload data periodically   
+
     startConnect();
 });
 
@@ -291,13 +316,13 @@ function displayTree(treeData) {
         sendrt_select = d.data.uuid;
       } else if (d.data.type === "module") {// module clicked
         if (selected_mod != undefined) {
-            console.log("Unsubscribing from:"+ stdout_topic + "/" + selected_mod.uuid)
-            mqttc.unsubscribe(stdout_topic + "/" + selected_mod.uuid);
+            console.log("Unsubscribing from:"+ topic['stdout'] + "/" + selected_mod.uuid)
+            mqttc.unsubscribe(topic['stdout'] + "/" + selected_mod.uuid);
         }
         module_select.value = d.data.uuid;
         selected_mod = d.data;
-        console.log("Subscribing:"+ stdout_topic + "/" + selected_mod.uuid)
-        mqttc.subscribe(stdout_topic + "/" + selected_mod.uuid);
+        console.log("Subscribing:"+ topic['stdout'] + "/" + selected_mod.uuid)
+        mqttc.subscribe(topic['stdout'] + "/" + selected_mod.uuid);
         stdout_box.value = "";
         module_label.innerHTML = "Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")" + " :";
         statusMsg("Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")\n");
@@ -327,18 +352,16 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
 }
 
 async function loadTreeData() {
-    c_data = await sendRequest('GET', '/api/v1/runtimes/');     
+    c_data = await sendRequest('GET', '/api/v1/runtimes/');   
+    realm_name =  topic['reg'].split('/')[0];
     td = {
-        "name": "realm", "t": "t1",
+        "name": realm_name, "t": "t1",
         "children" : c_data
     }
     if (_.isEqual(treeData, td) == false) {
         treeData=td;
         displayTree(treeData);
     }
-    console.log("set_timeout", reload_interval_milli);
-
-    setTimeout(loadTreeData, reload_interval_milli); // reload data periodically   
 }
 
 // Called after DOMContentLoaded
@@ -379,10 +402,10 @@ function reConnect() {
 // Called when the client connects
 function onConnect() {
     // Print output for the user in the messages div
-    statusMsg('Subscribing to: ' + ctl_topic + '\n');
+    statusMsg('Subscribing to: ' + topic['ctl'] + '\n');
 
     // Subscribe to the requested topic
-    mqttc.subscribe(ctl_topic);
+    mqttc.subscribe(topic['ctl']);
 }
 
 // Called when the client loses its connection
@@ -394,18 +417,19 @@ function onConnectionLost(responseObject) {
         statusMsg('ERROR: ' + responseObject.errorMessage + '\n');
         alert(responseObject.errorMessage);
     }
+    setTimeout(reConnect, 5000);
 }
 
 // Called when a message arrives
 function onMessageArrived(message) {
     statusMsg('Received: ' + message.payloadString + '\n');
 
-    if (message.destinationName.startsWith(stdout_topic)) {
+    if (message.destinationName.startsWith(topic['stdout'])) {
         stdoutMsg(message.payloadString + '\n');
         return;
     }
 
-    if (message.destinationName == ctl_topic) {
+    if (message.destinationName == topic['ctl']) {
         //console.log(message.payloadString);
         try {
             var msg_req = JSON.parse(message.payloadString);
@@ -470,10 +494,10 @@ function createModule() {
     }
 
     req_json = JSON.stringify(req);
-    console.log("Publishing ("+ctl_topic+"):"+req_json);
+    console.log("Publishing ("+topic['ctl']+"):"+req_json);
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(ctl_topic, req_json); 
+    mqttc.send(topic['ctl'], req_json); 
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 } 
@@ -505,13 +529,13 @@ function deleteModule(rtuuid) {
         req.data.send_to_runtime = sendtoid;
     }
 
-    //rt_ctl_topic = ctl_topic + "/" + module.parent.uuid;
+    //rt_topic['ctl'] = topic['ctl'] + "/" + module.parent.uuid;
 
     req_json = JSON.stringify(req);
-    console.log("Publishing ("+ctl_topic+"):"+req_json);
+    console.log("Publishing ("+topic['ctl']+"):"+req_json);
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(ctl_topic, req_json); 
+    mqttc.send(topic['ctl'], req_json); 
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 } 
@@ -537,10 +561,10 @@ function deleteRuntime() {
     }
 
     req_json = JSON.stringify(req);
-    console.log("Publishing ("+reg_topic+"):"+req_json);
+    console.log("Publishing ("+topic['reg']+"):"+req_json);
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(reg_topic, req_json); 
+    mqttc.send(topic['reg'], req_json); 
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 }
