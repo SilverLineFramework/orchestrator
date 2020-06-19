@@ -21,10 +21,12 @@ var sendrt_select;
 var delrt_select;
 var module_select;
 
+var selected_mod;
 var treeData;
 var mqttc;
 
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log("****Here!")
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -53,12 +55,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function statusMsg(msg) {
-    status_box.value += msg;
+    status_box.value += msg + '\n';
     status_box.scrollTop = status_box.scrollHeight;
 }
 
 function stdoutMsg(msg) {
-    stdout_box.value += msg;
+    stdout_box.value += msg + '\n';
     stdout_box.scrollTop = stdout_box.scrollHeight;
 }
 
@@ -325,7 +327,7 @@ function displayTree(treeData) {
         mqttc.subscribe(topic['stdout'] + "/" + selected_mod.uuid);
         stdout_box.value = "";
         module_label.innerHTML = "Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")" + " :";
-        statusMsg("Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")\n");
+        statusMsg("Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")");
 
         //console.log(d.data)
       }
@@ -373,8 +375,8 @@ function startConnect() {
     port = document.getElementById('mqtt_port').value;
 
     // Print output for the user in the messages div
-    statusMsg('Connecting to: ' + host + ' on port: ' + port + '\n');
-    statusMsg('Using the following mqttc value: ' + clientID + '\n');
+    statusMsg('Connecting to: ' + host + ' on port: ' + port);
+    statusMsg('Using the following mqttc value: ' + clientID);
 
     // Initialize new Paho client connection
     mqttc = new Paho.MQTT.Client(host, Number(port), clientID);
@@ -402,7 +404,7 @@ function reConnect() {
 // Called when the client connects
 function onConnect() {
     // Print output for the user in the messages div
-    statusMsg('Subscribing to: ' + topic['ctl'] + '\n');
+    statusMsg('Subscribing to: ' + topic['ctl']);
 
     // Subscribe to the requested topic
     mqttc.subscribe(topic['ctl']);
@@ -410,11 +412,9 @@ function onConnect() {
 
 // Called when the client loses its connection
 function onConnectionLost(responseObject) {
-    console.log('Disconnected...');
-
-    statusMsg('Disconnected.\n');
+    statusMsg('Disconnected.');
     if (responseObject.errorCode !== 0) {
-        statusMsg('ERROR: ' + responseObject.errorMessage + '\n');
+        statusMsg('ERROR: ' + responseObject.errorMessage);
         alert(responseObject.errorMessage);
     }
     setTimeout(reConnect, 5000);
@@ -422,10 +422,10 @@ function onConnectionLost(responseObject) {
 
 // Called when a message arrives
 function onMessageArrived(message) {
-    statusMsg('Received: ' + message.payloadString + '\n');
-
+    console.log('Received: ', message.payloadString, "[", message.destinationName, "]");
+    
     if (message.destinationName.startsWith(topic['stdout'])) {
-        stdoutMsg(message.payloadString + '\n');
+        stdoutMsg(message.payloadString);
         return;
     }
 
@@ -434,7 +434,7 @@ function onMessageArrived(message) {
         try {
             var msg_req = JSON.parse(message.payloadString);
         } catch(err) {
-            console.log ("Error parsing message:", message.payloadString, err);
+            statusMsg("Error parsing message:"+message.payloadString +" "+err);
             return;
         }
         if (pending_uuid == msg_req.object_id && msg_req.type == 'arts_resp') {
@@ -442,11 +442,10 @@ function onMessageArrived(message) {
                 if (msg_req.data.result == 'ok') {
                     mod_instance = msg_req.data.details;
                     // Print output for the user in the messages div
-                    statusMsg('Ok: ' + mod_instance + '\n');
+                    statusMsg('Ok: ' + JSON.stringify(mod_instance, null, 2));
                 } else {
                     // Print output for the user in the messages div
-                    statusMsg(status_box.value += 'Error: ' + msg_req.data.details + '\n');
-                    alert(msg_req.data.details);
+                    statusMsg(status_box.value += 'Error: ' + msg_req.data.details);
                 } 
         }
     }
@@ -455,7 +454,7 @@ function onMessageArrived(message) {
 // Called when the disconnect button is pressed
 function startDisconnect() {
     mqttc.disconnect();
-    statusMsg('Disconnected\n');
+    statusMsg('Disconnected.');
 }
 
 function uuidv4() {
@@ -469,7 +468,13 @@ function createModule() {
     fn = document.getElementById('filename').value;
     fid = document.getElementById('fileid').value;
     ft = document.getElementById('filetype').value;
-    args = document.getElementById('args').value;
+    try {
+        args = JSON.parse(document.getElementById('args').value);
+        env = JSON.parse(document.getElementById('env').value);   
+        channels = JSON.parse(document.getElementById('channels').value);    
+    } catch (err) {
+        statusMsg("args/env/channels need to be valid json: "+err);
+    } 
     parentid = document.getElementById('runtime_select').value;
 
     pending_uuid = uuidv4();
@@ -484,7 +489,9 @@ function createModule() {
             filename: fn, 
             fileid: fid,
             filetype: ft, 
-            args: args
+            args: args,
+            env: env,
+            channels: channels
         }
     } 
 
@@ -494,7 +501,7 @@ function createModule() {
     }
 
     req_json = JSON.stringify(req);
-    console.log("Publishing ("+topic['ctl']+"):"+req_json);
+    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
     mqttc.send(topic['ctl'], req_json); 
@@ -508,7 +515,7 @@ function deleteModule(rtuuid) {
     sendtoid = document.getElementById('sendto_runtime_select').value;
 
     if (mid == undefined) {
-        alert("Need to select an existing module.");
+        statusMsg("Need to select an existing module.");
         return;
     }
 
@@ -532,7 +539,7 @@ function deleteModule(rtuuid) {
     //rt_topic['ctl'] = topic['ctl'] + "/" + module.parent.uuid;
 
     req_json = JSON.stringify(req);
-    console.log("Publishing ("+topic['ctl']+"):"+req_json);
+    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
     mqttc.send(topic['ctl'], req_json); 
@@ -544,7 +551,7 @@ function deleteRuntime() {
     rtid = document.getElementById('del_runtime_select').value;
     
     if (rtid.length < 1) {
-        alert("Need to select an existing runtime.");
+        statusMsg("Need to select an existing runtime.");
         return;
     }
 
@@ -561,7 +568,7 @@ function deleteRuntime() {
     }
 
     req_json = JSON.stringify(req);
-    console.log("Publishing ("+topic['reg']+"):"+req_json);
+    statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
     mqttc.send(topic['reg'], req_json); 

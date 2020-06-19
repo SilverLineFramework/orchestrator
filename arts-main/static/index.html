@@ -28,7 +28,8 @@
 			<div id="modules" class="tabcontent">
                 <p class="label">Create Module:</p>
                 <select id="file_select" onchange="onFileSelectChange('file_select')">
-                    <option value='{ "name": "counter", "filename": "counter.wasm", "fileid":"na", "filetype": "WA"}'>counter (wasm)</option>
+                    <option value='{ "name": "counter-cwlib", "filename": "cwlib_example.wasm", "fileid":"na", "filetype": "WA", "args": "[]", "env": "[]", "channels": "[]"}'>counter-cwlib (wasm)</option>
+                    <option value='{ "name": "counter", "filename": "counter.wasm", "fileid":"na", "filetype": "WA", "args": "[]", "env": "[]", "channels": "[]"}'>counter (wasm)</option>
                     <option value='{ "name": "helloworld", "filename": "helloworld.wasm", "fileid":"na", "filetype": "WA"}'>hello (wasm)</option>
                     <option value='{ "name": "test", "filename": "test.zip", "fileid":"1mcJhBvnNqs1CpNsZG2QUjhk3_8SS7Q7U", "filetype": "PY"}'>test (python)</option>
                     <option value='{ "name": "hello", "filename": "hello.zip", "fileid":"19IU7-03XnKYVuyNuz4xCZkSPQ4pFZsDw", "filetype": "PY"}'>hello (python)</option>
@@ -39,6 +40,8 @@
                 <tr><td>Fileid:</td><td><input type="text" id="fileid" value=""></td></tr>
                 <tr><td>Filetype:</td><td><input type="text" id="filetype" value=""></td></tr>
                 <tr><td>Args:</td><td><input type="text" id="args" value=""></td></tr>
+                <tr><td>Env:</td><td><input type="text" id="env" value=""></td></tr>
+                <tr><td>Channels:</td><td><input type="text" id="channels" value=""></td></tr>
                 <tr><td>Runtime:</td><td><select class="small" id="runtime_select"></select></td></tr>
                 </table>
                 <button onclick="createModule()">Create</button>
@@ -94,6 +97,9 @@
                   document.getElementById("filename").value = v.filename;
                   document.getElementById("fileid").value = v.fileid;
                   document.getElementById("filetype").value = v.filetype;
+                  document.getElementById("args").value = v.args;
+                  document.getElementById("env").value = v.env;
+                  document.getElementById("channels").value = v.channels;
                 }
 
                 function openTab(evt, tabName) {
