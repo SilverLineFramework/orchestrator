@@ -199,7 +199,7 @@ export default class moduleIO {
       strMsg = buffer.toString();
     }
     if (strMsg === "\n") return buffer.length; // dont send just '\n'
-    //console.log("WASM [", topic, "] :", strMsg);
+    console.log("WASM [", topic, "] :", strMsg);
     this.IOWorkerPort.postMessage({
       type: WorkerMessages.msgType.pub_msg,
       mod_uuid: this.modData.uuid,

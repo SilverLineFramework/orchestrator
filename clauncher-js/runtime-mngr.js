@@ -209,7 +209,6 @@ function handleARTSMsg(msg) {
 
   // module delete request
   if (msg.action === ARTSMessages.Action.delete) {
-    console.log("here");
     // save send_to_runtime
     runtime.modules[msg.data.uuid].send_to_runtime = msg.send_to_runtime;
 
