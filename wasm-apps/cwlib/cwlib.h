@@ -1,8 +1,13 @@
  /** @file cwlib.h
  *  @brief Definitions for the CONIX WASM Library (CWLib)
  * 
- *  WASI wrapper to expose a simple pubsub enabled event-based interface for WASM modules.
- *
+ *  Event-based library to perform file-based IO (for pubsub and signals) for WASM modules using WASI. 
+ *  The event loop implemented by cwlib allows modules to migrate without need to move machine state.
+ * 
+ *  Modules must have a main() with a predefined structure:
+ *    1. First call performed by main (before any declaration or any other call) must be to cwlib_init()
+ *    2. main sets up channels (or setup loop callback and timeout handlers, when available in cwlib)
+ *    3. main calls cwlib_loop() to run the event loop
  *
  * Copyright (C) Wiselab CMU. 
  * @date April, 2020
@@ -13,15 +18,15 @@
 #include <unistd.h>
 
 #define BUF_MAX 1000
+#define FILE_PATH_MAX 500
 
-// file descriptor indexes
+// file descriptor indexes; signalfd is always 0
 enum FDIs
 {
   FDI_signalfd = 0,
   FDI_channels_start,
   FDI_MAX = 10
 };
-
 
 // Macro to declare function as an export
 #define WASM_EXPORT __attribute__( ( visibility( "default" ) ) )
@@ -58,17 +63,29 @@ typedef struct channel {
 /**
  * Init cwlib
  * Setup signalfd; check if we have to jump to the event loop
+ * 
+ * @return -1 on error; 0 otherwise  
  */
-int cwlib_init();
+WASM_EXPORT int cwlib_init();
 
 /**
- * Setup a channel
+ * Setup a channel. 
  * 
- * @param chpath opens the channel specified by pathname
+ * Returns a channel descriptor index and setup a callback for when new data is available on the channel
+ * Calls open() on the fiven channel path; different from open(), a channel has only one file descriptor. 
+ * Multiple cwlib_open_channel() calls with the same path will return the same file descriptor.
+ * 
+ * Do not mix channel descriptor index with file descriptors.
+ * 
+ * The path "signalfd" is treated differently by calling signalfd() instead of open()
+ * 
+ * @param path opens the channel specified by pathname; if path is "signalfd", will call signalfd() to open it
  * @param flags must include one of O_RDONLY, O_WRONLY, or O_RDWR. file creation flags and file status flags can be used, similar to open()
  * @param mode file mode bits applied when a new file is created, similar to open()
- * @param ch_handler handler to be called when new data is available on this channel
- * @param ctx user-specified data to be given to handler
+ * @param handler handler to be called when new data is available on this channel
+ * @param ctx user-specified data to be given to the handler
+ * 
+ * @return -1 on error; a channel descriptor index on success. a call to an existing path returns the previously created descriptor index
  */
 int cwlib_open_channel(const char *chpath, int flags, mode_t mode, cwlib_channel_handler_t ch_handler, void *ctx);
 
@@ -77,14 +94,30 @@ int cwlib_open_channel(const char *chpath, int flags, mode_t mode, cwlib_channel
  * 
  * @param loop_callback callback for event loop iteration
  * @param callback_ctx user provided callback context
+ * 
+ * @return -1 on error; 0 otherwise
  */
 int cwlib_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx);
 
 /**
+ * Setup/change a callback for an open channel
+ * 
+ * @todo support for signalfd callbacks (returns -1 if signalfd index is given)
+ * 
+ * @param chfd channel fd returned by cwlib_open_channel
+ * @param loop_callback callback for event loop iteration
+ * @param callback_ctx user provided callback context
+ * 
+ * @return -1 on error; 0 otherwise
+ */
+int cwlib_channel_callback(int chi, cwlib_channel_handler_t handler, void *ctx);
+
+/**
  * Polls files and performs callbacks appropriately
  *
- * @param sleep_s amount of time, in milliseconds, to sleep if we have no events to wait
+ * @param sleep_s amount of time, in milliseconds, to sleep if we have no events
  * 
+ * @return -1 on error; does not return unless a signal is received
  */
 int cwlib_loop(int sleep_ms);
 

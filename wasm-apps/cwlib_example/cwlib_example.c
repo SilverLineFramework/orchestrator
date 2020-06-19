@@ -30,7 +30,7 @@ void on_channel_light_data(void *buf, size_t count, void *ctx); // channel callb
 int main(int argc, char **argv)
 {
   // startup cwlib; call cwlib_init at the start of main()
-  cwlib_init();
+  //cwlib_init();
 
   // open channel
   cwlib_open_channel("/ch/light/data", O_RDWR, 0660, on_channel_light_data, NULL);

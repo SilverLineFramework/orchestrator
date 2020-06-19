@@ -1,13 +1,6 @@
 /** @file cwlib.c
  *  @brief CONIX WASM Library (CWLib)
- * 
- *  Event-based library to perform file-based IO (for pubsub and signals) for WASM modules using WASI. 
- *  The event loop implemented by cwlib allows modules to migrate without need to move machine state.
- * 
- *  Modules must have a main() with a predefined structure:
- *    1. First call performed by main (before any declaration or any other call) must be to cwlib_init()
- *    2. main sets up channels (or setup loop callback and timeout handlers, when available in cwlib)
- *    3. main calls cwlib_loop() to run the event loop
+ *  @see cwlib.h for documentation
  *
  * Copyright (C) Wiselab CMU. 
  * @date April, 2020
@@ -27,17 +20,18 @@
 /**
  * @internal Setup channels after migration
  * 
+ * @return -1 on error; 0 otherwise 
  */
 static int reopen_channels();
 
 // array of all fds we are going wait for (with poll()), including channels
-struct pollfd g_fds[FDI_MAX];
+struct pollfd *g_fds = NULL;
 
-// count of fds
-int g_nfds = 0;
+// count of fds; start at FDI_channels_start as some (signalfd) fds should be created by default
+int g_nfds = FDI_channels_start;
 
 // information about channels
-t_channel g_channels[FDI_MAX - FDI_channels_start];
+t_channel *g_channels = NULL;
 
 // user callback for each event loop (temp fix until we have timer-based callbacks setup by the user)
 cwlib_loop_calback_t g_loop_callback = NULL;
@@ -52,19 +46,18 @@ int g_el_sleep_ms = dft_g_el_sleep_ms;
 // flag indicating if we received a quit signal
 bool g_quit_pending = 0;
 
-/**
- * @internal Setup channels after migration
- * 
- */
+/** @copydoc reopen_channels */
 int reopen_channels()
 {
+  // call signalfd again
+  g_fds[FDI_signalfd].fd = signalfd(-1, NULL, 0); // mask and flags are ignored
+
   for (int i = FDI_channels_start; i < g_nfds; i++)
   {
     // call open again
-    g_fds[g_channels[i].fdi].fd = open(g_channels[i].path, g_channels[i].flags, g_channels[i].mode);
-    if (g_fds[g_channels[i].fdi].fd < 0)
+    g_fds[i].fd = open(g_channels[i].path, g_channels[i].flags, g_channels[i].mode);
+    if (g_fds[i].fd < 0)
     {
-      printf("error opening channel %s\n", g_channels[i].path);
       return -1;
     }
   }
@@ -72,23 +65,9 @@ int reopen_channels()
   return 0;
 }
 
-/**
- * Init cwlib
- * Setup signalfd; check if we have to jump to the event loop
- * 
- */
+/** @copydoc cwlib_init */
 int cwlib_init()
 {
-  // add signalfd
-  g_fds[FDI_signalfd].fd = signalfd(-1, NULL, 0); // mask and flags are ignored
-  g_fds[FDI_signalfd].events = POLLRDNORM;
-  if (g_fds[FDI_signalfd].fd < 0)
-  {
-    printf("error opening signalfd\n");
-    return -1;
-  }
-  g_nfds = 1;
-
   char *v = getenv("CWLIB_JTEL"); // presence of env variable Jump To Event Loop (JTEL) indicates we should jump
   if (v != NULL)
   {
@@ -98,72 +77,113 @@ int cwlib_init()
     // call event loop
     cwlib_loop(g_el_sleep_ms);
   }
+  else
+  {
+    g_fds = malloc(sizeof(struct pollfd) * FDI_MAX);
+    if (g_fds == NULL)
+      return -1;
+
+    g_channels = malloc(sizeof(t_channel) * FDI_MAX);
+    if (g_channels == NULL)
+      return -1;
+
+    // open signalfd
+    int sfd = cwlib_open_channel("signalfd", O_RDONLY, 0, NULL, NULL);
+    if (sfd < 0)
+      return -1;
+  }
 
   return 0;
 }
 
-/**
- * Setup a channel
- * 
- * @param path opens the channel specified by pathname
- * @param flags must include one of O_RDONLY, O_WRONLY, or O_RDWR. file creation flags and file status flags can be used, similar to open()
- * @param mode file mode bits applied when a new file is created, similar to open()
- * @param handler handler to be called when new data is available on this channel
- * @param ctx user-specified data to be given to handler
- */
+/** @copydoc cwlib_open_channel */
 int cwlib_open_channel(const char *path, int flags, mode_t mode, cwlib_channel_handler_t handler, void *ctx)
 {
-  if (g_nfds < FDI_channels_start)
+  if (g_fds == NULL)
+    return -1;
+  if (g_channels == NULL)
     return -1;
   if (g_nfds == FDI_MAX)
     return -1;
 
-  // add channel to fd list
-  g_fds[g_nfds].fd = open(path, flags, mode);
-  if (flags & O_RDONLY)
-    g_fds[g_nfds].events = POLLRDNORM;
-  if (flags & O_WRONLY)
-    g_fds[g_nfds].events = POLLWRNORM;
-  if (flags & O_RDWR)
-    g_fds[g_nfds].events = POLLWRNORM | POLLRDNORM;
-  if (g_fds[g_nfds].fd < 0)
+  // check if path to channel is already open
+  for (int i = 0; i < g_nfds; i++)
   {
-    printf("error opening channel %s\n", path);
-    return -1;
+    if (strncmp(g_channels[i].path, path, strlen(path)) == 0)
+    {
+      return i;
+    }
   }
 
-  // save channel data
-  int nch = g_nfds - FDI_channels_start;
-  g_channels[nch].path = malloc(strlen(path) + 1);
-  memcpy(g_channels[nch].path, path, strlen(path) + 1);
-  g_channels[nch].flags = flags;
-  g_channels[nch].mode = mode;
-  g_channels[nch].fdi = g_nfds;
-  g_channels[nch].handler = handler;
-  g_channels[nch].ctx = ctx;
-  g_nfds++;
+  // open file descriptor
+  int nfd = 0, chi = 0;
+  if (strncmp(path, "signalfd", 8) == 0)
+  {
+    nfd = signalfd(-1, NULL, 0); // mask and flags are ignored
+    if (nfd < 0)
+      return -1;
+    flags = O_RDONLY;
+    chi = FDI_signalfd; // signalfd is always at a known index (0)
+  }
+  else
+  {
+    nfd = open(path, flags, mode);
+    if (nfd < 0)
+      return -1;
+    chi = g_nfds;
+    g_nfds++;
+  }
 
-  return 0;
+  // add file descriptor to poll fd list
+  g_fds[chi].fd = nfd;
+  if (flags & O_RDONLY)
+    g_fds[chi].events = POLLRDNORM;
+  if (flags & O_WRONLY)
+    g_fds[chi].events = POLLWRNORM;
+  if (flags & O_RDWR)
+    g_fds[chi].events = POLLWRNORM | POLLRDNORM;
+
+  // save channel data
+  int path_len = strnlen(path, FILE_PATH_MAX) + 1;
+  g_channels[chi].path = malloc(path_len);
+  if (g_channels[chi].path == NULL)
+  {
+    close(nfd);
+    g_nfds--;
+    return -1;
+  }
+  //strncpy_s(_channels[chi].path, path_len, path, path_len-1);
+  memcpy(g_channels[chi].path, path, path_len - 1);
+  g_channels[chi].path[path_len] = '\0';
+  g_channels[chi].flags = flags;
+  g_channels[chi].mode = mode;
+  g_channels[chi].handler = handler;
+  g_channels[chi].ctx = ctx;
+
+  return chi;
 }
 
-/**
- * Setup a callback every event loop iteration
- * 
- * @param loop_callback callback for event loop iteration
- * @param callback_ctx user provided callback context
- */
+/** @copydoc cwlib_loop_callback */
 int cwlib_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx)
 {
   g_loop_callback = loop_callback;
   g_loop_calback_ctx = callback_ctx;
+  return 0;
 }
 
-/**
- * Polls files and performs callbacks appropriately
- *
- * @param sleep_s amount of time, in milliseconds, to sleep if we have no events to wait
- * 
- */
+/** @copydoc cwlib_channel_callback */
+int cwlib_channel_callback(int chi, cwlib_channel_handler_t handler, void *ctx)
+{
+  if (g_nfds < chi)
+    return -1;
+  if (chi == FDI_signalfd)
+    return -1; // no callbacks for signalfd, for now
+  g_channels[chi].handler = handler;
+  g_channels[chi].ctx = ctx;
+  return 0;
+}
+
+/** @copydoc cwlib_loop */
 int cwlib_loop(int sleep_ms)
 {
   if (g_nfds < FDI_channels_start)
@@ -178,6 +198,7 @@ int cwlib_loop(int sleep_ms)
 
     // poll fds
     int retval = poll(g_fds, g_nfds, sleep_ms);
+    bool no_fd_input = true;
     if (retval > 0)
     {
       // event in one of the fds
@@ -188,11 +209,7 @@ int cwlib_loop(int sleep_ms)
           struct signalfd_siginfo fdsi;
           // signal
           ssize_t s = read(g_fds[i].fd, &fdsi, sizeof(struct signalfd_siginfo));
-          if (s > 0 && s != sizeof(struct signalfd_siginfo))
-          {
-            printf("error reading signalfd\n");
-          }
-          else if (s > 0)
+          if (s > 0 && s == sizeof(struct signalfd_siginfo))
           {
             // SIGQUIT indicates a module migration; we save this state and only exit when all fds are empty
             if (fdsi.ssi_signo == SIGQUIT)
@@ -210,22 +227,20 @@ int cwlib_loop(int sleep_ms)
           int n = read(g_fds[i].fd, buf, sizeof(buf));
           if (n > 0)
           {
-            int ich = i - FDI_channels_start;
+            no_fd_input = false;
             // call channel handler
-            g_channels[ich].handler(buf, n, g_channels[ich].ctx);
+            if (g_channels[i].handler != NULL)
+              g_channels[i].handler(buf, n, g_channels[i].ctx);
           }
         }
       }
     }
-    else
+    // check if we can quit
+    if (g_quit_pending == true && no_fd_input == true)
     {
-      // all fds are empty; check if we should quit
-      if (g_quit_pending)
-      {
-        g_el_sleep_ms = sleep_ms; // save the last sleep value to call the event loop again
-        g_quit_pending = false;
-        exit(EXIT_SUCCESS);
-      }
+      g_el_sleep_ms = sleep_ms; // save the last sleep value to call the event loop again
+      g_quit_pending = false;
+      exit(EXIT_SUCCESS);
     }
   }
 }
