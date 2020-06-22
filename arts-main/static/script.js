@@ -26,7 +26,6 @@ var treeData;
 var mqttc;
 
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log("****Here!")
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -101,20 +100,26 @@ function displayTree(treeData) {
     // Collapse after the second level
     //oot.children.forEach(collapse);
 
-    while (runtime_select.options.length > 0) {                
-        runtime_select.remove(0);
-        sendrt_select.remove(0);
-        delrt_select.remove(0);
+    if (runtime_select.options) {
+        while (runtime_select.options.length > 0) runtime_select.remove(0);
+    }
+
+    if (sendrt_select.options) {
+        while (sendrt_select.options.length > 0) sendrt_select.remove(0);
     }  
 
-    while (module_select.options.length > 0) {                
-        module_select.remove(0);
+    if (delrt_select.options) {
+        while (delrt_select.options.length > 0) delrt_select.remove(0);
     }  
 
-    runtime_select.options[runtime_select.options.length] = new Option('Schedule', '');
-    sendrt_select.options[sendrt_select.options.length] = new Option('No migration', '');
-    delrt_select.options[delrt_select.options.length] = new Option('Select Runtime', '');
-    module_select.options[module_select.options.length] = new Option('Select Module', '');
+    if (module_select.options) {
+        while (module_select.options.length > 0) module_select.remove(0);
+    }  
+
+    runtime_select.options[0] = new Option('Schedule', '');
+    sendrt_select.options[0] = new Option('No migration', '');
+    delrt_select.options[0] = new Option('Select Runtime', '');
+    module_select.options[0] = new Option('Select Module', '');
 
     // Define the div for the tooltip
     var div = d3.select("body").append("div")	
@@ -315,7 +320,7 @@ function displayTree(treeData) {
       if (d.data.type === "runtime") { // runtime clicked
         runtime_select.value = d.data.uuid;
         delrt_select.value = d.data.uuid;
-        sendrt_select = d.data.uuid;
+        sendrt_select.value = d.data.uuid;
       } else if (d.data.type === "module") {// module clicked
         if (selected_mod != undefined) {
             console.log("Unsubscribing from:"+ topic['stdout'] + "/" + selected_mod.uuid)
@@ -475,7 +480,7 @@ function createModule() {
     } catch (err) {
         statusMsg("args/env/channels need to be valid json: "+err);
     } 
-    parentid = document.getElementById('runtime_select').value;
+    parentid = runtime_select.value;
 
     pending_uuid = uuidv4();
 
@@ -510,9 +515,8 @@ function createModule() {
 } 
 
 function deleteModule(rtuuid) {
-    //module = JSON.parse(document.getElementById('module_select').value);
-    mid = document.getElementById('module_select').value;
-    sendtoid = document.getElementById('sendto_runtime_select').value;
+    mid = module_select.value;
+    sendtoid = sendrt_select.value;
 
     if (mid == undefined) {
         statusMsg("Need to select an existing module.");
@@ -548,7 +552,7 @@ function deleteModule(rtuuid) {
 } 
 
 function deleteRuntime() {
-    rtid = document.getElementById('del_runtime_select').value;
+    rtid = delrt_select.value;
     
     if (rtid.length < 1) {
         statusMsg("Need to select an existing runtime.");
@@ -574,4 +578,57 @@ function deleteRuntime() {
     mqttc.send(topic['reg'], req_json); 
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+async function DemoMigrateModule() {
+    if (runtime_select.options.length < 2) {
+        statusMsg("Must have more than one runtime.");
+        return;
+    }
+    rt1i = getRandomInt(0, runtime_select.options.length-1);
+    rt2i = getRandomInt(0, runtime_select.options.length-1);
+    while (rt1i == rt2i) rt2i = getRandomInt(0, runtime_select.options.length-1);
+
+    rt1uuid = runtime_select.options[rt1i].value;
+    rt2uuid = runtime_select.options[rt2i].value;
+
+    pending_uuid = uuidv4();
+
+    muuid = uuidv4();
+
+    req = { 
+        object_id: pending_uuid, 
+        action: "create",
+        type: "arts_req", 
+        data: { 
+            type: "module",
+            name: "counter-cwlib", 
+            uuid: muuid,
+            filename: "cwlib_example.wasm", 
+            fileid: "na",
+            filetype: "WA", 
+            args: [],
+            env: [],
+            channels: [],
+            parent: { uuid: rt1uuid }
+        }
+    } 
+
+    req_json = JSON.stringify(req);
+    statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
+    message = new Paho.MQTT.Message(req_json);
+    message.destinationName = req_json;
+    mqttc.send(topic['reg'], req_json); 
+
+    setTimeout(loadTreeData, 500); // reload data 
+
+    // wait 5 seconds...
+    await new Promise(r => setTimeout(r, 5000));
+
+
+
 }
