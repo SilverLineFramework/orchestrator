@@ -182,7 +182,7 @@ JWT_AUTH = {
 
 # pubsub settings
 PUBSUB = {
-	'mqtt_server': { 'host': 'oz.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001 },
+	'mqtt_server': { 'host': 'spatial.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001 },
 	'subscribe_topics': [
 		{ 'name': 'reg', 'topic': 'realm/proc/reg', 'on_message': 'on_reg_message'},
 		{ 'name': 'ctl', 'topic': 'realm/proc/control', 'on_message': 'on_ctl_message' },

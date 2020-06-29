@@ -49,7 +49,9 @@ class Module(models.Model):
     #filetype
     filetype = models.CharField(max_length=10, choices=FileType.choices, default=FileType.WA)
     # arguments to pass to the module at startup
-    args = models.CharField(max_length=255, blank=True, default='')
+    args = models.CharField(max_length=1000, default=[""], blank=True)
+    # env to pass to the module at startup
+    env = models.CharField(max_length=1000, default=[""], blank=True)
     # channels
     channels = models.CharField(max_length=1000, default=[""], blank=True)
     
@@ -63,7 +65,7 @@ class Module(models.Model):
         super(Module, self).save(*args, **kwargs)
             
     def __str__(self):
-        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args, 'channels': self.channels })
+        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args, 'env': self.env, 'channels': self.channels })
     
 class Link(models.Model):
     # link uuid
