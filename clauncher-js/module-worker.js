@@ -20,7 +20,7 @@ onmessage = async function (e) {
     let wasmFilePath = "./" + e.data.arts_mod_instance_data.filename;
     console.log("Starting new module",  e.data.arts_mod_instance_data);
 
-    console.time("Module Startup/Instanciate");
+    console.time("|T: Module Startup/Instanciate");
 
     // Fetch our Wasm File
     const response = await fetch(wasmFilePath);
@@ -75,15 +75,10 @@ onmessage = async function (e) {
 
     let mem;
 
-    console.timeEnd("Module Startup/Instanciate");
-
     // Restore memory contents, if provided 
     if (e.data.memory !== undefined) { 
-      console.time("Deserialize");
       let mem = Base64.decode(e.data.memory); 
-      console.timeEnd("Deserialize");
 
-      console.time("Mem. Write");
       let size = mem.byteLength - instance.exports.memory.buffer.byteLength;
       if (size > 0) { // need to adjust memory size
         let nb = size / 64000;
@@ -96,26 +91,27 @@ onmessage = async function (e) {
       for (let i=0; i<instance.exports.memory.buffer.byteLength/BigUint64Array.BYTES_PER_ELEMENT; i++) {
         tv[i] = sv[i];
       }
-      console.timeEnd("Mem. Write");
     }
 
+    console.timeEnd("|T: Module Startup/Instanciate");
+
+    console.time("|T: Module Executed for");
     // Start the WASI instance
     try {
       wasi.start(instance); 
     } catch(e) {
       // WASI throws exception on non-zero return; ignore
-      console.log(e);  
+      //console.log(e);  
     }
+    console.timeEnd("|T: Module Executed for");
 
-    console.time("Serialize");
     // Get instance memory and send finish message
     mem = Base64.encode(instance.exports.memory.buffer);
-    console.timeEnd("Serialize");  
 
     this.postMessage({
       type: WorkerMessages.msgType.finish,
       mod_uuid: e.data.arts_mod_instance_data.uuid,
-      memory: mem
+      memory: mem,
     });
   }
 };

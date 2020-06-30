@@ -9,21 +9,35 @@ LogPanel.init('log_panel');
 
 // get name
 let namePrompt = "r1"
-/*
+
 namePrompt = prompt(
   `Enter a name to identify your client\n`
 );
-*/
+
 LogPanel.log("Hi " + namePrompt + ".");
 
 RuntimeMngr.init({ onInitCallback: runtimeInitDone, name: namePrompt });
 
 function runtimeInitDone() {
   LogPanel.log("Runtime init done.");
-
+/*
   setTimeout( function () {
     //let fn = "stdinread.wasm";
     //let fn = "counter.wasm";
+    let fn = "cwlib_example.wasm";
+    let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6b";
+    let rt_uuid = RuntimeMngr.runtime.uuid;
+    let modCreateMsg = ARTSMessages.mod( {
+      uuid: mod_uuid,
+      parent: { uuid:  rt_uuid },
+      filename: fn,
+      channels: [{ path: "/ch/wasm-demo", type: "pubsub", mode: "rw", params: { topic: "realm/s/wasm-demo" }}]
+    }, ARTSMessages.Action.create);
+    // simulate the arrival of a module create message
+    RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modCreateMsg); 
+  }, 500);  
+*/
+    /*    
     let fn = "cwlib_example.wasm";
     let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6b";
     let rt_uuid = RuntimeMngr.runtime.uuid;
@@ -36,7 +50,7 @@ function runtimeInitDone() {
     // simulate the arrival of a module create message
     RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modCreateMsg); 
   }, 1000);  
-
+*/
 /*
   setTimeout( function () {
     let fn = "counter.wasm";
@@ -53,8 +67,20 @@ function runtimeInitDone() {
 */
 /*
   setTimeout( function () {
-      RuntimeMngr.signal("44c72c87-c4ec-4759-b587-30ddc8590f6b", SIGNO.QUIT);
-  }, 10000);  
-*/
+    let mod_uuid = "44c72c87-c4ec-4759-b587-30ddc8590f6b";
+    let rt_uuid = RuntimeMngr.runtime.uuid;
+    let modDelMsg = ARTSMessages.mod( {
+      uuid: mod_uuid,
+      parent: { uuid:  rt_uuid },
+    }, ARTSMessages.Action.delete);
+    modDelMsg.send_to_runtime = rt_uuid;
+    
+    // simulate the arrival of a module del message
+    RuntimeMngr.mc.simulatePublish(RuntimeMngr.runtime.ctl_topic + "/" + rt_uuid, modDelMsg); 
+  }, 2000);  
 
+  setTimeout( function () {
+    RuntimeMngr.signal("44c72c87-c4ec-4759-b587-30ddc8590f6b", SIGNO.QUIT);
+}, 5000);  
+*/
 }

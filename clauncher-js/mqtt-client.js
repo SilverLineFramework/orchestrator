@@ -18,8 +18,8 @@ export default class MqttClient {
     // handle default this.settings
     st = st || {};
     this.settings = {
-      host: st.host !== undefined ? st.host : "oz.andrew.cmu.edu",
-      port: st.port !== undefined ? st.port : 9001,
+      host: st.host !== undefined ? st.host : "spatial.andrew.cmu.edu",
+      port: st.port !== undefined ? st.port : 8081,
       clientid:
         st.clientid !== undefined
           ? st.clientid
@@ -77,6 +77,7 @@ export default class MqttClient {
           resolve();
         },
         willMessage: _this.settings.willMessage,
+        useSSL: true
       });
     });
   }

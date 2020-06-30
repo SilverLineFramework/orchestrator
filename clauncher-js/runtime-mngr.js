@@ -182,6 +182,9 @@ function handleARTSMsg(msg) {
     // start a worker to run the wasm module
     let mworker = new Worker("module-worker.js");
 
+    console.log(msg);
+    if (msg.migratetx_start) console.log("|T: Migration - State Publish to Module Startup:", Date.now() - msg.migratetx_start, "ms"); // TMP: assumes module is migrating in the same machine/in synched machines
+
     // post start message to worker
     mworker.postMessage(
     {
@@ -205,14 +208,13 @@ function handleARTSMsg(msg) {
     return;
   }
 
-  console.log(msg);
-
   // module delete request
   if (msg.action === ARTSMessages.Action.delete) {
     // save send_to_runtime
     runtime.modules[msg.data.uuid].send_to_runtime = msg.send_to_runtime;
 
-    console.time("Module Terminate/Serialize");    
+    runtime.modules[msg.data.uuid].del_start = Date.now();    // TMP
+ 
     console.log("Posting kill to module uuid",  msg.data.uuid);
     // send signal to module through moduleio; worker will send message back when done (handled by onWorkerMessage)
     ioworker.postMessage(
@@ -246,22 +248,24 @@ function onWorkerMessage(e) {
   // clear module data
   delete runtime.modules[e.data.mod_uuid];
 
-  //mod.send_to_runtime = runtime.uuid; // TMP
   if (mod.send_to_runtime === undefined) return;
 
   // module create msg
   let modCreateMsg = ARTSMessages.mod(mod, ARTSMessages.Action.create);
   modCreateMsg.data.memory = e.data.memory;
-  
+
+  modCreateMsg.migratetx_start = Date.now(); // TMP
+
+  console.log("|T: Module Terminate/Serialize/Post State:", Date.now() - mod.del_start, "ms"); // TMP
+
   // send module create msg
   if (mod.send_to_runtime !== runtime.uuid) {
-    console.time("Publish"); 
+    console.time("|T: Publish (part of State Publish)");
     mc.publish(dft_ctl_topic + "/" + mod.send_to_runtime, JSON.stringify(modCreateMsg));    
-    console.timeEnd("Publish"); 
+    console.timeEnd("|T: Publish (part of State Publish)");
   } else {
     // move to self ? allow for now... (useful for testing) 
     handleARTSMsg(modCreateMsg);
   }
 
-  console.timeEnd("Module Terminate/Serialize");   
 }
