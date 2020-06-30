@@ -6,6 +6,7 @@ import paho.mqtt.client as mqtt
 import json
 import time
 from django.conf import settings 
+import pprint
 
 class MqttListner(mqtt.Client):
 
@@ -13,6 +14,10 @@ class MqttListner(mqtt.Client):
         super(MqttListner, self).__init__(cid)
         
         import pubsub.pubsubctl
+        
+        print("Starting MQTT client.")
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(settings.PUBSUB)
         
         self.config = settings.PUBSUB
         

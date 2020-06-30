@@ -35,17 +35,20 @@ class ARTSMQTTCtl():
             
         if (reg_msg['type'] != 'arts_req'): # silently return if type is not arts_req!
             return
-         
+
         if (reg_msg['action'] == 'create'):                
             if (reg_msg['data']['type'] == 'runtime'):
                 print("***", reg_msg);
                 try:
                     reg_data = reg_msg['data']
-                    rt_uuid = reg_data.get("uuid", Runtime._meta.get_field('uuid').default) 
+                    if 'uuid' in reg_data: 
+                        rt_uuid = uuid.UUID(reg_data['uuid'])
+                    else: 
+                        rt_uuid = uuid.uuid4()
                     rt_name = reg_data.get("name", Runtime._meta.get_field('name').default) 
                     rt_max_nmodules = reg_data.get("max_nmodules", Runtime._meta.get_field('max_nmodules').default) 
                     rt_apis = reg_data.get("apis", Runtime._meta.get_field('apis').default)  
-                    a_rt = Runtime.objects.create(uuid=uuid.UUID(rt_uuid), name=rt_name, max_nmodules=rt_max_nmodules, apis=rt_apis)
+                    a_rt = Runtime.objects.create(uuid=rt_uuid, name=rt_name, max_nmodules=rt_max_nmodules, apis=rt_apis)
                 except Exception as err:
                     resp = ARTSResponse(reg_msg['object_id'],Result.err, 'Runtime could not be created {0}'.format(err))
                     print(json.dumps(resp))
@@ -92,38 +95,48 @@ class ARTSMQTTCtl():
                 print(err1)
             print(json.dumps(resp))
             self.mqtt_client.publish(msg.topic, json.dumps(resp))
-                        
+        
+        if (ctl_msg['type'] != 'arts_req'): # silently return if type is not arts_req!
+            return
+        
         if (ctl_msg['action'] == 'create'):
             if (ctl_msg['data']['type'] == 'module'):
                 parent_rt=None
-                print(ctl_msg);
                 
                 if ('parent' in ctl_msg['data']):
-                    parent_rt = Runtime.objects.get(pk=ctl_msg['data']['parent']['uuid']) # honor parent, if given
-                else:
+                    try:
+                        parent_rt = Runtime.objects.get(pk=ctl_msg['data']['parent']['uuid']) # honor parent, if given
+                    except Exception as err:
+                        print('Exception:',err)
+                
+                if (parent_rt == None):
                     try:
                         parent_rt = self.scheduler.schedule_new_module()
                     except Exception as err:
                         print('Exception:',err)
-                
-                m_args = ''
-                if 'args' in ctl_msg['data']: 
-                    m_args = ctl_msg['data']['args']
     
                 try:
                     ctl_data = ctl_msg['data']
                     mod_name = ctl_data.get('name', Module._meta.get_field('name').default)
+                    mod_uuid = None
+                    if 'uuid' in ctl_data: 
+                        mod_uuid = uuid.UUID(ctl_data['uuid'])
+                    else:
+                        mod_uuid = uuid.uuid4()
                     mod_filename = ctl_data.get('filename', Module._meta.get_field('filename').default)
                     mod_fileid = ctl_data.get('fileid', Module._meta.get_field('fileid').default)
                     mod_filetype = ctl_data.get('filetype', Module._meta.get_field('filetype').default)
                     mod_args = ctl_data.get('args', Module._meta.get_field('args').default)
+                    mod_env = ctl_data.get('env', Module._meta.get_field('env').default)
                     mod_channels = ctl_data.get('channels', Module._meta.get_field('channels').default)
-                    a_mod = Module.objects.create(name=mod_name, 
+                    a_mod = Module.objects.create(uuid=mod_uuid,
+                                                  name=mod_name, 
                                                   filename=mod_filename, 
                                                   fileid=mod_fileid, 
                                                   filetype=mod_filetype,
                                                   parent=parent_rt, 
                                                   args=mod_args,
+                                                  env=mod_env,
                                                   channels=mod_channels)
                 except Exception as err:
                     resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Module could not be created. {0}'.format(err)))

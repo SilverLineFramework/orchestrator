@@ -585,13 +585,14 @@ function getRandomInt(min, max) {
 }
 
 async function DemoMigrateModule() {
-    if (runtime_select.options.length < 2) {
+    if (runtime_select.options.length < 3) {
         statusMsg("Must have more than one runtime.");
         return;
     }
-    rt1i = getRandomInt(0, runtime_select.options.length-1);
-    rt2i = getRandomInt(0, runtime_select.options.length-1);
-    while (rt1i == rt2i) rt2i = getRandomInt(0, runtime_select.options.length-1);
+    // assumes index 0 is used for "Select" label
+    rt1i = getRandomInt(1, runtime_select.options.length-1);
+    rt2i = getRandomInt(1, runtime_select.options.length-1);
+    while (rt1i == rt2i) rt2i = getRandomInt(1, runtime_select.options.length-1);
 
     rt1uuid = runtime_select.options[rt1i].value;
     rt2uuid = runtime_select.options[rt2i].value;
@@ -622,13 +623,55 @@ async function DemoMigrateModule() {
     statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['reg'], req_json); 
+    mqttc.send(topic['ctl'], req_json); 
 
-    setTimeout(loadTreeData, 500); // reload data 
+    setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
     // wait 5 seconds...
     await new Promise(r => setTimeout(r, 5000));
 
+    pending_uuid = uuidv4();
 
+    req = { 
+        object_id: pending_uuid, 
+        action: "delete",
+        type: "arts_req", 
+        data: {
+            type: "module",
+            uuid: muuid,
+            send_to_runtime: rt2uuid
+        }
+    } 
+
+    req_json = JSON.stringify(req);
+    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    message = new Paho.MQTT.Message(req_json);
+    message.destinationName = req_json;
+    mqttc.send(topic['ctl'], req_json); 
+
+    setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
+
+    // wait 5 seconds...
+    await new Promise(r => setTimeout(r, 5000));
+
+    pending_uuid = uuidv4();
+
+    req = { 
+        object_id: pending_uuid, 
+        action: "delete",
+        type: "arts_req", 
+        data: {
+            type: "module",
+            uuid: muuid,
+        }
+    } 
+
+    req_json = JSON.stringify(req);
+    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    message = new Paho.MQTT.Message(req_json);
+    message.destinationName = req_json;
+    mqttc.send(topic['ctl'], req_json); 
+
+    setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
 }
