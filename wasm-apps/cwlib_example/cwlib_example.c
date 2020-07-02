@@ -5,7 +5,7 @@
   * 
   *  The event loop implemented by cwlib allows modules to migrate without need to move machine state.
   *  This requires main() must have a predefined structure:
-  *    1. First call performed by main (before any declaration or any other call) should be to cwlib_init()
+  *    1. First call performed by main should be to cwlib_init(); !NOTE: our makefile will do this for you if it does not find a call to cwlib_init()
   *    2. main sets up channels (or setup loop callback and timeout handlers, when available in cwlib)
   *    3. main calls cwlib_loop() to run the event loop
   *
@@ -23,14 +23,14 @@ void on_channel_light_data(void *buf, size_t count, void *ctx); // channel callb
 
 /** 
   *  main() must have a predefined structure:
-  *    1. start with cwlib_init(); *no* state initialization before this call
+  *    1. call cwlib_init(); !NOTE: our makefile will insert a call to cwlib_init() if it does not find it
   *    2. call cwlib_open_channel to set up channels (or setup loop callback and timers, when available in cwlib)
   *    3. call cwlib_loop() to run the event loop
   */
 int main(int argc, char **argv)
 {
-  // startup cwlib; call cwlib_init at the start of main()
-  //cwlib_init();
+  // call cwlib_init() to startup cwlib; *no* state initialization before this call
+  // Makefile will add this call if it does not find it
 
   // open channel
   cwlib_open_channel("/ch/light/data", O_RDWR, 0660, on_channel_light_data, NULL);
