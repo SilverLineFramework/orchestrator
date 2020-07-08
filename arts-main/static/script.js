@@ -341,7 +341,7 @@ function displayTree(treeData) {
 
 async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
     // Default options are marked with *
-    url = 'http://' + window.location.host + rsrc;
+    url = document.location.protocol + '//' + window.location.host + rsrc;
     //console.log(url)
     const response = await fetch(url, {
         method: mthd, // *GET, POST, PUT, DELETE, etc.
