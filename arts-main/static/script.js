@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     document.getElementById('mqtt_server').value = cfg.mqtt_server.host;
-    document.getElementById('mqtt_port').value = cfg.mqtt_server.ws_port;
+    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.wss_port : cfg.mqtt_server.wss_port;
 
     loadTreeData();
     
@@ -393,6 +393,7 @@ function startConnect() {
     // Connect the client, if successful, call onConnect function
     mqttc.connect({
         onSuccess: onConnect,
+        useSSL: ('https:' == document.location.protocol) ? true : false
     });
 }
 
