@@ -8,6 +8,9 @@ from rest_framework.response import Response
 from rest_framework.views import status
 from rest_framework_jwt.settings import api_settings
 
+from django.http import JsonResponse
+from django.conf import settings
+
 from rest_framework import generics
 from .models import Runtime, Module, Link
 from .serializers import RuntimeSerializer, ModuleSerializer, LinkSerializer, TokenSerializer, UserSerializer #, RuntimeListSerializer
@@ -227,3 +230,8 @@ class RegisterUsers(generics.CreateAPIView):
             data=UserSerializer(new_user).data,
             status=status.HTTP_201_CREATED
         )
+        
+def get_config(request):
+    if request.method == 'GET':
+        config = settings.PUBSUB
+        return JsonResponse(config)        

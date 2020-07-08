@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     document.getElementById("mod_tablink").click();
 
-    cfg = await sendRequest('GET', '/config/');     
+    cfg = await sendRequest('GET', '/arts-api/v1/config/');     
     console.log(cfg); // {"mqtt_server":{"host":"oz.andrew.cmu.edu","port":1883,"ws_port":9001},"subscribe_topics":[{"topic":"realm/proc/reg","on_message":"on_reg_message"},{"topic":"realm/proc/control","on_message":"on_ctl_message"},{"topic":"realm/proc/debug","on_message":"on_dbg_message"}]}
 
     cfg.subscribe_topics.forEach( t => {
@@ -359,7 +359,7 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
 }
 
 async function loadTreeData() {
-    c_data = await sendRequest('GET', '/api/v1/runtimes/');   
+    c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');   
     realm_name =  topic['reg'].split('/')[0];
     td = {
         "name": realm_name, "t": "t1",
