@@ -7,7 +7,7 @@ ARTS is responsible for managing computational resources available in an ARENA r
 As applications are started in the ARENA, ARTS decides the best available compute resource(s) to run the application and monitors its execution do adapt to changing resource availability and consumption. This execution-time adaptation is a unique aspect of ARTS that leverages an important feature: live migration of WASM modules.
 
 This repository includes:
-- **arts-main**: Runtime manager (ARTS); Accepts registrations from client runtimes and schedules modules to run on them.
+- **arts-main**: Runtime supervisor (ARTS); Accepts registrations from client runtimes and schedules modules to run on them.
 - **clauncher**: Module launcher (on a Linux WASM/Python runtime/interpreter).
 - **clauncher-js**: Browser-based module launcher.
 
