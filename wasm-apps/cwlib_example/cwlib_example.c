@@ -24,7 +24,7 @@ void on_channel_light_data(void *buf, size_t count, void *ctx); // channel callb
 /** 
   *  main() must have a predefined structure:
   *    1. call cwlib_init(); !NOTE: our makefile will insert a call to cwlib_init() if it does not find it
-  *    2. call cwlib_open_channel to set up channels (or setup loop callback and timers, when available in cwlib)
+  *    2. call cwlib_channel_open to set up channels (or setup loop callback and timers, when available in cwlib)
   *    3. call cwlib_loop() to run the event loop
   */
 int main(int argc, char **argv)
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   // Makefile will add this call if it does not find it
 
   // open channel
-  cwlib_open_channel("/ch/light/data", O_RDWR, 0660, on_channel_light_data, NULL);
+  cwlib_channel_open("/ch/light/data", O_RDWR, 0660, on_channel_light_data, NULL);
 
   // setup loop callback
   int cnt = 0; // declare variable to pass as context
@@ -75,7 +75,7 @@ void loop(void *ctx)
   * @param count size of data read
   * @param ctx user provided context to pass the handler
   * 
-  * @ see cwlib_open_channel() (called by main)
+  * @ see cwlib_channel_open() (called by main)
   */
 void on_channel_light_data(void *buf, size_t count, void *ctx)
 {

@@ -71,6 +71,7 @@ int cwlib_init()
   char *v = getenv("CWLIB_JTEL"); // presence of env variable Jump To Event Loop (JTEL) indicates we should jump
   if (v != NULL)
   {
+    printf("back!\n");
     g_el_sleep_ms = g_el_sleep_ms > 0 ? g_el_sleep_ms : dft_g_el_sleep_ms;
     // reopen channels
     reopen_channels();
@@ -88,7 +89,7 @@ int cwlib_init()
       return -1;
 
     // open signalfd
-    int sfd = cwlib_open_channel("signalfd", O_RDONLY, 0, NULL, NULL);
+    int sfd = cwlib_channel_open("signalfd", O_RDONLY, 0, NULL, NULL);
     if (sfd < 0)
       return -1;
   }
@@ -96,8 +97,8 @@ int cwlib_init()
   return 0;
 }
 
-/** @copydoc cwlib_open_channel */
-int cwlib_open_channel(const char *path, int flags, mode_t mode, cwlib_channel_handler_t handler, void *ctx)
+/** @copydoc cwlib_channel_open */
+int cwlib_channel_open(const char *path, int flags, mode_t mode, cwlib_channel_handler_t handler, void *ctx)
 {
   if (g_fds == NULL)
     return -1;
@@ -160,7 +161,26 @@ int cwlib_open_channel(const char *path, int flags, mode_t mode, cwlib_channel_h
   g_channels[chi].handler = handler;
   g_channels[chi].ctx = ctx;
 
-  return chi;
+  return nfd;
+}
+
+/** @copydoc cwlib_channel_callback */
+int cwlib_channel_callback(int chfd, cwlib_channel_handler_t handler, void *ctx)
+{
+  int chi=0;
+  // find channel
+  for (; chi < g_nfds; chi++)
+  {
+    if (g_fds[chi].fd == chfd) break;
+  }
+  if (chi >= g_nfds) return -1;
+  if (chi == FDI_signalfd)
+    return -1; // no callbacks for signalfd, for now
+
+  g_channels[chi].handler = handler;
+  g_channels[chi].ctx = ctx;
+  
+  return 0;
 }
 
 /** @copydoc cwlib_loop_callback */
@@ -168,18 +188,6 @@ int cwlib_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx)
 {
   g_loop_callback = loop_callback;
   g_loop_calback_ctx = callback_ctx;
-  return 0;
-}
-
-/** @copydoc cwlib_channel_callback */
-int cwlib_channel_callback(int chi, cwlib_channel_handler_t handler, void *ctx)
-{
-  if (g_nfds < chi)
-    return -1;
-  if (chi == FDI_signalfd)
-    return -1; // no callbacks for signalfd, for now
-  g_channels[chi].handler = handler;
-  g_channels[chi].ctx = ctx;
   return 0;
 }
 
@@ -214,7 +222,6 @@ int cwlib_loop(int sleep_ms)
             // SIGQUIT indicates a module migration; we save this state and only exit when all fds are empty
             if (fdsi.ssi_signo == SIGQUIT)
             {
-              // save last sleep value
               g_quit_pending = true;
             }
             else if (fdsi.ssi_signo == SIGKILL)
