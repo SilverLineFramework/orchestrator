@@ -6,19 +6,21 @@
   "scripts": {
     "collect-static": "cp ../wasm-apps/wasm-files/* static/",
     "dev": "npm run collect-static && parcel index.html",
-    "build": "parcel build index.html --public-url ./",
-    "deploy": "rsync -zarvh --delete ./dist/* wiselab@spatial.andrew.cmu.edu:/home/wiselab/docker-compose-services/www/clauncher-js/",
+    "prebuild": "shx rm -rf runtime-mngr/*",
+    "build": "parcel build index.js --public-url /clauncher-js/runtime-mngr -d ./runtime-mngr",
+    "deploy": "rsync -zarvh --delete ./runtime-mngr/* wiselab@spatial.andrew.cmu.edu:/home/wiselab/arena-services-docker/www-test/clauncher-js/runtime-mngr",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "browserslist": [
-    "last 1 Chrome versions"
+    "last 2 Chrome versions, last 2 Firefox versions, last 2 Safari versions, last 2 Edge versions"
   ],
   "devDependencies": {
     "jest": "^26.0.1",
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-static-files-copy": "^2.3.1",
+    "shx": "^0.3.2",
     "typescript": "^3.9.3"
   },
   "dependencies": {

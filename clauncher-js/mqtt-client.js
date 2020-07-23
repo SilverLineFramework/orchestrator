@@ -19,7 +19,7 @@ export default class MqttClient {
     st = st || {};
     this.settings = {
       host: st.host !== undefined ? st.host : "spatial.andrew.cmu.edu",
-      port: st.port !== undefined ? st.port : 8081,
+      port: st.port !== undefined ? st.port : 8083,
       clientid:
         st.clientid !== undefined
           ? st.clientid
