@@ -1,14 +1,14 @@
 {
-  "name": "CLauncher-js",
+  "name": "BrowserRuntimeMngr",
   "version": "1.0.0",
-  "description": "CONIX Browser WASM Launcher; Connect to ARTS and launch WASI WASM modules",
+  "description": "CONIX Browser WASM runtime manager; Connect to ARTS and launch WASI WASM modules",
   "main": "index.js",
   "scripts": {
     "collect-static": "cp ../wasm-apps/wasm-files/* static/",
     "dev": "npm run collect-static && parcel index.html",
     "prebuild": "shx rm -rf runtime-mngr/*",
-    "build": "parcel build index.js --public-url /clauncher-js/runtime-mngr -d ./runtime-mngr",
-    "deploy": "rsync -zarvh --delete ./runtime-mngr/* wiselab@spatial.andrew.cmu.edu:/home/wiselab/arena-services-docker/www-test/clauncher-js/runtime-mngr",
+    "build": "parcel build index.js --public-url /runtime-mngr -d ./runtime-mngr",
+    "deploy": "rsync -zarvh --delete ./runtime-mngr/* wiselab@spatial.andrew.cmu.edu:/home/wiselab/arena-services-docker/www-arena-test/runtime-mngr",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -29,6 +29,7 @@
     "base64-arraybuffer": "^0.2.0",
     "paho-mqtt": "^1.1.0",
     "path-browserify": "^1.0.1",
+    "query-string": "^6.13.1",
     "ts-node": "^8.9.0",
     "uuid": "^7.0.3"
   }

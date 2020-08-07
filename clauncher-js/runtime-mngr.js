@@ -5,39 +5,50 @@
  * @date April, 2020
  */
 import { v4 as uuidv4 } from "uuid"; // https://www.npmjs.com/package/uuidjs
-import MqttClient from "/mqtt-client.js";
+import * as QueryString from "query-string";
 
+import MqttClient from "/mqtt-client.js";
 import * as ARTSMessages from "/arts-msgs.js";
 import * as WorkerMessages from "/worker-msgs.js";
 import SharedArrayCircularBuffer from "/sa-cbuffer.js";
 import { SIGNO } from '/signal.js'
 
-import * as LogPanel from "/log-panel.js";
-
-export var runtime;
-export var mc;
+var runtime;
+var mc;
 var ioworker;
 
-const dft_reg_topic = "realm/proc/reg";
-const dft_ctl_topic = "realm/proc/control";
-const dft_dbg_topic = "realm/proc/debug";
+const dft_realm = "realm";
+const dft_reg_topic = "proc/reg";
+const dft_ctl_topic = "proc/control";
+const dft_dbg_topic = "proc/debug";
+const dft_apis = ["wasi:unstable"];
+const dft_store_location = "/store/users/";
 
 export async function init(settings) {
   // handle default settings
   settings = settings || {};
+
+  let rrealm = settings.realm !== undefined ? settings.realm : dft_realm;
+  let ruuid = settings.uuid !== undefined ? settings.uuid : uuidv4();
   runtime = {
-    uuid: settings.uuid !== undefined ? settings.uuid : uuidv4(),
-    name: settings.name.length > 1 ? settings.name : "rt-" + Math.round(Math.random() * 10000) + "@" + navigator.product,
+    realm: rrealm,
+    uuid: ruuid, 
+    name: settings.name !== undefined > 1 ? settings.name : "rt-" + Math.round(Math.random() * 10000) + "@" + navigator.product,
     max_nmodules: settings.max_nmodules !== undefined ? settings.max_nmodules : 1,
-    apis: settings.apis !== undefined ? settings.apis : ["wasi:unstable"],
-    reg_topic: settings.reg_topic !== undefined ? settings.reg_topic : dft_reg_topic,
-    ctl_topic: settings.ctl_topic !== undefined ? settings.ctl_topic : dft_ctl_topic,
-    dbg_topic: settings.dbg_topic !== undefined ? settings.dbg_topic : dft_dbg_topic,
+    apis: settings.apis !== undefined ? settings.apis : dft_apis,
+    reg_topic: settings.reg_topic !== undefined ? settings.reg_topic : rrealm + "/" + dft_reg_topic,
+    ctl_topic: settings.ctl_topic !== undefined ? settings.ctl_topic : rrealm + "/" + dft_ctl_topic+"/"+ruuid + "/#",
+    dbg_topic: settings.dbg_topic !== undefined ? settings.dbg_topic : rrealm + "/" + dft_dbg_topic,
+    arts_ctl_topic: settings.arts_ctl_topic !== undefined ? settings.arts_ctl_topic : rrealm+"/" + dft_ctl_topic, // arts messages sent here 
     reg_timeout_seconds: settings.reg_timeout_seconds !== undefined ? settings.reg_timeout_seconds : 5,
+    mqtt_uri: settings.mqtt_uri, 
     onInitCallback: settings.onInitCallback,
     modules: [],
+    filestore_location: settings.filestore_location != undefined ? settings.filestore_location : dft_store_location,
+    dbg: settings.dbg !== undefined ? settings.dbg : false,
   };
 
+  console.log(runtime);
   runtime.isRegistered = false;
 
   // create last will message
@@ -45,16 +56,22 @@ export async function init(settings) {
 
   // start mqtt client
   mc = new MqttClient({
+    uri: runtime.mqtt_uri,
     clientid: runtime.uuid, // mqtt client id is the runtime uuid
     willMessageTopic: runtime.reg_topic,
     willMessage: lastWill,
     subscribeTopics: [runtime.reg_topic], // subscribe to reg topic
     onMessageCallback: onMqttMessage,
+    dbg: runtime.dbg
   });
 
   // connect
-  await mc.connect();
-
+  try {
+    await mc.connect();
+  } catch (error) {
+    console.log(error) // Failure!
+    return;
+  }
   // subscribe to **all** debug messages; for debug/viz purposes only
   //mc.subscribe(runtime.dbg_topic + "/#");
 
@@ -63,10 +80,14 @@ export async function init(settings) {
 
   // create the module io worker
   ioworker = new Worker("moduleio-worker.js");
-
-  if (runtime.onInitCallback != undefined) runtime.onInitCallback();
 }
 
+// get runtime settings
+export function info() {
+  return runtime;
+}
+
+// send a signal to local module
 export function signal(modUuid, signo) {
     ioworker.postMessage(
     {
@@ -74,6 +95,80 @@ export function signal(modUuid, signo) {
         mod_uuid: modUuid,
         signo: signo
     });
+}
+
+// create module from persist object 
+// will create a module in this runtime or send request message to ARTS
+export function createModule(persist_mod) {
+
+  // function to replace variables
+  function replaceVars(text, replace) {
+    let result;
+    for (const [key, value] of Object.entries(replace)) {
+      if (value !== undefined) {
+        let re = new RegExp('\\\$\\{'+key+'\\}', 'g');
+          result = text.replace(re, value);
+        text = result;
+      }
+    }
+    return result;
+  }
+  
+  // variables we replace in args and env
+  let qstring = QueryString.parse(location.search);
+  let rvars =  {
+    scene: (window.globals) ? window.globals.renderParam : qstring["scene"],
+    cameraid: (window.globals) ? window.globals.camName : undefined,
+    username: (window.globals) ? window.globals.userParam : qstring["name"],
+    runtimeid: runtime.uuid,
+    ...qstring // add all url params
+  };
+
+  // convert args and env to strings and replace variables
+  let args = replaceVars(persist_mod.data.args.join(' '), rvars);  
+  let env = replaceVars(persist_mod.data.env.join(' '), rvars);  
+  
+  let muuid = undefined;
+    // check instantiate (single/per 'client')
+    let pdata=persist_mod.data;
+    if (pdata.instantiate == "single") {
+      // object_id in persist obj is used as the uuid, if it is a valid uuid
+      let uuid_regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i; 
+      if (uuid_regex.test(persist_mod.object_id)) muuid = persist_mod.object_id;
+      else { 
+        console.log("Error! Object id must be a valid uuid (for instantiate=single)!");    
+      }
+    } // for per client, let ARTSMessages.mod() create a random uuid;
+
+  // full filename using file store location, name (in the form namespace/program-folder), entry filename
+  let fullfn =  [runtime.filestore_location, pdata.name,  pdata.filename].join("/").replace(/([^:])(\/\/+)/g, '$1/');
+
+  // create new ARTS message using persist obj data
+  let modCreateMsg = ARTSMessages.mod({
+      name: pdata.name,
+      uuid: muuid,
+      parent: (pdata.affinity == "client") ? { uuid: runtime.uuid } : undefined, // parent is this runtime if affinity is client; otherwise, undefined to let ARTS decide
+      filename: fullfn,
+      filetype: pdata.filetype,
+      channels: pdata.channels,
+      env: env,
+      args: args
+  }, ARTSMessages.Action.create);
+
+  // check affinity
+  if (pdata.affinity == "single") {
+    // object_id in persist obj is used as the uuid, if it is a valid uuid
+    let regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i; 
+    if (regex.test(persist_mod.object_id)) modCreateMsg.data.uuid = persist_mod.object_id;
+    else console.log("Error! Object id must be a valid uuid!");    
+  } // nothing to do for multiple; a random uuid is created in ARTSMessages.mod(undefined, ARTSMessages.Action.create);
+  
+  // TODO: save pending req uuid and check arts responses
+  // NOTE: object_id of arts messages are used as a transaction id
+  // runtime.pending_req.push(modCreateMsg.object_id); // pending_req is a list with object_id of requests waiting arts response
+
+  console.log(modCreateMsg);
+  mc.publish(runtime.arts_ctl_topic, modCreateMsg);
 }
 
 // register runtime
@@ -93,7 +188,7 @@ function onMqttMessage(message) {
 
   // output module stdout; for debug/viz purposes (in init we subscribed to runtime.dbg_topic/#)
   if (message.destinationName.startsWith(runtime.dbg_topic + "/stdout/")) {
-    LogPanel.log("[" + message.destinationName + "] " + message.payloadString);
+    console.log("[" + message.destinationName + "] " + message.payloadString);
     return;
   }
 
@@ -101,7 +196,7 @@ function onMqttMessage(message) {
   try {
     var msg = JSON.parse(message.payloadString);
   } catch (err) {
-    console.log("Could not parse message:", message.payloadString, err);
+    console.log("Could not parse message: [" + message.destinationName + "==" + + "]", message.payloadString, err);
     return;
   }
 
@@ -119,7 +214,7 @@ function handleARTSMsg(msg) {
 
       // check if result was ok
       if (msg.data.result != ARTSMessages.Result.ok) {
-        LogPanel.log(
+        console.log(
           "Error registering runtime:" + msg.data
         );
         return;
@@ -129,9 +224,11 @@ function handleARTSMsg(msg) {
 
       // unsubscribe from reg topic and subscribe to ctl/runtime_uuid
       mc.unsubscribe(runtime.reg_topic);
-      runtime.ctl_topic += "/" + runtime.uuid + "/#";
       mc.subscribe(runtime.ctl_topic);
-  
+
+      // runtime registered; signal init is done and ready to roll
+      if (runtime.onInitCallback != undefined) runtime.onInitCallback();
+
       return;
   
     }
