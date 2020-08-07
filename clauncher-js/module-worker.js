@@ -17,28 +17,48 @@ import moduleIO from "/moduleio.js"
 
 onmessage = async function (e) {
   if (e.data.type == WorkerMessages.msgType.start) {
-    let wasmFilePath = "./" + e.data.arts_mod_instance_data.filename;
+    let wasmFilePath = e.data.arts_mod_instance_data.filename;
     console.log("Starting new module",  e.data.arts_mod_instance_data);
 
     console.time("|T: Module Startup/Instanciate");
 
     // Fetch our Wasm File
-    const response = await fetch(wasmFilePath);
+    try {
+      var response = await fetch(wasmFilePath+"djsd");
+    } catch (err) {
+      console.log("Could not find file:", wasmFilePath);
+      return;
+    }
+    if (!response.ok) {
+      console.log("Could not find file:", wasmFilePath);
+      return;
+    }
     const wasmBytes = new Uint8Array(await response.arrayBuffer());
 
-    // Transform the WebAssembly module interface (https://docs.wasmer.io/integrations/js/module-transformation)
-    const loweredWasmBytes = await lowerI64Imports(wasmBytes);
-
-    // Compile the WebAssembly file
-    let wasmModule = await WebAssembly.compile(loweredWasmBytes);
-
+    try {
+      // Transform the WebAssembly module interface (https://docs.wasmer.io/integrations/js/module-transformation)
+      const loweredWasmBytes = await lowerI64Imports(wasmBytes);
+    
+      // Compile the WebAssembly file
+      let wasmModule = await WebAssembly.compile(loweredWasmBytes);
+    } catch(err) {
+      console.log("Could not compile file (exists?):", wasmFilePath);
+      return;
+    }
+    
     // instance to handle the IO for the new module; creates wasmFs intance
     let mio = new moduleIO({shared_array_buffer: e.data.shared_array_buffer, worker_port: e.data.worker_port, mod_data: e.data.arts_mod_instance_data});
-    
+
+    // create wasi env object out of env param
+    let wasi_env={};
+    e.data.arts_mod_instance_data.env.split(" ").forEach(function (evar) {
+        evarkv = evar.split("=");
+        wasi_env[evarkv[0]] = evarkv[1];
+    });    
+
     // if we are restoring the state of the program, set CWLIB_JTEL to indicate that to the module (JTEL = Jump To Event Loop)
-    let wasi_env = {};
     if (e.data.memory !== undefined) {
-      wasi_env = {CWLIB_JTEL: 1};
+      wasi_env["CWLIB_JTEL"] = 1;
     }
 
     // Instantiate new WASI Instance
