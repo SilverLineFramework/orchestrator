@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     document.getElementById('mqtt_server').value = cfg.mqtt_server.host;
-    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.wss_port : cfg.mqtt_server.wss_port;
+    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.ws_port : cfg.mqtt_server.ws_port;
 
     loadTreeData();
     
