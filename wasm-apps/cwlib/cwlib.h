@@ -2,10 +2,10 @@
  *  @brief Definitions for the CONIX WASM Library (CWLib)
  * 
  *  Event-based library to perform file-based IO (for pubsub and signals) for WASM modules using WASI. 
- *  The event loop implemented by cwlib allows modules to migrate without need to move machine state.
+ *  The event loop implemented by cwlib allows modules to migrate to other runtimes.
  * 
  *  Modules must have a main() with a predefined structure:
- *    1. First call performed by main (before any declaration or any other call) must be to cwlib_init()
+ *    1. first call performed by main (before any declaration or any other call) must be to cwlib_init()
  *    2. main sets up channels (or setup loop callback and timeout handlers, when available in cwlib)
  *    3. main calls cwlib_loop() to run the event loop
  *
@@ -109,7 +109,6 @@ int cwlib_channel_callback(int chfd, cwlib_channel_handler_t handler, void *ctx)
  * @return -1 on error; 0 otherwise
  */
 int cwlib_loop_callback(cwlib_loop_calback_t loop_callback, void *callback_ctx);
-
 
 /**
  * Polls files and performs callbacks appropriately

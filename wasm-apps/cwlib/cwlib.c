@@ -71,7 +71,6 @@ int cwlib_init()
   char *v = getenv("CWLIB_JTEL"); // presence of env variable Jump To Event Loop (JTEL) indicates we should jump
   if (v != NULL)
   {
-    printf("back!\n");
     g_el_sleep_ms = g_el_sleep_ms > 0 ? g_el_sleep_ms : dft_g_el_sleep_ms;
     // reopen channels
     reopen_channels();
