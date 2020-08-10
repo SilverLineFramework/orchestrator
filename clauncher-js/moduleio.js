@@ -61,8 +61,9 @@ export default class moduleIO {
   setupChannelsFromModArgs(modData) {
     let modCh=undefined;
     if (typeof modData.channels === 'string' || modData.channels instanceof String) {
+      let chdata = modData.channels.replace(/'/g,'"'); // replace single quotes
       try {
-        modCh = JSON.parse(modData.channels);
+        modCh = JSON.parse(chdata);
       } catch(err) {
         console.log('could not parse channels');
       }
