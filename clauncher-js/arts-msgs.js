@@ -39,7 +39,7 @@ export function mod(mod_data, msg_action) {
     let msg = req(msg_action);
 
     mod_data = mod_data || {};
-    
+
     msg.data = {
         type: ObjType.mod,
         uuid: mod_data.uuid !== undefined ? mod_data.uuid : uuidv4(),
@@ -48,6 +48,7 @@ export function mod(mod_data, msg_action) {
         filename: mod_data.filename !== undefined ? mod_data.filename : "",
         fileid: mod_data.fileid !== undefined ? mod_data.fileid : "na",
         filetype: mod_data.filetype !== undefined ? mod_data.filetype : "WA",
+        env: mod_data.env !== undefined ? mod_data.env : "",
         args: mod_data.args !== undefined ? mod_data.args : "",
         channels: mod_data.channels !== undefined ? mod_data.channels : [],
         wait_state: mod_data.wait_state !== undefined ? mod_data.wait_state : "false",
