@@ -52,9 +52,19 @@ function runtimeInitDone() {
       affinity: "any",
       args: ["${scene} ${test1}"],
       env: [],
-      channels: []
+      channels: [
+        {
+          path: "/ch/${scene}",
+          type: "pubsub",
+          mode: "r",
+          params: {
+            topic: "realm/s/${scene}"
+          }
+        }
+      ]
     }
   }
+  
   RuntimeMngr.createModule(persistm);
 
 /*

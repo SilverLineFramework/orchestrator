@@ -27,4 +27,15 @@ window.onload = (event) => {
 
 function runtimeInitDone() {
   console.log("Runtime init done.");
+
+  // check if we have modules to start
+  if (pendingModules.length > 0) {
+    pendingModules.forEach(function(persistm) {
+      console.log("Starting:", persistm.data.name);
+      RuntimeMngr.createModule(persistm);
+    });
+  }
+  // empty pending modules
+  pendingModules = [];
 }
+
