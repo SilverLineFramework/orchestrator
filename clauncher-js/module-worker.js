@@ -23,8 +23,9 @@ onmessage = async function (e) {
     console.time("|T: Module Startup/Instanciate");
 
     // Fetch our Wasm File
+    let response;
     try {
-      var response = await fetch(wasmFilePath+"djsd");
+      response = await fetch(wasmFilePath);
     } catch (err) {
       console.log("Could not find file:", wasmFilePath);
       return;
@@ -35,12 +36,13 @@ onmessage = async function (e) {
     }
     const wasmBytes = new Uint8Array(await response.arrayBuffer());
 
+    let wasmModule;
     try {
       // Transform the WebAssembly module interface (https://docs.wasmer.io/integrations/js/module-transformation)
       const loweredWasmBytes = await lowerI64Imports(wasmBytes);
     
       // Compile the WebAssembly file
-      let wasmModule = await WebAssembly.compile(loweredWasmBytes);
+      wasmModule = await WebAssembly.compile(loweredWasmBytes);
     } catch(err) {
       console.log("Could not compile file (exists?):", wasmFilePath);
       return;
@@ -52,7 +54,7 @@ onmessage = async function (e) {
     // create wasi env object out of env param
     let wasi_env={};
     e.data.arts_mod_instance_data.env.split(" ").forEach(function (evar) {
-        evarkv = evar.split("=");
+        let evarkv = evar.split("=");
         wasi_env[evarkv[0]] = evarkv[1];
     });    
 
@@ -61,13 +63,17 @@ onmessage = async function (e) {
       wasi_env["CWLIB_JTEL"] = 1;
     }
 
+    // create wasi args
+    let wasi_args=[ wasmFilePath, ...e.data.arts_mod_instance_data.args.split(" ") ];
+    console.log("WASI args:", wasi_args);
+
     // Instantiate new WASI Instance
     let wasi = new WASI({
       preopenDirectories: {'/sys/': '/sys/', ...mio.channelDirectories()},
       // Arguments passed to the Wasm Module
       // The first argument is usually the filepath to the executable WASI module
       // we want to run.
-      args: [wasmFilePath],
+      args: wasi_args,
 
       // Environment variables that are accesible to the WASI module
       env: wasi_env,
