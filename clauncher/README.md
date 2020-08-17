@@ -1,3 +1,0 @@
-# CONIX Launcher 
-
-TBD
