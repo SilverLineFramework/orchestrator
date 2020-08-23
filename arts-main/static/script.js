@@ -196,7 +196,7 @@ function displayTree(treeData) {
             return d.children || d._children ? "end" : "start";
         })
         .on("mouseover", function(d) {	
-                disp_text="d.data.name";
+                disp_text=d.data.name;
                 if (d.data.type === "runtime") {
                     disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "nmodules:" + d.data.nmodules  + "<br/>";
                 } else if (d.data.type === "module") {
@@ -474,13 +474,10 @@ function createModule() {
     fn = document.getElementById('filename').value;
     fid = document.getElementById('fileid').value;
     ft = document.getElementById('filetype').value;
-    try {
-        args = JSON.parse(document.getElementById('args').value);
-        env = JSON.parse(document.getElementById('env').value);   
-        channels = JSON.parse(document.getElementById('channels').value);    
-    } catch (err) {
-        statusMsg("args/env/channels need to be valid json: "+err);
-    } 
+    
+    args = document.getElementById('args').value;
+    env = document.getElementById('env').value;   
+    channels = document.getElementById('channels').value;    
     parentid = runtime_select.value;
 
     pending_uuid = uuidv4();
@@ -613,9 +610,9 @@ async function DemoMigrateModule() {
             filename: "cwlib_example.wasm", 
             fileid: "na",
             filetype: "WA", 
-            args: [],
-            env: [],
-            channels: [],
+            args: "",
+            env: "",
+            channels: "",
             parent: { uuid: rt1uuid }
         }
     } 
