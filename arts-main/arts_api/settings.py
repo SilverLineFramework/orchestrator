@@ -128,7 +128,7 @@ STATICFILES_DIRS = [
 ]
 
 # Static root
-STATIC_ROOT = "./static-root"
+STATIC_ROOT = "./public"
 
 # Rest framework 
 

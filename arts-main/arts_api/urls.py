@@ -24,7 +24,7 @@ from django.conf.urls.static import static
 from wasm_files import views as wf_views
 
 urlpatterns = [
-    path('arts/admin/', admin.site.urls),
+    path('arts-admin/', admin.site.urls),
     re_path('arts-api/(?P<version>(v1|v2))/', include('arts_core.urls')),
     path('api-token-auth/', obtain_jwt_token, name='create-token'),
     path('wasm_files/', wf_views.UploadedFilesView.as_view(), name='wasm_files_list'),   
