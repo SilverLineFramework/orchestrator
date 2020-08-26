@@ -1,3 +1,6 @@
+"""
+ This is a very simple round-robin scheduler example
+"""        
 from django.core.exceptions import ObjectDoesNotExist
 import scheduler.base as sb
 from arts_core.models import Runtime, Module, Link
@@ -16,8 +19,7 @@ class RoundRobinScheduler(sb.SchedulerBase):
     @staticmethod
     def schedule_new_module():
         """
-        Return the runtime (parent) where the module it to be executed
-        This scheduler returns the next runtime, ordered by updated date 
+        Returns the next runtime, ordered by updated date 
         everytime a new module is scheduled
         """        
         next_runtime = None
