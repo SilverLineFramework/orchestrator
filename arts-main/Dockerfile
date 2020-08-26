@@ -7,8 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN rm db.sqlite3 
-RUN python manage.py makemigrations
+RUN python manage.py makemigrations --noinput
 RUN python manage.py migrate
 RUN rm -fr public
 RUN python manage.py collectstatic
