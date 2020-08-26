@@ -5,7 +5,7 @@ Message definitions:
 https://docs.google.com/presentation/d/1HJaQPFMV_sUyMLoiXciZn9KVTCNXCgQ5LeNxbp_Vf2U/edit?usp=sharing
 ''' 
 import paho.mqtt.client as mqtt
-from arts_core.models import Runtime, Module, Link
+from arts_core.models import Runtime, Module, Link, FileType
 from arts_core.serializers import RuntimeSerializer, ModuleSerializer, LinkSerializer
 import json
 import uuid
@@ -95,26 +95,22 @@ class ARTSMQTTCtl():
                 print(err1)
             print(json.dumps(resp))
             self.mqtt_client.publish(msg.topic, json.dumps(resp))
+
         
         if (ctl_msg['type'] != 'arts_req'): # silently return if type is not arts_req!
             return
         
+        parent_rt=None
         if (ctl_msg['action'] == 'create'):
             if (ctl_msg['data']['type'] == 'module'):
-                parent_rt=None
+                
                 
                 if ('parent' in ctl_msg['data']):
                     try:
                         parent_rt = Runtime.objects.get(pk=ctl_msg['data']['parent']['uuid']) # honor parent, if given
                     except Exception as err:
                         print('Exception:',err)
-                
-                if (parent_rt == None):
-                    try:
-                        parent_rt = self.scheduler.schedule_new_module()
-                    except Exception as err:
-                        print('Exception:',err)
-    
+                    
                 try:
                     ctl_data = ctl_msg['data']
                     mod_name = ctl_data.get('name', Module._meta.get_field('name').default)
@@ -129,11 +125,22 @@ class ARTSMQTTCtl():
                     mod_args = ctl_data.get('args', Module._meta.get_field('args').default)
                     mod_env = ctl_data.get('env', Module._meta.get_field('env').default)
                     mod_channels = ctl_data.get('channels', Module._meta.get_field('channels').default)
-                    a_mod = Module.objects.create(uuid=mod_uuid,
+                    # get apis if given, or infer from filetype
+                    mod_apis=None
+                    if ('apis' in ctl_data):
+                        mod_apis = ctl_data['apis']
+                    else: 
+                        if (mod_filetype == FileType.WA):
+                            mod_apis = "wasi:snapshot_preview1"
+                        elif (mod_filetype == FileType.PY):   
+                            mod_apis = "python:python3"
+                          
+                    a_mod = Module(uuid=mod_uuid,
                                                   name=mod_name, 
                                                   filename=mod_filename, 
                                                   fileid=mod_fileid, 
                                                   filetype=mod_filetype,
+                                                  apis=mod_apis,
                                                   parent=parent_rt, 
                                                   args=mod_args,
                                                   env=mod_env,
@@ -142,17 +149,31 @@ class ARTSMQTTCtl():
                     resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Module could not be created. {0}'.format(err)))
                     self.mqtt_client.publish(msg.topic, resp)
                 else:
-                    # request module start
-                    mod_req = json.dumps(ARTSRequest(Action.create, ModuleSerializer(a_mod, many=False).data ))
-                    print('Requesting module creation to parent: ', mod_req, ' to: ', msg.topic + "/" + str(parent_rt.uuid))
-                    self.mqtt_client.publish(msg.topic + "/" + str(parent_rt.uuid), mod_req)
-                    
-                #     # TODO: check if module was started at the runtime (read back result on the mqtt topic)
+                    print("here")
+                    # schedule the module
+                    if (parent_rt == None):
+                        try:
+                            parent_rt = self.scheduler.schedule_new_module(a_mod)
+                        except Exception as err:
+                            print('Scheduler error: ',err)
+                            resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Error Scheduling module. {0}'.format(err)))
+                            self.mqtt_client.publish(msg.topic, resp)
+                        else:    
+                            a_mod.parent = parent_rt
+                            
+                            # request module start
+                            mod_req = json.dumps(ARTSRequest(Action.create, ModuleSerializer(a_mod, many=False).data ))
+                            print('Requesting module creation to parent: ', mod_req, ' to: ', msg.topic + "/" + str(parent_rt.uuid))
+                            self.mqtt_client.publish(msg.topic + "/" + str(parent_rt.uuid), mod_req)
+                            
+                            # TODO: check if module was started at the runtime (read back result on the mqtt topic)
 
-                # send response
-                resp = json.dumps(ARTSResponse(ctl_msg['object_id'], Result.ok, ModuleSerializer(a_mod, many=False).data ))
-                print('Created Module; Publishing: ', resp, ' to: ', msg.topic)
-                self.mqtt_client.publish(msg.topic, resp)
+                            a_mod.save() # save the module
+
+                            # send response
+                            resp = json.dumps(ARTSResponse(ctl_msg['object_id'], Result.ok, ModuleSerializer(a_mod, many=False).data ))
+                            print('Created Module; Publishing: ', resp, ' to: ', msg.topic)
+                            self.mqtt_client.publish(msg.topic, resp)
 
         if (ctl_msg['action'] == 'delete'):
             if (ctl_msg['data']['type'] == 'module'):
