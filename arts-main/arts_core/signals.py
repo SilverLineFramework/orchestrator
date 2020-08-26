@@ -20,13 +20,17 @@ def post_save_runtime(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Module)
 def post_save_module(sender, instance, created, **kwargs):
     # increase number of modules in the runtime
-    rt = instance.parent
-    rt.nmodules += 1
-    rt.save(update_fields=['nmodules'])
-
+    try:
+        instance.parent.nmodules += 1
+        instance.parent.save(update_fields=['nmodules'])
+    except Exception as err:
+        print("Error increasing nmodules", err)
+        
 @receiver(post_delete, sender=Module)
 def post_delete_module(sender, instance, **kwargs):
     # decrease number of modules in the runtime
-    rt = instance.parent
-    rt.nmodules -= 1
-    rt.save(update_fields=['nmodules'])
+    try:
+        instance.parent.nmodules -= 1
+        instance.parent.save(update_fields=['nmodules'])
+    except Exception as err:
+        print("Error decreasing nmodules", err)

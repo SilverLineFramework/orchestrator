@@ -16,9 +16,13 @@ class Runtime(models.Model):
     # last time the runtime was updated/created
     updated_at = models.DateTimeField(auto_now=True)
     # supported APIs
-    apis = models.CharField(max_length=500, default=["wasi:snapshot_preview1", "wasi:unstable", "wasi:core", "wasi:clock", "wasi:environ", "wasi:sock", "wasi:args", "wasi:fd", "wasi:path", "wasi:poll", "wasi:proc", "wasi:random", "wasi:sched", "wasi:sock", "python:core"], blank=True)
+    apis = models.CharField(max_length=500, default="wasi:snapshot_preview1 wasi:unstable wasi:core wasi:clock wasi:environ wasi:sock wasi:args wasi:fd wasi:path wasi:poll wasi:proc wasi:random wasi:sched wasi:sock python:python3", blank=True)
     # max number of modules
     max_nmodules = models.IntegerField(default=3)
+    # keep alive interval (seconds)
+    ka_interval_sec = models.IntegerField(default=60)
+    # last keep alive timestamp
+    ka_ts = models.DateTimeField(auto_now_add=True)
     # current number of modules
     nmodules = models.IntegerField(default=0)
 
@@ -29,11 +33,11 @@ class Runtime(models.Model):
     def save(self, *args, **kwargs):
         if (isinstance(self.uuid, uuid.UUID) == False):
             self.uuid = uuid.uuid4()
-            
+                        
         super(Runtime, self).save(*args, **kwargs)
     
     def __str__(self):
-        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'apis': str(self.apis), 'max_nmodules': self.max_nmodules, 'nmodules': self.nmodules})
+        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'apis': str(self.apis), 'max_nmodules': self.max_nmodules, 'nmodules': self.nmodules, 'ka_ts': str(self.ka_ts)})
 
 class Module(models.Model):
     # module uuid
@@ -41,13 +45,15 @@ class Module(models.Model):
     # name of the module
     name = models.CharField(max_length=255, default='amodule')
     # parent runtime (runtime where the module is installed/running)
-    parent = models.ForeignKey('Runtime', on_delete=models.CASCADE, related_name='children', blank=False, null=False)
-    # program file (can be a zip with several files; runtime will unzip and to execute filename.[py|wasm] according to the filetype)
+    parent = models.ForeignKey('Runtime', on_delete=models.CASCADE, related_name='children', blank=True, null=True)
+    # program file
     filename = models.CharField(max_length=255, blank=False, default='afile.wasm')
     # file id
     fileid = models.CharField(max_length=255, blank=False, default='afileid')
-    #filetype
+    #filetype (PY|WA)
     filetype = models.CharField(max_length=10, choices=FileType.choices, default=FileType.WA)
+    # APIS required by the module
+    apis = models.CharField(max_length=500, default="wasi:snapshot_preview1", blank=True)
     # arguments to pass to the module at startup
     args = models.CharField(max_length=1000, default=[""], blank=True)
     # env to pass to the module at startup
@@ -65,7 +71,7 @@ class Module(models.Model):
         super(Module, self).save(*args, **kwargs)
             
     def __str__(self):
-        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args, 'env': self.env, 'channels': self.channels })
+        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'apis': self.apis, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args, 'env': self.env, 'channels': self.channels })
     
 class Link(models.Model):
     # link uuid

@@ -20,7 +20,7 @@ class ArtsCoreConfig(AppConfig):
             # instanciate scheduler            
             #import scheduler.rr as sched
             import scheduler.lmf as sched
-            self.scheduler = sched.RoundRobinScheduler(self.mqtt_listner)
+            self.scheduler = sched.LeastModulesFirst(self.mqtt_listner)
 
             # tell the mqtt ctl class about the scheduler; 
             # it interacts with the scheduler when a new module is requested
