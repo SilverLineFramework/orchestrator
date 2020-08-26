@@ -63,6 +63,7 @@ export async function init(settings) {
     mqtt_uri: settings.mqtt_uri,
     onInitCallback: settings.onInitCallback,
     modules: [],
+    client_modules: [],
     filestore_location:
       settings.filestore_location != undefined
         ? settings.filestore_location
@@ -77,6 +78,14 @@ export async function init(settings) {
   let lastWill = JSON.stringify(
     ARTSMessages.rt(runtime, ARTSMessages.Action.delete)
   );
+
+  // on unload, send delete client modules requests
+  window.onbeforeunload = function() {
+    runtime.client_modules.forEach(mod => {
+      let modDelMsg = ARTSMessages.mod(mod, ARTSMessages.Action.delete);      
+      mc.publish(runtime.arts_ctl_topic, modDelMsg);
+    });
+  };
 
   // start mqtt client
   mc = new MqttClient({
@@ -138,10 +147,28 @@ export function createModule(persist_mod) {
     return result;
   }
 
-  // variables we replace 
+
+  // get mqtt host from globals
+  let mqtthost = window.globals ? window.globals.mqttParamZ : undefined;
+  if (mqtthost) { 
+    // remove port, scheme and path it exist
+    let n = mqtthost.lastIndexOf(":");
+    if (mqtthost.lastIndexOf(":") > -1) { 
+      mqtthost = mqtthost.substring(0, n);    
+    }
+    mqtthost.replace("wss://", "");
+    mqtthost.replace("ws://", "");
+    mqtthost.replace("/mqtt/", "");
+    mqtthost.replace("/mqtt", "");
+  }
+
+  // get query string
   let qstring = QueryString.parse(location.search);
+
+  // variables we replace 
   let rvars = {
     scene: window.globals ? window.globals.renderParam : qstring["scene"],
+    mqtth: mqtthost,
     cameraid: window.globals ? window.globals.camName : undefined,
     username: window.globals ? window.globals.userParam : qstring["name"],
     runtimeid: runtime.uuid,
@@ -174,10 +201,13 @@ export function createModule(persist_mod) {
     }
   } // for per client, let ARTSMessages.mod() create a random uuid;
 
-  // full filename using file store location, name (in the form namespace/program-folder), entry filename
-  let fullfn = [runtime.filestore_location, pdata.name, pdata.filename]
-    .join("/")
-    .replace(/([^:])(\/\/+)/g, "$1/");
+  let fn;
+  if (pdata.filetype == 'WA') {
+    // full filename using file store location, name (in the form namespace/program-folder), entry filename
+    fn = [runtime.filestore_location, pdata.name, pdata.filename]
+      .join("/")
+      .replace(/([^:])(\/\/+)/g, "$1/");
+  } else fn = pdata.filename; // just the filename
 
   // create new ARTS message using persist obj data
   let modCreateMsg = ARTSMessages.mod(
@@ -185,7 +215,7 @@ export function createModule(persist_mod) {
       name: pdata.name,
       uuid: muuid,
       parent: pdata.affinity == "client" ? { uuid: runtime.uuid } : undefined, // parent is this runtime if affinity is client; otherwise, undefined to let ARTS decide
-      filename: fullfn,
+      filename: fn,
       filetype: pdata.filetype,
       channels: pdata.channels,
       env: env,
@@ -202,6 +232,13 @@ export function createModule(persist_mod) {
       modCreateMsg.data.uuid = persist_mod.object_id;
     else console.log("Error! Object id must be a valid uuid!");
   } // nothing to do for multiple; a random uuid is created in ARTSMessages.mod(undefined, ARTSMessages.Action.create);
+
+  // if instanciate 'per client', save this module uuid to delete before exit
+  if (pdata.instantiate == "client") {
+    console.log("Saving:", modCreateMsg.data);
+    runtime.client_modules.push(modCreateMsg.data);
+
+  }
 
   // TODO: save pending req uuid and check arts responses
   // NOTE: object_id of arts messages are used as a transaction id
@@ -271,11 +308,10 @@ function handleARTSMsg(msg) {
   }
 
   // below, only handle module requests
-  if (
-    msg.type != ARTSMessages.Type.req ||
-    msg.data.type != ARTSMessages.ObjType.mod
-  )
+  if (msg.type != ARTSMessages.Type.req || msg.data.type != ARTSMessages.ObjType.mod) {
+    console.log("Not an valid ARTS request. Ignoring.")
     return;
+  }
 
   // module create request
   if (msg.action === ARTSMessages.Action.create) {
@@ -284,6 +320,12 @@ function handleARTSMsg(msg) {
     // if this is a module we have not heard about, we need to do some additional stuff
     if (mod === undefined) {
       mod = msg.data;
+
+      // also return if filetype is not WASM
+      if (mod.filetype !== 'WA') {
+        console.log("Received module request for filetype not supported.")
+        return;
+      }
 
       // save module data
       runtime.modules[mod.uuid] = mod;
