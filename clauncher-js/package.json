@@ -7,8 +7,8 @@
     "collect-static": "cp ../wasm-apps/wasm-files/* static/",
     "dev": "npm run collect-static && parcel index.html",
     "prebuild": "shx rm -rf runtime-mngr/*",
-    "build": "npm run collect-static && parcel build index.js --public-url /runtime-mngr -d ./runtime-mngr",
-    "deploy": "rsync -zarvh --delete ./runtime-mngr/* wiselab@spatial.andrew.cmu.edu:/home/wiselab/arena-services-docker/www-arena-test/runtime-mngr",
+    "build": "npm run collect-static && parcel build index.js --public-url ./runtime-mngr -d ./runtime-mngr",
+    "deploy": "rsync -zarvh --delete ./runtime-mngr/* wiselab@arena.andrew.cmu.edu:/home/wiselab/spatial-services-docker/www-arena-test/runtime-mngr",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
