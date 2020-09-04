@@ -17,19 +17,6 @@ export default class MqttClient {
   constructor(st) {
     // handle default this.settings
     st = st || {};
-    if (st.host == undefined) {
-      st.uri = st.uri !== undefined ? st.uri : "wss://spatial.andrew.cmu.edu:4443/mqtt/";
-      let match = st.uri.match(/^(wss?):\/\/((\[(.+)\])|([^\/]+?))(:(\d+))?(\/.*)$/);
-      if (match) {
-        st.host = match[4]||match[2];
-        st.port = parseInt(match[7]);
-        st.path = match[8];
-        if (match[1] == 'ws') st.useSSL = false;
-        else st.useSSL = true;
-      } else {
-        throw new Error("Invalid URI.");
-      }
-    } else if (st.uri != undefined) console.log("Host defined; Ignoring URI");
     this.settings = {
       uri: st.uri !== undefined ? st.uri : "wss://spatial.andrew.cmu.edu:4443/mqtt/",
       host: st.host !== undefined ? st.host : "spatial.andrew.cmu.edu",
@@ -61,18 +48,27 @@ export default class MqttClient {
   }
 
   async connect() {
-    if (this.settings.dbg == true) {
-      let wss = this.settings.useSSL == true ? "wss://": "ws://";
-      console.log("Connecting: " + wss + this.settings.host + ":" + this.settings.port + this.settings.path);
-    }
+    if (this.settings.uri) {
+      if (this.settings.dbg == true) {
+        console.log("Connecting [uri]: ", this.settings.uri);
+        // init Paho client connection
+        this.mqttc = new Paho.Client(
+          this.settings.uri,
+          this.settings.clientid
+        );
 
-    // init Paho client connection
-    this.mqttc = new Paho.Client(
-      this.settings.host,
-      Number(this.settings.port),
-      this.settings.path,
-      this.settings.clientid
-    );
+      }  
+    } else {
+      let wss = this.settings.useSSL == true ? "wss://": "ws://";
+      console.log("Connecting [host,port,path]: " + wss + this.settings.host + ":" + this.settings.port + this.settings.path);
+      // init Paho client connection
+      this.mqttc = new Paho.Client(
+        this.settings.host,
+        Number(this.settings.port),
+        this.settings.path,
+        this.settings.clientid
+      );
+    } 
 
     // callback handlers
     this.mqttc.onConnectionLost = this.onConnectionLost.bind(this);
