@@ -6,15 +6,17 @@ import * as ARTSMessages from "/arts-msgs.js";
 window.WASMRuntimeManager = RuntimeMngr;
 
 /* start runtime after page and other scripts are loaded; */
-window.onload = (event) => {
+window.addEventListener('onauth', (event) => {
   let mqtt_uri;
   let name;
 
   if (globals) {
-    // use globals.mqttParam for mqtt server, if exists; otherwise build mqqt server uri from hostname
-    mqtt_uri = globals.mqttParam !== undefined ? globals.mqttParam : "wss://" + location.hostname + (location.port ? ':'+location.port : '') + "/mqtt/";
+    let mqttParamZ;
+    if (defaults) mqttParamZ=defaults.mqttParamZ;
+    // use globals.mqttParam/defaults.mqttParamZ for mqtt server, if exists; fallback to mqqt server uri from browser location
+    mqtt_uri = globals.mqttParam !== undefined ? globals.mqttParam : mqttParamZ !== undefined ? "wss://" + defaults.mqttParamZ + "/mqtt/" : "wss://" + location.hostname + (location.port ? ':'+location.port : '') + "/mqtt/";
     // use globals.userParam for runtime name, if exists; otherwise let the runtime manager assign one
-    name = globals.userParam !== undefined ? "rt-"+globals.userParam : undefined;
+    name = globals.userParam !== undefined ? "rt-"+Math.round(Math.random() * 10000)+"-"+globals.userParam : undefined;
   }
 
   RuntimeMngr.init({ 
@@ -23,7 +25,7 @@ window.onload = (event) => {
     name: name,
     dbg: true
   });
-};
+});
 
 function runtimeInitDone() {
   console.log("Runtime init done.");
