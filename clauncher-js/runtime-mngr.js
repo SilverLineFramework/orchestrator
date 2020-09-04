@@ -59,7 +59,7 @@ export async function init(settings) {
     reg_timeout_seconds:
       settings.reg_timeout_seconds !== undefined
         ? settings.reg_timeout_seconds
-        : 5,
+        : 30,
     mqtt_uri: settings.mqtt_uri,
     onInitCallback: settings.onInitCallback,
     modules: [],
@@ -309,7 +309,7 @@ function handleARTSMsg(msg) {
 
   // below, only handle module requests
   if (msg.type != ARTSMessages.Type.req || msg.data.type != ARTSMessages.ObjType.mod) {
-    console.log("Not an valid ARTS request. Ignoring.")
+    console.log("Runtime mngr: ignoring non module request msg.")
     return;
   }
 
