@@ -9,7 +9,7 @@ We currently have three runtime environments being worked on to interact with AR
 
 We also maintain a [simulated runtime](https://github.com/conix-center/arena-runtime-simulated) for prototyping. 
 
-You can use the issue tracker to start discussions, suggestion, etc.
+You can use the issue tracker to start discussions, suggestions, etc.
 
 ## Design Notes Slides
 - [Runtime Design Notes](https://docs.google.com/presentation/d/1HJaQPFMV_sUyMLoiXciZn9KVTCNXCgQ5LeNxbp_Vf2U/edit?usp=sharing).
