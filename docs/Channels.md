@@ -1,7 +1,7 @@
 ## Channels
 Channels are a file-like abstraction that defines the access programs have to external resrources. For now, we use channels to define access to a pubsub structure, but imagine these can be used to define access to other device (e.g. sensors) and network resources.
 
-The first implemenation of channels was a WASI-compatible browser implementation for the [browser runtime](https://github.com/conix-center/arena-runtime-browser)). We are now working on implementations that do not use WASI, due to memory limitations in embedded-devices. The host API of channels is defined bellow.
+The first implemenation of channels was a WASI-compatible browser implementation for the [browser runtime](https://github.com/conix-center/arena-runtime-browser)). We are now working on implementations that do not use WASI, due to memory limitations in embedded-devices. The API of channels is defined bellow.
 
 ## Channel API
 
