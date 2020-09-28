@@ -12,5 +12,5 @@ We also maintain a [simulated runtime](https://github.com/conix-center/arena-run
 You can use the issue tracker to start discussions, suggestions, etc.
 
 ## Design Notes Slides
-- [Runtime Design Notes](https://docs.google.com/presentation/d/1HJaQPFMV_sUyMLoiXciZn9KVTCNXCgQ5LeNxbp_Vf2U/edit?usp=sharing).
+- [Runtime Design Notes (a bit browser focused)](https://docs.google.com/presentation/d/1HJaQPFMV_sUyMLoiXciZn9KVTCNXCgQ5LeNxbp_Vf2U/edit?usp=sharing).
 - [Embedded Runtime Design Notes](https://docs.google.com/presentation/d/1BP3cx1oRckuiQTNVvrfEUUt9D-pV1mHmJwtnUMnffGU/edit?usp=sharing).
