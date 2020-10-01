@@ -178,7 +178,7 @@ ARTS → Runtime
   "type": "arts_req",
   "data": {
     "type": "module",
-    "uuid": 44c72c87-c4ec-4759-b587-30ddc8590f6b",
+    "uuid": "44c72c87-c4ec-4759-b587-30ddc8590f6b",
     "send_to_runtime": "45772c87-ccd5-4759-b587-30ddc85e2f6e"
   }
 }
