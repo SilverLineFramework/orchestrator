@@ -3,7 +3,7 @@
 	<head>
 		<meta charset=utf-8 />
 		<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
-		<title>CONIX Vizualization Demo</title>
+		<title>CONIX Visualization Demo</title>
         <link href="style.css" rel="stylesheet" />
         <!-- d3 -->
         <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -17,7 +17,9 @@
         <div id="panel" class="panel"></div>
 		<div id="config" class="config">
 			<div class="preamble">
-                Runtime Vizualization/Control <br/>
+                Runtime Visualization/Control 
+                <a class="small" id="logout" style="float: right;" href="#" onclick="signOut();">Logout</a>
+                <br/>
                 <a class="small" href="/arts-admin">ARTS Admin Interface</a>
             </div>
             
@@ -116,6 +118,13 @@
             </script>   
                         
 		</div>
+
+        <!-- login auth check with calls to mqtt connect placed in an `onauth` event listener -->
+        <script src="https://apis.google.com/js/platform.js"></script>
+        <script src="../vendor/jsrsasign-all-min.js" type="text/javascript"></script>
+        <script src="../defaults.js"></script>
+        <script src="../auth.js"></script>
+        <script type="text/javascript">authCheck({ signInPath: "../signin" });</script>
     </body>
     
 </html>
