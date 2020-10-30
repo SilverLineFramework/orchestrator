@@ -24,8 +24,11 @@ var module_select;
 var selected_mod;
 var treeData;
 var mqttc;
+var mqtt_username;
+var mqtt_token;
 
-document.addEventListener('DOMContentLoaded', async function() {
+// document.addEventListener('DOMContentLoaded', async function() {
+window.addEventListener('onauth', async function(e) {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -45,6 +48,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('mqtt_server').value = cfg.mqtt_server.host;
     document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.wss_port : cfg.mqtt_server.ws_port;
+
+    mqtt_username = e.detail.mqtt_username;
+    mqtt_token = e.detail.mqtt_token;
 
     loadTreeData();
     
@@ -393,8 +399,10 @@ function startConnect() {
     // Connect the client, if successful, call onConnect function
     mqttc.connect({
         onSuccess: onConnect,
-        useSSL: ('https:' == document.location.protocol) ? true : false
-    });
+        useSSL: ('https:' == document.location.protocol) ? true : false,
+        userName: mqtt_username,
+        password: mqtt_token,
+});
 }
 
 // Called on connect button click

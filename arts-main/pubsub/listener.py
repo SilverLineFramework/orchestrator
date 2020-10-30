@@ -8,10 +8,10 @@ import time
 from django.conf import settings 
 import pprint
 
-class MqttListner(mqtt.Client):
+class MqttListener(mqtt.Client):
 
-    def __init__(self, view_class, cid='', conn_subs=True, ):
-        super(MqttListner, self).__init__(cid)
+    def __init__(self, view_class, cid='', conn_subs=True, mqtt_username=None, mqtt_token=None):
+        super(MqttListener, self).__init__(cid)
         
         import pubsub.pubsubctl
         
@@ -20,6 +20,8 @@ class MqttListner(mqtt.Client):
         pp.pprint(settings.PUBSUB)
         
         self.config = settings.PUBSUB
+        self.mqtt_username = mqtt_username
+        self.mqtt_token = mqtt_token
         
         if (conn_subs):
             self.connect_and_subscribe()
@@ -50,6 +52,7 @@ class MqttListner(mqtt.Client):
         '''
         subscribe to each topic in the config file
         '''
+        self.username_pw_set(username=self.mqtt_username, password=self.mqtt_token)
         self.connect(self.config['mqtt_server']['host'], self.config['mqtt_server']['port'], 60)
         for t in self.config['subscribe_topics']:
             print('Subscribing:', t['topic'])
