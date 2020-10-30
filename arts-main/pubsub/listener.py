@@ -52,7 +52,7 @@ class MqttListener(mqtt.Client):
         '''
         subscribe to each topic in the config file
         '''
-        self.username_pw_set(username=self.mqtt_username, password=self.mqtt_token)
+        #self.username_pw_set(username=self.mqtt_username, password=self.mqtt_token)
         self.connect(self.config['mqtt_server']['host'], self.config['mqtt_server']['port'], 60)
         for t in self.config['subscribe_topics']:
             print('Subscribing:', t['topic'])
