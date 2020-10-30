@@ -15,8 +15,10 @@ class ArtsCoreConfig(AppConfig):
             self.mqtt_ctl = ctl.ARTSMQTTCtl()
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
-            self.mqtt_listener = listener.MqttListener(
-                self.mqtt_ctl)#, mqtt_username=mqtt_username, mqtt_token=mqtt_token)
+            self.mqtt_listener = listener.MqttListener(self.mqtt_ctl)
+            # TODO (mwfarb): add service-level JWT token here
+            #self.mqtt_listener = listener.MqttListener(
+            #    self.mqtt_ctl), mqtt_username=mqtt_username, mqtt_token=mqtt_token)
 
             # instantiate scheduler
             #import scheduler.rr as sched
