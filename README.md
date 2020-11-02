@@ -10,4 +10,15 @@ This repository includes:
 - **arts-main**: Runtime supervisor (ARTS); Accepts registrations from client runtimes and schedules modules to run on them.
 - **wasm-apps**: Example/test WASM applications.
 
-See the [Runtime Design Notes](https://docs.google.com/presentation/d/1HJaQPFMV_sUyMLoiXciZn9KVTCNXCgQ5LeNxbp_Vf2U/edit?usp=sharing).
+You can use the issue tracker to start discussions, suggestions, etc.
+
+## Runtime environments
+
+We currently have three runtime environments being worked on to interact with ARTS:
+ - [Embedded Runtime](https://github.com/conix-center/arena-runtime-zephyr)
+ - [Linux Runtime](https://github.com/conix-center/arena-runtime-linux)
+ - [Browser Runtime](https://github.com/conix-center/arena-runtime-browser)
+
+We also maintain a [simulated runtime](https://github.com/conix-center/arena-runtime-simulated) for prototyping. 
+
+See the [Documentation Folder](docs/).
