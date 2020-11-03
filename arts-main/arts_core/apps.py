@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 import pubsub.listener as listener
+from django.conf import settings 
 import os
 
 
@@ -7,6 +8,7 @@ class ArtsCoreConfig(AppConfig):
     name = 'arts_core'
 
     def ready(self):
+        print("#####HERE", str(settings))
         # check if we are running the main process; start mqtt listener
         if os.environ.get('RUN_MAIN', None) == 'true':
 
@@ -15,10 +17,7 @@ class ArtsCoreConfig(AppConfig):
             self.mqtt_ctl = ctl.ARTSMQTTCtl()
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
-            self.mqtt_listener = listener.MqttListener(self.mqtt_ctl)
-            # TODO (mwfarb): add service-level JWT token here
-            #self.mqtt_listener = listener.MqttListener(
-            #    self.mqtt_ctl), mqtt_username=mqtt_username, mqtt_token=mqtt_token)
+            self.mqtt_listener = listener.MqttListener(self.mqtt_ctl, pubsub_config=settings.PUBSUB, jwt_config=settings.PUBSUB)
 
             # instantiate scheduler
             #import scheduler.rr as sched

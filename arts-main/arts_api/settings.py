@@ -16,18 +16,16 @@ import datetime
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '@rmNpr7ZKaZbNAwy$fDU2b^VTymggJ*MUU0vnc7l%qA*B*B9eUVcgO08K6qqHH^Q'
+SECRET_KEY = 'SECRET_DEFINED_DURING_DEPLOYMENT'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -185,10 +183,12 @@ JWT_AUTH = {
 
 # pubsub settings
 PUBSUB = {
-	'mqtt_server': { 'host': 'spatial.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001 },
+	'mqtt_server': { 'host': 'arena.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001},
+    'mqtt_username': None, 
+    'mqtt_password': None,
 	'subscribe_topics': [
 		{ 'name': 'reg', 'topic': 'realm/proc/reg', 'on_message': 'on_reg_message'},
 		{ 'name': 'ctl', 'topic': 'realm/proc/control', 'on_message': 'on_ctl_message' },
 		{ 'name': 'dbg', 'topic': 'realm/proc/debug', 'on_message': 'on_dbg_message' }
-	]
+	] 
 }
