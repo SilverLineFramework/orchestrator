@@ -183,7 +183,7 @@ JWT_AUTH = {
 
 # pubsub settings
 PUBSUB = {
-	'mqtt_server': { 'host': 'arena.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001},
+	'mqtt_server': { 'host': '127.0.0.1', 'port': 1883, 'ws_port': 9001},
     'mqtt_username': None, 
     'mqtt_password': None,
 	'subscribe_topics': [

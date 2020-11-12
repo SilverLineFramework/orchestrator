@@ -25,6 +25,8 @@ class Runtime(models.Model):
     ka_ts = models.DateTimeField(auto_now_add=True)
     # current number of modules
     nmodules = models.IntegerField(default=0)
+    # WASM pagesize. Default = 64KiB. Memory-constrained embedded runtimes can use smaller page size of 4KiB
+    page_size = models.IntegerField(default=65536)
 
     @property
     def type(self):
@@ -53,13 +55,15 @@ class Module(models.Model):
     #filetype (PY|WA)
     filetype = models.CharField(max_length=10, choices=FileType.choices, default=FileType.WA)
     # APIS required by the module
-    apis = models.CharField(max_length=500, default="wasi:snapshot_preview1", blank=True)
+    apis = models.CharField(max_length=500, default=["wasi:snapshot_preview1"], blank=True)
     # arguments to pass to the module at startup
     args = models.CharField(max_length=10000, default=[""], blank=True)
     # env to pass to the module at startup
     env = models.CharField(max_length=10000, default=[""], blank=True)
     # channels
     channels = models.CharField(max_length=10000, default=[""], blank=True)
+    # peripherals
+    peripherals = models.CharField(max_length=10000, default=[""], blank=True)
     
     @property
     def type(self):

@@ -88,6 +88,9 @@ class ARTSMQTTCtl():
             if (str_payload[0] == "'"):
                 str_payload = str_payload[1:len(str_payload)-1]
             ctl_msg = json.loads(str_payload) # convert json payload to a python string, then to dictionary
+
+            
+
         except Exception as err:
             try:
                 resp = ARTSResponse('could_not_parse', Result.err, 'Could not process request; {0}'.format(err))
@@ -98,6 +101,7 @@ class ARTSMQTTCtl():
 
         
         if (ctl_msg['type'] != 'arts_req'): # silently return if type is not arts_req!
+            #TODO: Allow for response messages from module
             return
         
         parent_rt=None
@@ -125,15 +129,16 @@ class ARTSMQTTCtl():
                     mod_args = ctl_data.get('args', Module._meta.get_field('args').default)
                     mod_env = ctl_data.get('env', Module._meta.get_field('env').default)
                     mod_channels = ctl_data.get('channels', Module._meta.get_field('channels').default)
+                    mod_peripherals = ctl_data.get('peripherals', Module._meta.get_field('peripherals').default)
                     # get apis if given, or infer from filetype
                     mod_apis=None
                     if ('apis' in ctl_data):
                         mod_apis = ctl_data['apis']
                     else: 
                         if (mod_filetype == FileType.WA):
-                            mod_apis = "wasi:snapshot_preview1"
+                            mod_apis = "[\"wasi:snapshot_preview1\"]"
                         elif (mod_filetype == FileType.PY):   
-                            mod_apis = "python:python3"
+                            mod_apis = "[\"python:python3\"]"
                           
                     a_mod = Module(uuid=mod_uuid,
                                                   name=mod_name, 
@@ -144,36 +149,105 @@ class ARTSMQTTCtl():
                                                   parent=parent_rt, 
                                                   args=mod_args,
                                                   env=mod_env,
-                                                  channels=mod_channels)
+                                                  channels=mod_channels,
+                                                  peripherals=mod_peripherals)
                 except Exception as err:
                     resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Module could not be created. {0}'.format(err)))
                     self.mqtt_client.publish(msg.topic, resp)
                 else:
-                    print("here")
-                    # schedule the module
-                    if (parent_rt == None):
-                        try:
+                    try:
+                        if (parent_rt == None):
+                            # schedule the module
                             parent_rt = self.scheduler.schedule_new_module(a_mod)
-                        except Exception as err:
-                            print('Scheduler error: ',err)
-                            resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Error Scheduling module. {0}'.format(err)))
-                            self.mqtt_client.publish(msg.topic, resp)
-                        else:    
-                            a_mod.parent = parent_rt
-                            
-                            # request module start
-                            mod_req = json.dumps(ARTSRequest(Action.create, ModuleSerializer(a_mod, many=False).data ))
-                            print('Requesting module creation to parent: ', mod_req, ' to: ', msg.topic + "/" + str(parent_rt.uuid))
-                            self.mqtt_client.publish(msg.topic + "/" + str(parent_rt.uuid), mod_req)
-                            
-                            # TODO: check if module was started at the runtime (read back result on the mqtt topic)
+                    except Exception as err:
+                        print('Scheduler error: ',err)
+                        resp = json.dumps(ARTSResponse(ctl_msg['object_id'],Result.err, 'Error Scheduling module. {0}'.format(err)))
+                        self.mqtt_client.publish(msg.topic, resp)
+                    else:    
+                        a_mod.parent = parent_rt
+                        
+                        # request module start
+                        mod_req = ARTSRequest(Action.create, ModuleSerializer(a_mod, many=False).data)
 
-                            a_mod.save() # save the module
+                        # Convert array fields into actual arrays.
+                        if 'apis' in mod_req['data']:
+                            apis_string = mod_req['data']['apis'].replace("'", '"')
+                            try:
+                                mod_req['data']['apis'] = json.loads(apis_string)
+                            except:
+                                pass
+                        if 'args' in mod_req['data']:
+                            args_string = mod_req['data']['args'].replace("'", '"')
+                            try:
+                                mod_req['data']['args'] = json.loads(args_string)
+                            except:
+                                pass
+                        if 'env' in mod_req['data']:
+                            env_string = mod_req['data']['env'].replace("'", '"')
+                            try:
+                                mod_req['data']['env'] = json.loads(env_string)
+                            except:
+                                pass
+                        if 'channels' in mod_req['data']:
+                            channels_string = mod_req['data']['channels'].replace("'", '"')
+                            try:
+                                mod_req['data']['channels'] = json.loads(channels_string)
+                            except:
+                                pass
+                        if 'peripherals' in mod_req['data']:
+                            peripherals_string = mod_req['data']['peripherals'].replace("'", '"')
+                            try:
+                                mod_req['data']['peripherals'] = json.loads(peripherals_string)
+                            except:
+                                pass
 
-                            # send response
-                            resp = json.dumps(ARTSResponse(ctl_msg['object_id'], Result.ok, ModuleSerializer(a_mod, many=False).data ))
-                            print('Created Module; Publishing: ', resp, ' to: ', msg.topic)
-                            self.mqtt_client.publish(msg.topic, resp)
+                        mod_req = json.dumps(mod_req)
+
+                        print('Requesting module creation to parent: ', mod_req, ' to: ', msg.topic + "/" + str(parent_rt.uuid))
+                        self.mqtt_client.publish(msg.topic + "/" + str(parent_rt.uuid), mod_req)
+                        
+                        # TODO: check if module was started at the runtime (read back result on the mqtt topic)
+
+                        a_mod.save() # save the module
+
+                        # send response
+                        resp = ARTSResponse(ctl_msg['object_id'], Result.ok, ModuleSerializer(a_mod, many=False).data)
+                       
+                        # Convert array fields into actual arrays.
+                        if 'apis' in resp['data']['details']:
+                            apis_string = resp['data']['details']['apis'].replace("'", '"')
+                            try:
+                                resp['data']['details']['apis'] = json.loads(apis_string)
+                            except:
+                                pass
+                        if 'args' in resp['data']['details']:
+                            args_string = resp['data']['details']['args'].replace("'", '"')
+                            try:
+                                resp['data']['details']['args'] = json.loads(args_string)
+                            except:
+                                pass
+                        if 'env' in resp['data']['details']:
+                            env_string = resp['data']['details']['env'].replace("'", '"')
+                            try:
+                                resp['data']['details']['env'] = json.loads(env_string)
+                            except:
+                                pass
+                        if 'channels' in resp['data']['details']:
+                            channels_string = resp['data']['details']['channels'].replace("'", '"')
+                            try:
+                                resp['data']['details']['channels'] = json.loads(channels_string)
+                            except:
+                                pass
+                        if 'peripherals' in resp['data']['details']:
+                            peripherals_string = resp['data']['details']['peripherals'].replace("'", '"')
+                            try:
+                                resp['data']['details']['peripherals'] = json.loads(peripherals_string)
+                            except:
+                                pass
+
+                        resp = json.dumps(resp)
+                        print('Created Module; Publishing: ', resp, ' to: ', msg.topic)
+                        self.mqtt_client.publish(msg.topic, resp)
 
         if (ctl_msg['action'] == 'delete'):
             if (ctl_msg['data']['type'] == 'module'):
