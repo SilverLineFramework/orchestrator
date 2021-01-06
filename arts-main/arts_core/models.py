@@ -57,13 +57,13 @@ class Module(models.Model):
     # APIS required by the module
     apis = models.CharField(max_length=500, default=["wasi:snapshot_preview1"], blank=True)
     # arguments to pass to the module at startup
-    args = models.CharField(max_length=10000, default=[""], blank=True)
+    args = models.CharField(max_length=10000, default=[], blank=True)
     # env to pass to the module at startup
-    env = models.CharField(max_length=10000, default=[""], blank=True)
+    env = models.CharField(max_length=10000, default=[], blank=True)
     # channels
-    channels = models.CharField(max_length=10000, default=[""], blank=True)
+    channels = models.CharField(max_length=10000, default=[], blank=True)
     # peripherals
-    peripherals = models.CharField(max_length=10000, default=[""], blank=True)
+    peripherals = models.CharField(max_length=10000, default=[], blank=True)
     
     @property
     def type(self):

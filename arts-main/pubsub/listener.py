@@ -36,7 +36,6 @@ class MqttListener(mqtt.Client):
         route messages to the appropriate view method
         '''
         for t in self.config['subscribe_topics']:
-            print(msg.topic, '=', t['topic'])
             if msg.topic == t['topic']: # topic must match exactly (no subtopics)
                 topic_onmsg = getattr(self.view, t['on_message'])
                 return topic_onmsg(msg)

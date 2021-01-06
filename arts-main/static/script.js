@@ -24,11 +24,8 @@ var module_select;
 var selected_mod;
 var treeData;
 var mqttc;
-var mqtt_username;
-var mqtt_token;
 
-// document.addEventListener('DOMContentLoaded', async function() {
-window.addEventListener('onauth', async function(e) {
+document.addEventListener('DOMContentLoaded', async function() {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -47,10 +44,7 @@ window.addEventListener('onauth', async function(e) {
     });
 
     document.getElementById('mqtt_server').value = cfg.mqtt_server.host;
-    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.wss_port : cfg.mqtt_server.ws_port;
-
-    mqtt_username = e.detail.mqtt_username;
-    mqtt_token = e.detail.mqtt_token;
+    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.ws_port : cfg.mqtt_server.ws_port;
 
     loadTreeData();
     
@@ -128,8 +122,8 @@ function displayTree(treeData) {
     module_select.options[0] = new Option('Select Module', '');
 
     // Define the div for the tooltip
-    var div = d3.select("body").append("div")	
-        .attr("class", "tooltip")				
+    var div = d3.select("body").append("div")   
+        .attr("class", "tooltip")               
         .style("opacity", 0);
 
     update(root);
@@ -201,24 +195,24 @@ function displayTree(treeData) {
         .attr("text-anchor", function(d) {
             return d.children || d._children ? "end" : "start";
         })
-        .on("mouseover", function(d) {	
+        .on("mouseover", function(d) {  
                 disp_text=d.data.name;
                 if (d.data.type === "runtime") {
                     disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "nmodules:" + d.data.nmodules  + "<br/>";
                 } else if (d.data.type === "module") {
                     disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "filename:" + d.data.filename  + "<br/>";
-                }            	
-                div.transition()		
-                    .duration(200)		
-                    .style("opacity", .9);		
-                div	.html(disp_text)	
-                    .style("left", (d3.event.pageX) + "px")		
-                    .style("top", (d3.event.pageY - 40) + "px");	
-                })					
-            .on("mouseout", function(d) {		
-                div.transition()		
-                    .duration(500)		
-                    .style("opacity", 0);	
+                }               
+                div.transition()        
+                    .duration(200)      
+                    .style("opacity", .9);      
+                div .html(disp_text)    
+                    .style("left", (d3.event.pageX) + "px")     
+                    .style("top", (d3.event.pageY - 40) + "px");    
+                })                  
+            .on("mouseout", function(d) {       
+                div.transition()        
+                    .duration(500)      
+                    .style("opacity", 0);   
             })
         .text(function(d) { 
             if (d.data.type) return d.data.name + " ("+d.data.type+")";
@@ -399,10 +393,8 @@ function startConnect() {
     // Connect the client, if successful, call onConnect function
     mqttc.connect({
         onSuccess: onConnect,
-        useSSL: ('https:' == document.location.protocol) ? true : false,
-        userName: mqtt_username,
-        password: mqtt_token,
-});
+        useSSL: ('https:' == document.location.protocol) ? true : false
+    });
 }
 
 // Called on connect button click
@@ -486,6 +478,7 @@ function createModule() {
     args = document.getElementById('args').value;
     env = document.getElementById('env').value;   
     channels = document.getElementById('channels').value;    
+    peripherals = document.getElementById('peripherals').value;    
     parentid = runtime_select.value;
 
     pending_uuid = uuidv4();
@@ -502,7 +495,8 @@ function createModule() {
             filetype: ft, 
             args: args,
             env: env,
-            channels: channels
+            channels: channels,
+            peripherals: peripherals
         }
     } 
 

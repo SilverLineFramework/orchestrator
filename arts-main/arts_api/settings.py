@@ -189,6 +189,7 @@ PUBSUB = {
 	'subscribe_topics': [
 		{ 'name': 'reg', 'topic': 'realm/proc/reg', 'on_message': 'on_reg_message'},
 		{ 'name': 'ctl', 'topic': 'realm/proc/control', 'on_message': 'on_ctl_message' },
-		{ 'name': 'dbg', 'topic': 'realm/proc/debug', 'on_message': 'on_dbg_message' }
+		{ 'name': 'dbg', 'topic': 'realm/proc/debug', 'on_message': 'on_dbg_message' },
+        { 'name': 'keepalive', 'topic':    'realm/proc/keepalive', 'on_message': 'on_keepalive_message' }
 	] 
 }
