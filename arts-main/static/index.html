@@ -12,18 +12,18 @@
         <!-- lodash (json .isEqual) -->
         <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.10/lodash.min.js"></script>
     </head>
- 
+
 	<body>
         <div id="panel" class="panel"></div>
 		<div id="config" class="config">
-			<div class="preamble">
-                Runtime Visualization/Control 
+            <div class="preamble">
+                Runtime Visualization/Control
                 <a class="small" style="float: right;" href="#" onclick="signOut();">Logout</a>
                 <a class="small" style="float: right;" href="#" onclick="showPerms();">Perm/</a>
-                <br/>
+                <br />
                 <a class="small" href="/arts-admin">ARTS Admin Interface</a>
             </div>
-            
+
             <div class="tab">
                 <button id="mod_tablink" class="tablinks" onclick="openTab(event, 'modules')">Modules</button>
                 <button class="tablinks" onclick="openTab(event, 'runtimes')">Runtimes</button>
@@ -54,15 +54,15 @@
                 <button onclick="deleteModule()">Delete/Migrate</button>
                 <br/><br/>
                 <p class="label" id="module_label">Module Stdout: <p class="small">(Select module by clicking on it on the tree)<p/></p>
-                <textarea id="stdout-box" rows="10" cols="50"></textarea>            
+                <textarea id="stdout-box" rows="10" cols="50"></textarea>
             </div>
 
             <div id="runtimes" class="tabcontent">
                 <p class="label">Delete Runtime:</p>
                 Runtime:<select class="small" id="del_runtime_select"></select>
-                <button class="button" onclick="deleteRuntime()">Delete</button><p/>                  
+                <button class="button" onclick="deleteRuntime()">Delete</button><p/>
                 Delete the runtime from ARTS database; does not terminate the runtime itself
-            </div>                                
+            </div>
 
             <div id="misc" class="tabcontent">
                 <p class="label">MQTT</p>
@@ -70,26 +70,26 @@
                 <input type="text" size=27 id="mqtt_server" value="oz.andrew.cmu.edu">:
                 <input type="text" size=4 id="mqtt_port" value="9001">
                 <button onclick="reConnect()">Connect</button>
-                
+
                 <p class="label">Force tree refresh</p>
-                <button class="button" onclick="loadTreeData()">Force Refresh</button><p/>                  
+                <button class="button" onclick="loadTreeData()">Force Refresh</button><p/>
 
                 <p class="label">Demos</p>
                 <ul>
-                 <li/><span class="small"><button class="button" onclick="DemoMigrateModule()">Migrate Counter</button><p/>Start cwlib_example.wasm (program that outputs a counter value). After 5 seconds, migrate to a random runtime. </span>                        
-                               
+                 <li/><span class="small"><button class="button" onclick="DemoMigrateModule()">Migrate Counter</button><p/>Start cwlib_example.wasm (program that outputs a counter value). After 5 seconds, migrate to a random runtime. </span>
+
                 </ul>
             </div>
 
 			<div class="status">
 
-                <textarea id="status-box" rows="10"></textarea>                    
+                <textarea id="status-box" rows="10"></textarea>
 
 			</div>
-							
+
 			<!-- demo src-->
             <script src="script.js"></script>
-            
+
             <script>
                 onFileSelectChange('file_select');
                 function onFileSelectChange(sid) {
@@ -116,8 +116,8 @@
                     document.getElementById(tabName).style.display = "block";
                     evt.currentTarget.className += " active";
                 }
-            </script>   
-                        
+            </script>
+
 		</div>
 
         <!-- login auth check with calls to mqtt connect placed in an `onauth` event listener -->
@@ -125,7 +125,7 @@
         <script src="../vendor/jsrsasign-all-min.js" type="text/javascript"></script>
         <script src="../conf/defaults.js"></script>
         <script src="../src/auth.js"></script>
-        <script type="text/javascript">authCheck({ userRoot: "../user" });</script>
+        <script type="text/javascript">authCheck();</script>
     </body>
-    
+
 </html>
