@@ -1,11 +1,6 @@
-FROM python:3-buster
+FROM python:3
 
 WORKDIR /usr/src/app
-
-# extra dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		wait-for-it \
-	&& rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
