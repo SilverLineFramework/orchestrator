@@ -8,7 +8,7 @@ class ArtsCoreConfig(AppConfig):
     name = 'arts_core'
 
     def ready(self):
-        print("#####HERE", str(settings))
+       
         # check if we are running the main process; start mqtt listener
         if os.environ.get('RUN_MAIN', None) == 'true':
 
