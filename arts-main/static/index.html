@@ -1,26 +1,41 @@
 <!DOCTYPE html>
 <html>
-    <head>
-		<meta charset=utf-8 />
-		<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
-		<title>CONIX Visualization Demo</title>
-        <link href="style.css" rel="stylesheet" />
-        <!-- d3 -->
-        <script src="https://d3js.org/d3.v4.min.js"></script>
-		<!-- paho mqtt -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js" type="text/javascript"></script>
-        <!-- lodash (json .isEqual) -->
-        <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.10/lodash.min.js"></script>
-    </head>
 
-	<body>
+<head>
+    <meta charset=utf-8 />
+    <meta name="viewport"
+        content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+    <title>CONIX Visualization Demo</title>
+    <link href="style.css" rel="stylesheet" />
+
+    <!-- Navbar Header -->
+    <link rel='stylesheet'
+        href='https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css'>
+    <script src="https://getbootstrap.com/2.3.2/assets/js/jquery.js"></script>
+    <script src="https://getbootstrap.com/2.3.2/assets/js/bootstrap-dropdown.js"></script>
+    <script src="https://getbootstrap.com/2.3.2/assets/js/bootstrap-collapse.js"></script>
+    <script>
+        $(function() {
+            $("#header").load("header.html");
+        });
+    </script>
+
+    <!-- d3 -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <!-- paho mqtt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js" type="text/javascript">
+    </script>
+    <!-- lodash (json .isEqual) -->
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.10/lodash.min.js"></script>
+</head>
+
+<body>
+    <div id="header"></div>
+    <div id="container">
         <div id="panel" class="panel"></div>
-		<div id="config" class="config">
+        <div id="config" class="config">
             <div class="preamble">
                 Runtime Visualization/Control
-                <a class="small" style="float: right;" href="#" onclick="signOut();">Logout</a>
-                <a class="small" style="float: right;" href="#" onclick="showPerms();">Perm/</a>
-                <br />
                 <a class="small" href="/arts-admin">ARTS Admin Interface</a>
             </div>
 
@@ -29,38 +44,74 @@
                 <button class="tablinks" onclick="openTab(event, 'runtimes')">Runtimes</button>
                 <button class="tablinks" onclick="openTab(event, 'misc')">Misc/Demos</button>
             </div>
-			<div id="modules" class="tabcontent">
+            <div id="modules" class="tabcontent">
                 <p class="label">Create Module:</p>
                 <select id="file_select" onchange="onFileSelectChange('file_select')">
-                    <option value='{ "name": "counter-cwlib", "filename": "cwlib_example.wasm", "fileid":"na", "filetype": "WA", "args": "", "env": "", "channels": ""}'>counter-cwlib (wasm)</option>
-                    <option value='{ "name": "counter", "filename": "counter.wasm", "fileid":"na", "filetype": "WA", "args": "", "env": "", "channels": ""}'>counter (wasm)</option>
-                    <option value='{ "name": "npereira/pytest", "filename": "test.py", "fileid":"na", "filetype": "PY", "args": "", "env": "", "channels": ""}'>test (python)</option>
-                </select><p/>
+                    <option
+                        value='{ "name": "counter-cwlib", "filename": "cwlib_example.wasm", "fileid":"na", "filetype": "WA", "args": "", "env": "", "channels": ""}'>
+                        counter-cwlib (wasm)</option>
+                    <option
+                        value='{ "name": "counter", "filename": "counter.wasm", "fileid":"na", "filetype": "WA", "args": "", "env": "", "channels": ""}'>
+                        counter (wasm)</option>
+                    <option
+                        value='{ "name": "npereira/pytest", "filename": "test.py", "fileid":"na", "filetype": "PY", "args": "", "env": "", "channels": ""}'>
+                        test (python)</option>
+                </select>
+                <p />
                 <table>
-                <tr><td>Name:</td><td><input type="text" id="mname" value=""></td></tr>
-                <tr><td>Filename:</td><td><input type="text" id="filename" value=""></td></tr>
-                <tr><td>Fileid:</td><td><input type="text" id="fileid" value=""></td></tr>
-                <tr><td>Filetype:</td><td><input type="text" id="filetype" value=""></td></tr>
-                <tr><td>Args:</td><td><input type="text" id="args" value=""></td></tr>
-                <tr><td>Env:</td><td><input type="text" id="env" value=""></td></tr>
-                <tr><td>Channels:</td><td><input type="text" id="channels" value=""></td></tr>
-                <tr><td>Runtime:</td><td><select class="small" id="runtime_select"></select></td></tr>
+                    <tr>
+                        <td>Name:</td>
+                        <td><input type="text" id="mname" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Filename:</td>
+                        <td><input type="text" id="filename" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Fileid:</td>
+                        <td><input type="text" id="fileid" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Filetype:</td>
+                        <td><input type="text" id="filetype" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Args:</td>
+                        <td><input type="text" id="args" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Env:</td>
+                        <td><input type="text" id="env" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Channels:</td>
+                        <td><input type="text" id="channels" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Runtime:</td>
+                        <td><select class="small" id="runtime_select"></select></td>
+                    </tr>
                 </table>
                 <button onclick="createModule()">Create</button>
-                <br/><br/>
+                <br /><br />
                 <p class="label">Delete/Migrate Module:</p>
-                Module:<select class="small" id="module_select"></select><br/>
+                Module:<select class="small" id="module_select"></select><br />
                 Migrate to:<select class="small" id="sendto_runtime_select"></select>
                 <button onclick="deleteModule()">Delete/Migrate</button>
-                <br/><br/>
-                <p class="label" id="module_label">Module Stdout: <p class="small">(Select module by clicking on it on the tree)<p/></p>
-                <textarea id="stdout-box" rows="10" cols="50"></textarea>
+                <br /><br />
+                <p class="label" id="module_label">Module Stdout: <p class="small">(Select module by clicking on it on
+                        the
+                        tree)
+                        <p />
+                    </p>
+                    <textarea id="stdout-box" rows="10" cols="50"></textarea>
             </div>
 
             <div id="runtimes" class="tabcontent">
                 <p class="label">Delete Runtime:</p>
                 Runtime:<select class="small" id="del_runtime_select"></select>
-                <button class="button" onclick="deleteRuntime()">Delete</button><p/>
+                <button class="button" onclick="deleteRuntime()">Delete</button>
+                <p />
                 Delete the runtime from ARTS database; does not terminate the runtime itself
             </div>
 
@@ -72,60 +123,68 @@
                 <button onclick="reConnect()">Connect</button>
 
                 <p class="label">Force tree refresh</p>
-                <button class="button" onclick="loadTreeData()">Force Refresh</button><p/>
+                <button class="button" onclick="loadTreeData()">Force Refresh</button>
+                <p />
 
                 <p class="label">Demos</p>
                 <ul>
-                 <li/><span class="small"><button class="button" onclick="DemoMigrateModule()">Migrate Counter</button><p/>Start cwlib_example.wasm (program that outputs a counter value). After 5 seconds, migrate to a random runtime. </span>
+                    <li /><span class="small"><button class="button" onclick="DemoMigrateModule()">Migrate
+                            Counter</button>
+                        <p />Start cwlib_example.wasm (program that outputs a counter value). After 5 seconds, migrate
+                        to a
+                        random runtime. </span>
 
                 </ul>
             </div>
 
-			<div class="status">
+            <div class="status">
 
                 <textarea id="status-box" rows="10"></textarea>
 
-			</div>
+            </div>
 
-			<!-- demo src-->
+            <!-- demo src-->
             <script src="script.js"></script>
 
             <script>
                 onFileSelectChange('file_select');
+
                 function onFileSelectChange(sid) {
-                  var v = JSON.parse(document.getElementById(sid).value);
-                  document.getElementById("mname").value = v.name;
-                  document.getElementById("filename").value = v.filename;
-                  document.getElementById("fileid").value = v.fileid;
-                  document.getElementById("filetype").value = v.filetype;
-                  document.getElementById("args").value = v.args;
-                  document.getElementById("env").value = v.env;
-                  document.getElementById("channels").value = v.channels;
+                    var v = JSON.parse(document.getElementById(sid).value);
+                    document.getElementById("mname").value = v.name;
+                    document.getElementById("filename").value = v.filename;
+                    document.getElementById("fileid").value = v.fileid;
+                    document.getElementById("filetype").value = v.filetype;
+                    document.getElementById("args").value = v.args;
+                    document.getElementById("env").value = v.env;
+                    document.getElementById("channels").value = v.channels;
                 }
 
                 function openTab(evt, tabName) {
                     var i, tabcontent, tablinks;
                     tabcontent = document.getElementsByClassName("tabcontent");
                     for (i = 0; i < tabcontent.length; i++) {
-                    tabcontent[i].style.display = "none";
+                        tabcontent[i].style.display = "none";
                     }
                     tablinks = document.getElementsByClassName("tablinks");
                     for (i = 0; i < tablinks.length; i++) {
-                    tablinks[i].className = tablinks[i].className.replace(" active", "");
+                        tablinks[i].className = tablinks[i].className.replace(" active", "");
                     }
                     document.getElementById(tabName).style.display = "block";
                     evt.currentTarget.className += " active";
                 }
             </script>
 
-	</div>
+        </div>
+    </div>
 
-        <!-- login auth check with calls to mqtt connect placed in an `onauth` event listener -->
-        <script src="https://apis.google.com/js/platform.js"></script>
-        <script src="../vendor/jsrsasign-all-min.js" type="text/javascript"></script>
-        <script src="../conf/defaults.js"></script>
-        <script src="../src/auth.js"></script>
-        <script type="text/javascript">authCheck();</script>
-    </body>
+    <!-- login auth check with calls to mqtt connect placed in an `onauth` event listener -->
+    <script src="../vendor/jsrsasign-all-min.js" type="text/javascript"></script>
+    <script src="../conf/defaults.js"></script>
+    <script src="../src/auth.js"></script>
+    <script type="text/javascript">
+        authCheck();
+    </script>
+</body>
 
 </html>
