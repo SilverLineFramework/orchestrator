@@ -86,6 +86,9 @@
                     $("#auth-dropdown").html("Login");
                     $("#auth-dropdown").attr("href", `${host}/user/login`);
                 }
+            }).catch(function() { // Error? Still show login.
+                $("#auth-dropdown").html("Login");
+                $("#auth-dropdown").attr("href", `${host}/user/login`);
             });
     });
 </script>
