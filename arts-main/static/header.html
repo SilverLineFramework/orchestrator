@@ -71,7 +71,6 @@
             .then(response => response.json())
             .then(data => {
                 const host = `${window.location.protocol}//${window.location.host}`;
-                console.log(data)
                 if (data.authenticated) {
                     $("#auth-dropdown").html(`${data.username} <b class='caret'></b>`);
                     $("#auth-dropdown").attr("class", "dropdown-toggle");
