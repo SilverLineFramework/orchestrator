@@ -2,16 +2,16 @@ var reload_interval_milli = 3000
 
 var cfg;
 
-// default values for topics 
+// default values for topics
 var topic = [];
 topic['reg'] = 'realm/proc/reg';
 topic['ctl'] = 'realm/proc/control';
 topic['dbg'] = 'realm/proc/debug';
-topic['stdout'] = topic['dbg']+'/stdout';
+topic['stdout'] = topic['dbg'] + '/stdout';
 
-var pending_uuid="";
+var pending_uuid = "";
 
-var stdout_txt=[];
+var stdout_txt = [];
 
 var status_box;
 var stdout_box;
@@ -36,13 +36,13 @@ window.addEventListener('onauth', async function(e) {
     sendrt_select = document.getElementById('sendto_runtime_select');
     delrt_select = document.getElementById('del_runtime_select');
     module_select = document.getElementById('module_select');
-    
+
     document.getElementById("mod_tablink").click();
 
-    cfg = await sendRequest('GET', '/arts-api/v1/config/');     
+    cfg = await sendRequest('GET', '/arts-api/v1/config/');
     console.log(cfg); // {"mqtt_server":{"host":"oz.andrew.cmu.edu","port":1883,"ws_port":9001},"subscribe_topics":[{"topic":"realm/proc/reg","on_message":"on_reg_message"},{"topic":"realm/proc/control","on_message":"on_ctl_message"},{"topic":"realm/proc/debug","on_message":"on_dbg_message"}]}
 
-    cfg.subscribe_topics.forEach( t => {
+    cfg.subscribe_topics.forEach(t => {
         topic[t.name] = t.topic;
     });
 
@@ -53,8 +53,8 @@ window.addEventListener('onauth', async function(e) {
     mqtt_token = e.detail.mqtt_token;
 
     loadTreeData();
-    
-    setInterval(loadTreeData, reload_interval_milli);  // reload data periodically   
+
+    setInterval(loadTreeData, reload_interval_milli); // reload data periodically
 
     startConnect();
 });
@@ -71,7 +71,12 @@ function stdoutMsg(msg) {
 
 function displayTree(treeData) {
     // Set the dimensions and margins of the diagram
-    var margin = {top: 20, right: 90, bottom: 30, left: 90},
+    var margin = {
+            top: 20,
+            right: 90,
+            bottom: 30,
+            left: 90
+        },
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
 
@@ -79,16 +84,16 @@ function displayTree(treeData) {
     // appends a 'group' element to 'svg'
     // moves the 'group' element to the top left margin
     panel = document.getElementById('panel')
-    
-    d3.select("svg").remove(); 
+
+    d3.select("svg").remove();
 
     //if (svg == undefined) {
-        svg = d3.select("div").append("svg")
-            .attr("width", width + margin.right + margin.left)
-            .attr("height", height + margin.top + margin.bottom)
+    svg = d3.select("div").append("svg")
+        .attr("width", width + margin.right + margin.left)
+        .attr("height", height + margin.top + margin.bottom)
         .append("g")
-            .attr("transform", "translate("
-                + margin.left + "," + margin.top + ")");
+        .attr("transform", "translate(" +
+            margin.left + "," + margin.top + ")");
     //}
 
     var i = 0,
@@ -99,7 +104,9 @@ function displayTree(treeData) {
     var treemap = d3.tree().size([height, width]);
 
     // Assigns parent, children, height, depth
-    root = d3.hierarchy(treeData, function(d) { return d.children; });
+    root = d3.hierarchy(treeData, function(d) {
+        return d.children;
+    });
     root.x0 = height / 2;
     root.y0 = 0;
 
@@ -112,15 +119,15 @@ function displayTree(treeData) {
 
     if (sendrt_select.options) {
         while (sendrt_select.options.length > 0) sendrt_select.remove(0);
-    }  
+    }
 
     if (delrt_select.options) {
         while (delrt_select.options.length > 0) delrt_select.remove(0);
-    }  
+    }
 
     if (module_select.options) {
         while (module_select.options.length > 0) module_select.remove(0);
-    }  
+    }
 
     runtime_select.options[0] = new Option('Schedule', '');
     sendrt_select.options[0] = new Option('No migration', '');
@@ -128,221 +135,235 @@ function displayTree(treeData) {
     module_select.options[0] = new Option('Select Module', '');
 
     // Define the div for the tooltip
-    var div = d3.select("body").append("div")	
-        .attr("class", "tooltip")				
+    var div = d3.select("body").append("div")
+        .attr("class", "tooltip")
         .style("opacity", 0);
 
     update(root);
 
     // Collapse the node and all it's children
     function collapse(d) {
-    if(d.children) {
-        d._children = d.children
-        d._children.forEach(collapse)
-        d.children = null
-    }
+        if (d.children) {
+            d._children = d.children
+            d._children.forEach(collapse)
+            d.children = null
+        }
     }
 
     function update(source) {
 
-    // Assigns the x and y position for the nodes
-    var treeData = treemap(root);
+        // Assigns the x and y position for the nodes
+        var treeData = treemap(root);
 
-    // Compute the new tree layout.
-    var nodes = treeData.descendants(),
-        links = treeData.descendants().slice(1);
+        // Compute the new tree layout.
+        var nodes = treeData.descendants(),
+            links = treeData.descendants().slice(1);
 
-    // Normalize for fixed-depth.
-    nodes.forEach(function(d){ d.y = d.depth * 180});
-
-    // ****************** Nodes section ***************************
-
-    // Update the nodes...
-    var node = svg.selectAll('g.node')
-        .data(nodes, function(d) {return d.id || (d.id = ++i); });
-
-    // Enter any new modes at the parent's previous position.
-    var nodeEnter = node.enter().append('g')
-        .attr('class', 'node')
-        .attr("transform", function(d) {
-
-            if (d.data.type === "runtime") {
-                // runtime
-                    //runtimes[d.data.uuid] = { uuid: d.data.uuid, name: d.data.name }
-                runtime_select.options[runtime_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
-                sendrt_select.options[sendrt_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
-                delrt_select.options[delrt_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
-            } else if (d.data.type === "module") {
-                // module
-                module_select.options[module_select.options.length] = new Option(d.data.name+'('+d.data.uuid+')', d.data.uuid);
-            }
-
-            return "translate(" + source.y0 + "," + source.x0 + ")";
-
-        })
-        .on('click', click);
-    
-    // Add Circle for the nodes
-    nodeEnter.append('circle')
-        .attr('class', 'node')
-        .attr('r', 1e-6)
-        .style("fill", function(d) {
-            if (d.data.type === "runtime" ) return "#fff";
-            if (d.data.type === "module" ) return "lightsteelblue";
-            return "steelblue"
+        // Normalize for fixed-depth.
+        nodes.forEach(function(d) {
+            d.y = d.depth * 180
         });
 
-    // Add labels for the nodes
-    nodeEnter.append('text')
-        .attr("dy", ".35em")
-        .attr("x", function(d) {
-            return d.children || d._children ? -13 : 13;
-        })
-        .attr("text-anchor", function(d) {
-            return d.children || d._children ? "end" : "start";
-        })
-        .on("mouseover", function(d) {	
-                disp_text=d.data.name;
+        // ****************** Nodes section ***************************
+
+        // Update the nodes...
+        var node = svg.selectAll('g.node')
+            .data(nodes, function(d) {
+                return d.id || (d.id = ++i);
+            });
+
+        // Enter any new modes at the parent's previous position.
+        var nodeEnter = node.enter().append('g')
+            .attr('class', 'node')
+            .attr("transform", function(d) {
+
                 if (d.data.type === "runtime") {
-                    disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "nmodules:" + d.data.nmodules  + "<br/>";
+                    // runtime
+                    //runtimes[d.data.uuid] = { uuid: d.data.uuid, name: d.data.name }
+                    runtime_select.options[runtime_select.options.length] = new Option(d.data.name + '(' + d.data.uuid + ')', d.data.uuid);
+                    sendrt_select.options[sendrt_select.options.length] = new Option(d.data.name + '(' + d.data.uuid + ')', d.data.uuid);
+                    delrt_select.options[delrt_select.options.length] = new Option(d.data.name + '(' + d.data.uuid + ')', d.data.uuid);
                 } else if (d.data.type === "module") {
-                    disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid  + "<br/>" + "filename:" + d.data.filename  + "<br/>";
-                }            	
-                div.transition()		
-                    .duration(200)		
-                    .style("opacity", .9);		
-                div	.html(disp_text)	
-                    .style("left", (d3.event.pageX) + "px")		
-                    .style("top", (d3.event.pageY - 40) + "px");	
-                })					
-            .on("mouseout", function(d) {		
-                div.transition()		
-                    .duration(500)		
-                    .style("opacity", 0);	
+                    // module
+                    module_select.options[module_select.options.length] = new Option(d.data.name + '(' + d.data.uuid + ')', d.data.uuid);
+                }
+
+                return "translate(" + source.y0 + "," + source.x0 + ")";
+
             })
-        .text(function(d) { 
-            if (d.data.type) return d.data.name + " ("+d.data.type+")";
-             return d.data.name;
+            .on('click', click);
+
+        // Add Circle for the nodes
+        nodeEnter.append('circle')
+            .attr('class', 'node')
+            .attr('r', 1e-6)
+            .style("fill", function(d) {
+                if (d.data.type === "runtime") return "#fff";
+                if (d.data.type === "module") return "lightsteelblue";
+                return "steelblue"
+            });
+
+        // Add labels for the nodes
+        nodeEnter.append('text')
+            .attr("dy", ".35em")
+            .attr("x", function(d) {
+                return d.children || d._children ? -13 : 13;
+            })
+            .attr("text-anchor", function(d) {
+                return d.children || d._children ? "end" : "start";
+            })
+            .on("mouseover", function(d) {
+                disp_text = d.data.name;
+                if (d.data.type === "runtime") {
+                    disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid + "<br/>" + "nmodules:" + d.data.nmodules + "<br/>";
+                } else if (d.data.type === "module") {
+                    disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid + "<br/>" + "filename:" + d.data.filename + "<br/>";
+                }
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div.html(disp_text)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 40) + "px");
+            })
+            .on("mouseout", function(d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            })
+            .text(function(d) {
+                if (d.data.type) return d.data.name + " (" + d.data.type + ")";
+                return d.data.name;
+            });
+
+        // UPDATE
+        var nodeUpdate = nodeEnter.merge(node);
+
+        // Transition to the proper position for the node
+        nodeUpdate.transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + d.y + "," + d.x + ")";
+            });
+
+        // Update the node attributes and style
+        nodeUpdate.select('circle.node')
+            .attr('r', function(d) {
+                if (d.data.type === "runtime") return 10;
+                if (d.data.type === "module") return 5;
+                return 15
+            })
+            .style("fill", function(d) {
+                if (d.data.type === "runtime") return "#fff";
+                if (d.data.type === "module") return "lightsteelblue";
+                return "steelblue"
+            })
+            .attr('cursor', 'pointer');
+
+        // Remove any exiting nodes
+        var nodeExit = node.exit().transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + source.y + "," + source.x + ")";
+            })
+            .remove();
+
+        // On exit reduce the node circles size to 0
+        nodeExit.select('circle')
+            .attr('r', 1e-6);
+
+        // On exit reduce the opacity of text labels
+        nodeExit.select('text')
+            .style('fill-opacity', 1e-6);
+
+        // ****************** links section ***************************
+
+        // Update the links...
+        var link = svg.selectAll('path.link')
+            .data(links, function(d) {
+                return d.id;
+            });
+
+        // Enter any new links at the parent's previous position.
+        var linkEnter = link.enter().insert('path', "g")
+            .attr("class", "link")
+            .attr('d', function(d) {
+                var o = {
+                    x: source.x0,
+                    y: source.y0
+                }
+                return diagonal(o, o)
+            });
+
+        // UPDATE
+        var linkUpdate = linkEnter.merge(link);
+
+        // Transition back to the parent element position
+        linkUpdate.transition()
+            .duration(duration)
+            .attr('d', function(d) {
+                return diagonal(d, d.parent)
+            });
+
+        // Remove any exiting links
+        var linkExit = link.exit().transition()
+            .duration(duration)
+            .attr('d', function(d) {
+                var o = {
+                    x: source.x,
+                    y: source.y
+                }
+                return diagonal(o, o)
+            })
+            .remove();
+
+        // Store the old positions for transition.
+        nodes.forEach(function(d) {
+            d.x0 = d.x;
+            d.y0 = d.y;
         });
-
-    // UPDATE
-    var nodeUpdate = nodeEnter.merge(node);
-
-    // Transition to the proper position for the node
-    nodeUpdate.transition()
-        .duration(duration)
-        .attr("transform", function(d) { 
-            return "translate(" + d.y + "," + d.x + ")";
-        });
-
-    // Update the node attributes and style
-    nodeUpdate.select('circle.node')
-        .attr('r', function(d) {
-            if (d.data.type === "runtime" ) return 10;
-            if (d.data.type === "module" ) return 5;
-            return 15
-        })
-        .style("fill", function(d) {
-            if (d.data.type === "runtime" ) return "#fff";
-            if (d.data.type === "module" ) return "lightsteelblue";
-            return "steelblue"
-        })
-        .attr('cursor', 'pointer');
-
-    // Remove any exiting nodes
-    var nodeExit = node.exit().transition()
-        .duration(duration)
-        .attr("transform", function(d) {
-            return "translate(" + source.y + "," + source.x + ")";
-        })
-        .remove();
-
-    // On exit reduce the node circles size to 0
-    nodeExit.select('circle')
-        .attr('r', 1e-6);
-
-    // On exit reduce the opacity of text labels
-    nodeExit.select('text')
-        .style('fill-opacity', 1e-6);
-
-    // ****************** links section ***************************
-
-    // Update the links...
-    var link = svg.selectAll('path.link')
-        .data(links, function(d) { return d.id; });
-
-    // Enter any new links at the parent's previous position.
-    var linkEnter = link.enter().insert('path', "g")
-        .attr("class", "link")
-        .attr('d', function(d){
-            var o = {x: source.x0, y: source.y0}
-            return diagonal(o, o)
-        });
-
-    // UPDATE
-    var linkUpdate = linkEnter.merge(link);
-
-    // Transition back to the parent element position
-    linkUpdate.transition()
-        .duration(duration)
-        .attr('d', function(d){ return diagonal(d, d.parent) });
-
-    // Remove any exiting links
-    var linkExit = link.exit().transition()
-        .duration(duration)
-        .attr('d', function(d) {
-            var o = {x: source.x, y: source.y}
-            return diagonal(o, o)
-        })
-        .remove();
-
-    // Store the old positions for transition.
-    nodes.forEach(function(d){
-        d.x0 = d.x;
-        d.y0 = d.y;
-    });
     }
-  // Creates a curved (diagonal) path from parent to the child nodes
-  function diagonal(s, d) {
+    // Creates a curved (diagonal) path from parent to the child nodes
+    function diagonal(s, d) {
 
-    path = `M ${s.y} ${s.x}
+        path = `M ${s.y} ${s.x}
             C ${(s.y + d.y) / 2} ${s.x},
               ${(s.y + d.y) / 2} ${d.x},
               ${d.y} ${d.x}`
 
-    return path
-  }
+        return path
+    }
 
-  // Toggle children on click.
-  function click(d) {
-    if (d.children) {
-        d._children = d.children;
-        d.children = null;
-      } else {
-        d.children = d._children;
-        d._children = null;
-      }
-
-      if (d.data.type === "runtime") { // runtime clicked
-        runtime_select.value = d.data.uuid;
-        delrt_select.value = d.data.uuid;
-        sendrt_select.value = d.data.uuid;
-      } else if (d.data.type === "module") {// module clicked
-        if (selected_mod != undefined) {
-            console.log("Unsubscribing from:"+ topic['stdout'] + "/" + selected_mod.uuid)
-            mqttc.unsubscribe(topic['stdout'] + "/" + selected_mod.uuid);
+    // Toggle children on click.
+    function click(d) {
+        if (d.children) {
+            d._children = d.children;
+            d.children = null;
+        } else {
+            d.children = d._children;
+            d._children = null;
         }
-        module_select.value = d.data.uuid;
-        selected_mod = d.data;
-        console.log("Subscribing:"+ topic['stdout'] + "/" + selected_mod.uuid)
-        mqttc.subscribe(topic['stdout'] + "/" + selected_mod.uuid);
-        stdout_box.value = "";
-        module_label.innerHTML = "Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")" + " :";
-        statusMsg("Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")");
 
-        //console.log(d.data)
-      }
-  }
+        if (d.data.type === "runtime") { // runtime clicked
+            runtime_select.value = d.data.uuid;
+            delrt_select.value = d.data.uuid;
+            sendrt_select.value = d.data.uuid;
+        } else if (d.data.type === "module") { // module clicked
+            if (selected_mod != undefined) {
+                console.log("Unsubscribing from:" + topic['stdout'] + "/" + selected_mod.uuid)
+                mqttc.unsubscribe(topic['stdout'] + "/" + selected_mod.uuid);
+            }
+            module_select.value = d.data.uuid;
+            selected_mod = d.data;
+            console.log("Subscribing:" + topic['stdout'] + "/" + selected_mod.uuid)
+            mqttc.subscribe(topic['stdout'] + "/" + selected_mod.uuid);
+            stdout_box.value = "";
+            module_label.innerHTML = "Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")" + " :";
+            statusMsg("Stdout for module '" + selected_mod.name + "' (" + selected_mod.uuid + ")");
+
+            //console.log(d.data)
+        }
+    }
 }
 
 async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
@@ -365,14 +386,15 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
 }
 
 async function loadTreeData() {
-    c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');   
-    realm_name =  topic['reg'].split('/')[0];
+    c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');
+    realm_name = topic['reg'].split('/')[0];
     td = {
-        "name": realm_name, "t": "t1",
-        "children" : c_data
+        "name": realm_name,
+        "t": "t1",
+        "children": c_data
     }
     if (_.isEqual(treeData, td) == false) {
-        treeData=td;
+        treeData = td;
         displayTree(treeData);
     }
 }
@@ -402,7 +424,7 @@ function startConnect() {
         useSSL: ('https:' == document.location.protocol) ? true : false,
         userName: mqtt_username,
         password: mqtt_token,
-});
+    });
 }
 
 // Called on connect button click
@@ -437,7 +459,7 @@ function onConnectionLost(responseObject) {
 // Called when a message arrives
 function onMessageArrived(message) {
     console.log('Received: ', message.payloadString, "[", message.destinationName, "]");
-    
+
     if (message.destinationName.startsWith(topic['stdout'])) {
         stdoutMsg(message.payloadString);
         return;
@@ -447,20 +469,20 @@ function onMessageArrived(message) {
         //console.log(message.payloadString);
         try {
             var msg_req = JSON.parse(message.payloadString);
-        } catch(err) {
-            statusMsg("Error parsing message:"+message.payloadString +" "+err);
+        } catch (err) {
+            statusMsg("Error parsing message:" + message.payloadString + " " + err);
             return;
         }
         if (pending_uuid == msg_req.object_id && msg_req.type == 'arts_resp') {
-                console.log(msg_req.data)
-                if (msg_req.data.result == 'ok') {
-                    mod_instance = msg_req.data.details;
-                    // Print output for the user in the messages div
-                    statusMsg('Ok: ' + JSON.stringify(mod_instance, null, 2));
-                } else {
-                    // Print output for the user in the messages div
-                    statusMsg(status_box.value += 'Error: ' + msg_req.data.details);
-                } 
+            console.log(msg_req.data)
+            if (msg_req.data.result == 'ok') {
+                mod_instance = msg_req.data.details;
+                // Print output for the user in the messages div
+                statusMsg('Ok: ' + JSON.stringify(mod_instance, null, 2));
+            } else {
+                // Print output for the user in the messages div
+                statusMsg(status_box.value += 'Error: ' + msg_req.data.details);
+            }
         }
     }
 }
@@ -472,53 +494,55 @@ function startDisconnect() {
 }
 
 function uuidv4() {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
-  }
+}
 
 function createModule() {
     mname = document.getElementById('mname').value;
     fn = document.getElementById('filename').value;
     fid = document.getElementById('fileid').value;
     ft = document.getElementById('filetype').value;
-    
+
     args = document.getElementById('args').value;
-    env = document.getElementById('env').value;   
-    channels = document.getElementById('channels').value;    
+    env = document.getElementById('env').value;
+    channels = document.getElementById('channels').value;
     parentid = runtime_select.value;
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "create",
-        type: "arts_req", 
-        data: { 
+        type: "arts_req",
+        data: {
             type: "module",
-            name: mname, 
-            filename: fn, 
+            name: mname,
+            filename: fn,
             fileid: fid,
-            filetype: ft, 
+            filetype: ft,
             args: args,
             env: env,
             channels: channels
         }
-    } 
+    }
 
     if (parentid.length > 0) {
         console.log('adding parent');
-        req.data.parent = { uuid: parentid }
+        req.data.parent = {
+            uuid: parentid
+        }
     }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
-} 
+}
 
 function deleteModule(rtuuid) {
     mid = module_select.value;
@@ -531,15 +555,15 @@ function deleteModule(rtuuid) {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
+        type: "arts_req",
         data: {
             type: "module",
             uuid: mid
         }
-    } 
+    }
 
     if (sendtoid.length > 0) {
         console.log('adding send to runtime');
@@ -549,17 +573,17 @@ function deleteModule(rtuuid) {
     //rt_topic['ctl'] = topic['ctl'] + "/" + module.parent.uuid;
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
-} 
+}
 
 function deleteRuntime() {
     rtid = delrt_select.value;
-    
+
     if (rtid.length < 1) {
         statusMsg("Need to select an existing runtime.");
         return;
@@ -567,21 +591,21 @@ function deleteRuntime() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
-        data: { 
-            type: "runtime", 
+        type: "arts_req",
+        data: {
+            type: "runtime",
             uuid: rtid
         }
     }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['reg'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['reg'], req_json); 
+    mqttc.send(topic['reg'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 }
@@ -596,9 +620,9 @@ async function DemoMigrateModule() {
         return;
     }
     // assumes index 0 is used for "Select" label
-    rt1i = getRandomInt(1, runtime_select.options.length-1);
-    rt2i = getRandomInt(1, runtime_select.options.length-1);
-    while (rt1i == rt2i) rt2i = getRandomInt(1, runtime_select.options.length-1);
+    rt1i = getRandomInt(1, runtime_select.options.length - 1);
+    rt2i = getRandomInt(1, runtime_select.options.length - 1);
+    while (rt1i == rt2i) rt2i = getRandomInt(1, runtime_select.options.length - 1);
 
     rt1uuid = runtime_select.options[rt1i].value;
     rt2uuid = runtime_select.options[rt2i].value;
@@ -607,29 +631,31 @@ async function DemoMigrateModule() {
 
     muuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "create",
-        type: "arts_req", 
-        data: { 
+        type: "arts_req",
+        data: {
             type: "module",
-            name: "counter-cwlib", 
+            name: "counter-cwlib",
             uuid: muuid,
-            filename: "cwlib_example.wasm", 
+            filename: "cwlib_example.wasm",
             fileid: "na",
-            filetype: "WA", 
+            filetype: "WA",
             args: "",
             env: "",
             channels: "",
-            parent: { uuid: rt1uuid }
+            parent: {
+                uuid: rt1uuid
+            }
         }
-    } 
+    }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['reg'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
@@ -638,22 +664,22 @@ async function DemoMigrateModule() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
+        type: "arts_req",
         data: {
             type: "module",
             uuid: muuid,
             send_to_runtime: rt2uuid
         }
-    } 
+    }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
@@ -662,21 +688,21 @@ async function DemoMigrateModule() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
+        type: "arts_req",
         data: {
             type: "module",
             uuid: muuid,
         }
-    } 
+    }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
