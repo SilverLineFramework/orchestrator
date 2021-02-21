@@ -27,8 +27,8 @@ var mqttc;
 var mqtt_username;
 var mqtt_token;
 
-///document.addEventListener('DOMContentLoaded', async function(e) {
-window.addEventListener('onauth', async function(e) {
+document.addEventListener('DOMContentLoaded', async function(e) {
+//window.addEventListener('onauth', async function(e) {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -62,6 +62,10 @@ window.addEventListener('onauth', async function(e) {
     startConnect();
 });
 
+document.getElementsByTagName("body")[0].onresize = function() {
+    loadTreeData(true);  // responsive graph
+};
+
 function statusMsg(msg) {
     status_box.value += msg + '\n';
     status_box.scrollTop = status_box.scrollHeight;
@@ -74,19 +78,19 @@ function stdoutMsg(msg) {
 
 function displayTree(treeData) {
     // Set the dimensions and margins of the diagram
+    panel = document.getElementById('panel')
     var margin = {
             top: 20,
             right: 90,
             bottom: 30,
             left: 90
         },
-        width = 960 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
+        width = panel.offsetWidth - margin.left - margin.right,
+        height = panel.offsetHeight - margin.top - margin.bottom;
 
     // append the svg object to the body of the page
     // appends a 'group' element to 'svg'
     // moves the 'group' element to the top left margin
-    panel = document.getElementById('panel')
 
     d3.select("svg").remove();
 
@@ -388,7 +392,7 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
     return await response.json(); // parses JSON response into native JavaScript objects
 }
 
-async function loadTreeData() {
+async function loadTreeData(redraw = false) {
     c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');
     realm_name = topic['reg'].split('/')[0];
     td = {
@@ -396,7 +400,7 @@ async function loadTreeData() {
         "t": "t1",
         "children": c_data
     }
-    if (_.isEqual(treeData, td) == false) {
+    if (redraw || _.isEqual(treeData, td) == false) {
         treeData = td;
         displayTree(treeData);
     }
