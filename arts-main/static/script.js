@@ -28,7 +28,7 @@ var mqtt_username;
 var mqtt_token;
 
 document.addEventListener('DOMContentLoaded', async function(e) {
-//window.addEventListener('onauth', async function(e) {
+    //window.addEventListener('onauth', async function(e) {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function(e) {
 });
 
 document.getElementsByTagName("body")[0].onresize = function() {
-    loadTreeData(true);  // responsive graph
+    loadTreeData(true); // responsive graph
 };
 
 function statusMsg(msg) {
