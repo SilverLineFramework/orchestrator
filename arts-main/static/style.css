@@ -10,6 +10,8 @@ body {
   overflow: hidden;
 }
 
+#arts-container {}
+
 .panel {
   position: absolute;
   left: 0;
@@ -35,11 +37,17 @@ body {
   z-index: 1;
 }
 
+.config-top {}
+
 .status {
   width: 100%;
   position: absolute;
   bottom: 0px;
   margin: 10px auto;
+}
+
+#status-box {
+  width: 100%;
 }
 
 textarea {

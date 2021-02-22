@@ -142,8 +142,8 @@ function displayTree(treeData) {
     module_select.options[0] = new Option('Select Module', '');
 
     // Define the div for the tooltip
-    svg.selectAll("tooltop").remove();
-    var div = d3.select("body").append("div")
+    d3.select(".tooltip").remove();
+    var div = d3.select("#panel").append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
 
