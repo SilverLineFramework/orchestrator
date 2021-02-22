@@ -27,7 +27,7 @@ var mqttc;
 var mqtt_username;
 var mqtt_token;
 
-//document.addEventListener('DOMContentLoaded', async function(e) {
+// document.addEventListener('DOMContentLoaded', async function(e) {
 window.addEventListener('onauth', async function(e) {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
