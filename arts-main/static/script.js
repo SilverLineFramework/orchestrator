@@ -392,7 +392,11 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
     return await response.json(); // parses JSON response into native JavaScript objects
 }
 
+<<<<<<< HEAD
 async function loadTreeData(redraw = false) {
+=======
+async function loadTreeData() {
+>>>>>>> master
     c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');
     realm_name = topic['reg'].split('/')[0];
     td = {
@@ -400,7 +404,11 @@ async function loadTreeData(redraw = false) {
         "t": "t1",
         "children": c_data
     }
+<<<<<<< HEAD
     if (redraw || _.isEqual(treeData, td) == false) {
+=======
+    if (_.isEqual(treeData, td) == false) {
+>>>>>>> master
         treeData = td;
         displayTree(treeData);
     }
