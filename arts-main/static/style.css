@@ -10,8 +10,13 @@ body {
   overflow: hidden;
 }
 
+#arts-container {
+  width: 100%;
+  height: 100%;
+}
+
 .panel {
-  position: absolute;
+  float: left;
   left: 0;
   top: 0;
   width: 70%;
@@ -19,11 +24,12 @@ body {
 }
 
 .config {
-  position: absolute;
+  float: right;
   right: 0;
   top: 0;
   bottom: 0;
   width: 30%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.666);
   box-sizing: border-box;
   padding: 1em;
@@ -31,21 +37,32 @@ body {
   transition-property: opacity;
   transition-duration: 250ms;
   transition-timing-function: ease-out;
-  overflow: auto;
+  overflow: hidden;
   z-index: 1;
+}
+
+.config-top {
+  height: 80%;
+  overflow: auto;
 }
 
 .status {
   width: 100%;
-  position: absolute;
-  bottom: 0px;
-  margin: 10px auto;
+  height: 20%;
+  float: inline-start
+}
+
+#status-box {
+  width: 100%;
+  height: 75%;
 }
 
 textarea {
-  width: 90%;
+  width: 100%;
   height: 100px;
-  font-size: 7px;
+  font-size: 8px;
+  font-family: monospace;
+  font-weight: bold;
 }
 
 .param {
@@ -154,7 +171,7 @@ div.tooltip {
 /* Style the tab */
 .tab {
   overflow: hidden;
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc; */
   /* background-color: #f1f1f1; */
 }
 
@@ -174,7 +191,7 @@ div.tooltip {
   border-top-right-radius: 6px;
   box-shadow: 0 3px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 #FFF;
   text-shadow: 0 1px #FFF;
-  margin: 0 -5px;
+  /* margin: 0 -5px; */
   padding: 0 20px;
 }
 
