@@ -10,10 +10,13 @@ body {
   overflow: hidden;
 }
 
-#arts-container {}
+#arts-container {
+  width: 100%;
+  height: 100%;
+}
 
 .panel {
-  position: absolute;
+  float: left;
   left: 0;
   top: 0;
   width: 70%;
@@ -21,11 +24,12 @@ body {
 }
 
 .config {
-  position: absolute;
+  float: right;
   right: 0;
   top: 0;
   bottom: 0;
   width: 30%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.666);
   box-sizing: border-box;
   padding: 1em;
@@ -33,14 +37,18 @@ body {
   transition-property: opacity;
   transition-duration: 250ms;
   transition-timing-function: ease-out;
-  overflow: auto;
+  overflow: hidden;
   z-index: 1;
 }
 
-.config-top {}
+.config-top {
+  height: 80%;
+  overflow: auto;
+}
 
 .status {
   width: 100%;
+  /* height: 20%; */
   position: absolute;
   bottom: 0px;
   margin: 10px auto;
