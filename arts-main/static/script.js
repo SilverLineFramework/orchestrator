@@ -142,6 +142,7 @@ function displayTree(treeData) {
     module_select.options[0] = new Option('Select Module', '');
 
     // Define the div for the tooltip
+    svg.selectAll("tooltop").remove();
     var div = d3.select("body").append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
@@ -392,11 +393,7 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
     return await response.json(); // parses JSON response into native JavaScript objects
 }
 
-<<<<<<< HEAD
 async function loadTreeData(redraw = false) {
-=======
-async function loadTreeData() {
->>>>>>> master
     c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');
     realm_name = topic['reg'].split('/')[0];
     td = {
@@ -404,11 +401,7 @@ async function loadTreeData() {
         "t": "t1",
         "children": c_data
     }
-<<<<<<< HEAD
     if (redraw || _.isEqual(treeData, td) == false) {
-=======
-    if (_.isEqual(treeData, td) == false) {
->>>>>>> master
         treeData = td;
         displayTree(treeData);
     }
