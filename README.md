@@ -19,6 +19,6 @@ We currently have three runtime environments being worked on to interact with AR
  - [Linux Runtime](https://github.com/conix-center/arena-runtime-linux)
  - [Browser Runtime](https://github.com/conix-center/arena-runtime-browser)
 
-We also maintain a [simulated runtime](https://github.com/conix-center/arena-runtime-simulated) for prototyping. 
+We also maintain a [simulated runtime](https://github.com/conix-center/arena-runtime-simulated) for prototyping.
 
 See the [Documentation Folder](docs/).
