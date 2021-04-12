@@ -1,13 +1,15 @@
  # ARTS Design Documentation
 
-By leveraging a common runtime and carefully integrated resource monitoring, the ARENA Runtime Supervisor (ARTS) can handle very heterogenous compute resources, across compute classes, from small embedded devices to edge servers. 
+By leveraging a common runtime and carefully integrated resource monitoring, the ARENA Runtime Supervisor (ARTS) can handle very heterogenous compute resources, across compute classes, from small embedded devices to edge servers.
 
 We currently have three runtime environments being worked on to interact with ARTS:
+<!-- markdown-link-check-disable-next-line -->
  - [Embedded Runtime](https://github.com/conix-center/arena-runtime-zephyr)
+<!-- markdown-link-check-disable-next-line -->
  - [Linux Runtime](https://github.com/conix-center/arena-runtime-linux)
  - [Browser Runtime](https://github.com/conix-center/arena-runtime-browser)
 
-We also maintain a [simulated runtime](https://github.com/conix-center/arena-runtime-simulated) for prototyping. 
+We also maintain a [simulated runtime](https://github.com/conix-center/arena-runtime-simulated) for prototyping.
 
 You can use the issue tracker to start discussions, suggestions, etc.
 

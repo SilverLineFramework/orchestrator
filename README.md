@@ -15,7 +15,9 @@ You can use the issue tracker to start discussions, suggestions, etc.
 ## Runtime environments
 
 We currently have three runtime environments being worked on to interact with ARTS:
+<!-- markdown-link-check-disable-next-line -->
  - [Embedded Runtime](https://github.com/conix-center/arena-runtime-zephyr)
+<!-- markdown-link-check-disable-next-line -->
  - [Linux Runtime](https://github.com/conix-center/arena-runtime-linux)
  - [Browser Runtime](https://github.com/conix-center/arena-runtime-browser)
 
