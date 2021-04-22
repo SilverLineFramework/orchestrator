@@ -128,7 +128,7 @@ STATICFILES_DIRS = [
 # Static root
 STATIC_ROOT = "./public"
 
-# Rest framework 
+# Rest framework
 
 REST_FRAMEWORK = {
     # When you enable API versioning, the request.version attribute will contain a string
@@ -183,12 +183,12 @@ JWT_AUTH = {
 
 # pubsub settings
 PUBSUB = {
-	'mqtt_server': { 'host': 'arena.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001},
-    'mqtt_username': None, 
+	'mqtt_server': { 'host': 'arena.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001, 'ws_path': '/mqtt'},
+    'mqtt_username': None,
     'mqtt_password': None,
 	'subscribe_topics': [
 		{ 'name': 'reg', 'topic': 'realm/proc/reg', 'on_message': 'on_reg_message'},
 		{ 'name': 'ctl', 'topic': 'realm/proc/control', 'on_message': 'on_ctl_message' },
 		{ 'name': 'dbg', 'topic': 'realm/proc/debug', 'on_message': 'on_dbg_message' }
-	] 
+	]
 }

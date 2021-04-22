@@ -46,29 +46,29 @@ class ListRuntimesView(generics.ListCreateAPIView):
     #     # Add in a QuerySet of all the books
     #     context['module_list'] = Module.objects.all()
     #     return context
-    
+
     # def list(self, request, *args, **kwargs):
     #     # Note the use of `get_queryset()` instead of `self.queryset`
     #     #if (self.request.GET.get('type') == 'tree'):
-            
+
     #     #else:
     #     list = []
     #     queryset = Runtime.objects.all().prefetch_related('parent')
     #     for rt in queryset:
     #         a_rt['name'] = rt.name
-            
+
     #         print(rt.name)
     #         modules = rt.parent.all()
     #         for m in modules:
     #             print(m)
-        
+
     #     #company.interviews.all()
     #     #print(str(queryset))
     #     serializer = RuntimeListSerializer(queryset, many=True)
-        
+
     #     return Response(serializer.data)
 
-        
+
 class RuntimeDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET runtime/:id/
@@ -174,7 +174,7 @@ class ModuleDetailView(generics.RetrieveUpdateDestroyAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-    
+
 class LoginView(generics.CreateAPIView):
     """
     POST auth/login/
@@ -186,7 +186,7 @@ class LoginView(generics.CreateAPIView):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+
     def post(self, request, *args, **kwargs):
         username = request.data.get("username", "")
         password = request.data.get("password", "")
@@ -236,4 +236,6 @@ class RegisterUsers(generics.CreateAPIView):
 class PubSubConfig(View):
     def get(self, request, *args, **kwargs):
         config = settings.PUBSUB
+        config.pop('mqtt_username', None)
+        config.pop('mqtt_password', None)
         return JsonResponse(config)
