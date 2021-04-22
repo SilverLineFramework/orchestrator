@@ -2,16 +2,16 @@ var reload_interval_milli = 3000
 
 var cfg;
 
-// default values for topics 
+// default values for topics
 var topic = [];
 topic['reg'] = 'realm/proc/reg';
 topic['ctl'] = 'realm/proc/control';
 topic['dbg'] = 'realm/proc/debug';
-topic['stdout'] = topic['dbg']+'/stdout';
+topic['stdout'] = topic['dbg'] + '/stdout';
 
-var pending_uuid="";
+var pending_uuid = "";
 
-var stdout_txt=[];
+var stdout_txt = [];
 
 var status_box;
 var stdout_box;
@@ -33,25 +33,35 @@ document.addEventListener('DOMContentLoaded', async function() {
     sendrt_select = document.getElementById('sendto_runtime_select');
     delrt_select = document.getElementById('del_runtime_select');
     module_select = document.getElementById('module_select');
-    
+
     document.getElementById("mod_tablink").click();
 
-    cfg = await sendRequest('GET', '/arts-api/v1/config/');     
+    cfg = await sendRequest('GET', '/arts-api/v1/config/');
     console.log(cfg); // {"mqtt_server":{"host":"oz.andrew.cmu.edu","port":1883,"ws_port":9001},"subscribe_topics":[{"topic":"realm/proc/reg","on_message":"on_reg_message"},{"topic":"realm/proc/control","on_message":"on_ctl_message"},{"topic":"realm/proc/debug","on_message":"on_dbg_message"}]}
 
-    cfg.subscribe_topics.forEach( t => {
+    cfg.subscribe_topics.forEach(t => {
         topic[t.name] = t.topic;
     });
 
     document.getElementById('mqtt_server').value = cfg.mqtt_server.host;
-    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.ws_port : cfg.mqtt_server.ws_port;
+    document.getElementById('mqtt_port').value = ('https:' == document.location.protocol) ? cfg.mqtt_server.wss_port : cfg.mqtt_server.ws_port;
 
+    if (e.detail) {
+        if (e.detail.mqtt_username)
+            mqtt_username = e.detail.mqtt_username;
+        if (e.detail.mqtt_token)
+            mqtt_token = e.detail.mqtt_token;
+    }
     loadTreeData();
-    
-    setInterval(loadTreeData, reload_interval_milli);  // reload data periodically   
+
+    setInterval(loadTreeData, reload_interval_milli); // reload data periodically
 
     startConnect();
 });
+
+document.getElementsByTagName("body")[0].onresize = function() {
+    loadTreeData(true); // responsive graph
+};
 
 function statusMsg(msg) {
     status_box.value += msg + '\n';
@@ -358,15 +368,16 @@ async function sendRequest(mthd = 'POST', rsrc = '', data = {}) {
     return await response.json(); // parses JSON response into native JavaScript objects
 }
 
-async function loadTreeData() {
-    c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');   
-    realm_name =  topic['reg'].split('/')[0];
+async function loadTreeData(redraw = false) {
+    c_data = await sendRequest('GET', '/arts-api/v1/runtimes/');
+    realm_name = topic['reg'].split('/')[0];
     td = {
-        "name": realm_name, "t": "t1",
-        "children" : c_data
+        "name": realm_name,
+        "t": "t1",
+        "children": c_data
     }
-    if (_.isEqual(treeData, td) == false) {
-        treeData=td;
+    if (redraw || _.isEqual(treeData, td) == false) {
+        treeData = td;
         displayTree(treeData);
     }
 }
@@ -393,7 +404,9 @@ function startConnect() {
     // Connect the client, if successful, call onConnect function
     mqttc.connect({
         onSuccess: onConnect,
-        useSSL: ('https:' == document.location.protocol) ? true : false
+        useSSL: ('https:' == document.location.protocol) ? true : false,
+        userName: mqtt_username,
+        password: mqtt_token,
     });
 }
 
@@ -429,7 +442,7 @@ function onConnectionLost(responseObject) {
 // Called when a message arrives
 function onMessageArrived(message) {
     console.log('Received: ', message.payloadString, "[", message.destinationName, "]");
-    
+
     if (message.destinationName.startsWith(topic['stdout'])) {
         stdoutMsg(message.payloadString);
         return;
@@ -439,20 +452,20 @@ function onMessageArrived(message) {
         //console.log(message.payloadString);
         try {
             var msg_req = JSON.parse(message.payloadString);
-        } catch(err) {
-            statusMsg("Error parsing message:"+message.payloadString +" "+err);
+        } catch (err) {
+            statusMsg("Error parsing message:" + message.payloadString + " " + err);
             return;
         }
         if (pending_uuid == msg_req.object_id && msg_req.type == 'arts_resp') {
-                console.log(msg_req.data)
-                if (msg_req.data.result == 'ok') {
-                    mod_instance = msg_req.data.details;
-                    // Print output for the user in the messages div
-                    statusMsg('Ok: ' + JSON.stringify(mod_instance, null, 2));
-                } else {
-                    // Print output for the user in the messages div
-                    statusMsg(status_box.value += 'Error: ' + msg_req.data.details);
-                } 
+            console.log(msg_req.data)
+            if (msg_req.data.result == 'ok') {
+                mod_instance = msg_req.data.details;
+                // Print output for the user in the messages div
+                statusMsg('Ok: ' + JSON.stringify(mod_instance, null, 2));
+            } else {
+                // Print output for the user in the messages div
+                statusMsg(status_box.value += 'Error: ' + msg_req.data.details);
+            }
         }
     }
 }
@@ -464,17 +477,17 @@ function startDisconnect() {
 }
 
 function uuidv4() {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
-  }
+}
 
 function createModule() {
     mname = document.getElementById('mname').value;
     fn = document.getElementById('filename').value;
     fid = document.getElementById('fileid').value;
     ft = document.getElementById('filetype').value;
-    
+
     args = document.getElementById('args').value;
     env = document.getElementById('env').value;   
     channels = document.getElementById('channels').value;    
@@ -483,36 +496,38 @@ function createModule() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "create",
-        type: "arts_req", 
-        data: { 
+        type: "arts_req",
+        data: {
             type: "module",
-            name: mname, 
-            filename: fn, 
+            name: mname,
+            filename: fn,
             fileid: fid,
-            filetype: ft, 
+            filetype: ft,
             args: args,
             env: env,
             channels: channels,
             peripherals: peripherals
         }
-    } 
+    }
 
     if (parentid.length > 0) {
         console.log('adding parent');
-        req.data.parent = { uuid: parentid }
+        req.data.parent = {
+            uuid: parentid
+        }
     }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
-} 
+}
 
 function deleteModule(rtuuid) {
     mid = module_select.value;
@@ -525,15 +540,15 @@ function deleteModule(rtuuid) {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
+        type: "arts_req",
         data: {
             type: "module",
             uuid: mid
         }
-    } 
+    }
 
     if (sendtoid.length > 0) {
         console.log('adding send to runtime');
@@ -543,17 +558,17 @@ function deleteModule(rtuuid) {
     //rt_topic['ctl'] = topic['ctl'] + "/" + module.parent.uuid;
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
-} 
+}
 
 function deleteRuntime() {
     rtid = delrt_select.value;
-    
+
     if (rtid.length < 1) {
         statusMsg("Need to select an existing runtime.");
         return;
@@ -561,21 +576,21 @@ function deleteRuntime() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
-        data: { 
-            type: "runtime", 
+        type: "arts_req",
+        data: {
+            type: "runtime",
             uuid: rtid
         }
     }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['reg'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['reg'], req_json); 
+    mqttc.send(topic['reg'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 }
@@ -590,9 +605,9 @@ async function DemoMigrateModule() {
         return;
     }
     // assumes index 0 is used for "Select" label
-    rt1i = getRandomInt(1, runtime_select.options.length-1);
-    rt2i = getRandomInt(1, runtime_select.options.length-1);
-    while (rt1i == rt2i) rt2i = getRandomInt(1, runtime_select.options.length-1);
+    rt1i = getRandomInt(1, runtime_select.options.length - 1);
+    rt2i = getRandomInt(1, runtime_select.options.length - 1);
+    while (rt1i == rt2i) rt2i = getRandomInt(1, runtime_select.options.length - 1);
 
     rt1uuid = runtime_select.options[rt1i].value;
     rt2uuid = runtime_select.options[rt2i].value;
@@ -601,29 +616,31 @@ async function DemoMigrateModule() {
 
     muuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "create",
-        type: "arts_req", 
-        data: { 
+        type: "arts_req",
+        data: {
             type: "module",
-            name: "counter-cwlib", 
+            name: "counter-cwlib",
             uuid: muuid,
-            filename: "cwlib_example.wasm", 
+            filename: "cwlib_example.wasm",
             fileid: "na",
-            filetype: "WA", 
+            filetype: "WA",
             args: "",
             env: "",
             channels: "",
-            parent: { uuid: rt1uuid }
+            parent: {
+                uuid: rt1uuid
+            }
         }
-    } 
+    }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['reg']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['reg'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
@@ -632,22 +649,22 @@ async function DemoMigrateModule() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
+        type: "arts_req",
         data: {
             type: "module",
             uuid: muuid,
             send_to_runtime: rt2uuid
         }
-    } 
+    }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 
@@ -656,21 +673,21 @@ async function DemoMigrateModule() {
 
     pending_uuid = uuidv4();
 
-    req = { 
-        object_id: pending_uuid, 
+    req = {
+        object_id: pending_uuid,
         action: "delete",
-        type: "arts_req", 
+        type: "arts_req",
         data: {
             type: "module",
             uuid: muuid,
         }
-    } 
+    }
 
     req_json = JSON.stringify(req);
-    statusMsg("Publishing ("+topic['ctl']+"):"+JSON.stringify(req, null, 2));
+    statusMsg("Publishing (" + topic['ctl'] + "):" + JSON.stringify(req, null, 2));
     message = new Paho.MQTT.Message(req_json);
     message.destinationName = req_json;
-    mqttc.send(topic['ctl'], req_json); 
+    mqttc.send(topic['ctl'], req_json);
 
     setTimeout(loadTreeData, 500); // reload data in 0.5 seconds
 

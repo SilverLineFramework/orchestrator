@@ -9,5 +9,5 @@
 
 **UIs:**
 
-- Admin: http://localhost:8000/admin/
-- Vizualize: http://localhost:8000/static/index.html
+- Admin: `http://localhost:8000/admin/`
+- Vizualize: `http://localhost:8000/static/index.html`
