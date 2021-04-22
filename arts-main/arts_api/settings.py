@@ -128,7 +128,7 @@ STATICFILES_DIRS = [
 # Static root
 STATIC_ROOT = "./public"
 
-# Rest framework 
+# Rest framework
 
 REST_FRAMEWORK = {
     # When you enable API versioning, the request.version attribute will contain a string
@@ -183,13 +183,13 @@ JWT_AUTH = {
 
 # pubsub settings
 PUBSUB = {
-	'mqtt_server': { 'host': '127.0.0.1', 'port': 1883, 'ws_port': 9001},
-    'mqtt_username': None, 
-    'mqtt_password': None,
+	'mqtt_server': { 'host': 'arena-dev1.conix.io', 'port': 1883, 'ws_port': 9001},
+    'mqtt_username': 'cli',
+    'mqtt_password': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJjbGkiLCJzdWJzIjpbIiMiXSwicHVibCI6WyIjIl0sImlhdCI6MTYxNzgwMjAwMCwiZXhwIjoxNjQ5MzM4MDAwfQ.Dsx9W1u1TuYFCjMZ4GF6J_dAAmD1apU5cW-T_qkZwjLTc2j2qPb-Nb2_NPes-RaS8uV-AKwOlZ6eKrfDHUzJBLPbM48bq2WsDPuZu-7G-7iVOvSXZNtR7qDbdZODiaZmAUOPomq3haFpQw56WFx2Y2FQ6LuLas5QnFOK0ZrjCAGSeY5MRSsugqKdOoeP7lFFo5BllTsUWmsgf0daIRytlgy1bkD0yM8burDK8pR9QZJhBKGTrr27zjAEq78DANR0__PFAwhSB5D0dFmUOHSarDyt2eQkG1iBup13ho8TOvQTq5-OgImRXYbgeo6_552X6FKPI1TSDQ34jE9KUg1ZhixqvqcZYXaHv7Pmxdn9HT5uArRL3edyix53K_fOnrgBacytReca1RQzagJiX6kgx9vO-VtUQmAmachmH1P3llJ9KFGMraUwX1ONlyhCJUEP_2groRwjiMIaGFww1h_qW_llBntN1oVQzA4qZ_fCpDAQ__OIRu48VTnkttPJ_OShwFMZVWpEnQCNFuOMmOiOdwqie-ohyndYcq3fACJxme4cDXzra_Ee0zyvC6WdVbs_df3CxkuzCuDp3EkKdyk-qQJC1OfijMaOIdBv89eM9JZA0UpxzXVY5auwmxo4_vmfhpNUKqHoMZgnRHh2D5EsajfM5opZzJYAwLJDmHwKKq0',
 	'subscribe_topics': [
-		{ 'name': 'reg', 'topic': 'realm/proc/reg', 'on_message': 'on_reg_message'},
-		{ 'name': 'ctl', 'topic': 'realm/proc/control', 'on_message': 'on_ctl_message' },
-		{ 'name': 'dbg', 'topic': 'realm/proc/debug', 'on_message': 'on_dbg_message' },
-        { 'name': 'keepalive', 'topic':    'realm/proc/keepalive', 'on_message': 'on_keepalive_message' }
-	] 
+		{ 'name': 'reg', 'topic': 'test/proc/reg', 'on_message': 'on_reg_message'},
+		{ 'name': 'ctl', 'topic': 'test/proc/control', 'on_message': 'on_ctl_message' },
+		{ 'name': 'dbg', 'topic': 'test/proc/debug', 'on_message': 'on_dbg_message' },
+        { 'name': 'keepalive', 'topic':    'test/proc/keepalive', 'on_message': 'on_keepalive_message' }
+	]
 }
