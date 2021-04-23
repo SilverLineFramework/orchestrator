@@ -1,0 +1,28 @@
+name: ARENA Main SSH Deploy
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ssh deploy
+        uses: appleboy/ssh-action@master
+        env:
+          TARGET: ${{ secrets.ARENA_MAIN_DEPLOY_TARGET }}
+        with:
+          host: ${{ secrets.ARENA_MAIN_DEPLOY_HOST }}
+          username: ${{ secrets.ARENA_MAIN_DEPLOY_USER }}
+          key: ${{ secrets.ARENA_MAIN_DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          envs: TARGET
+          script: |
+             cd  $TARGET
+             git checkout master
+             git reset --hard HEAD
+             git pull
+             cd ..
+             ./prod.sh stop arts
+             ./prod.sh up --force-recreate --build -d arts
+             ./prod.sh restart arena-web

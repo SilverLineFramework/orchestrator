@@ -7,6 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN chmod +x wait-for-it.sh
+
 RUN python manage.py makemigrations --noinput
 RUN python manage.py migrate
 RUN rm -fr public
