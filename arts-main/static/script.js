@@ -24,11 +24,8 @@ var module_select;
 var selected_mod;
 var treeData;
 var mqttc;
-var mqtt_username;
-var mqtt_token;
 
-// document.addEventListener('DOMContentLoaded', async function() {
-window.addEventListener('onauth', async function(e) {
+document.addEventListener('DOMContentLoaded', async function() {
     status_box = document.getElementById('status-box');
     stdout_box = document.getElementById('stdout-box');
     module_label = document.getElementById('module_label');
@@ -55,6 +52,7 @@ window.addEventListener('onauth', async function(e) {
         if (e.detail.mqtt_token)
             mqtt_token = e.detail.mqtt_token;
     }
+
     loadTreeData();
 
     setInterval(loadTreeData, reload_interval_milli); // reload data periodically
@@ -142,9 +140,11 @@ function displayTree(treeData) {
     module_select.options[0] = new Option('Select Module', '');
 
     // Define the div for the tooltip
+
     d3.select(".tooltip").remove();
     var div = d3.select("#panel").append("div")
         .attr("class", "tooltip")
+
         .style("opacity", 0);
 
     update(root);
@@ -198,6 +198,7 @@ function displayTree(treeData) {
 
                 return "translate(" + source.y0 + "," + source.x0 + ")";
 
+
             })
             .on('click', click);
 
@@ -222,9 +223,11 @@ function displayTree(treeData) {
             })
             .on("mouseover", function(d) {
                 disp_text = d.data.name;
+
                 if (d.data.type === "runtime") {
                     disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid + "<br/>" + "nmodules:" + d.data.nmodules + "<br/>";
                 } else if (d.data.type === "module") {
+
                     disp_text = "Runtime: " + disp_text + "<br/>" + "uuid:" + d.data.uuid + "<br/>" + "filename:" + d.data.filename + "<br/>";
                 }
                 div.transition()
@@ -233,6 +236,7 @@ function displayTree(treeData) {
                 div.html(disp_text)
                     .style("left", (d3.event.pageX) + "px")
                     .style("top", (d3.event.pageY - 40) + "px");
+
             })
             .on("mouseout", function(d) {
                 div.transition()
@@ -429,9 +433,11 @@ function startConnect() {
     // Connect the client, if successful, call onConnect function
     mqttc.connect({
         onSuccess: onConnect,
+
         useSSL: ('https:' == document.location.protocol) ? true : false,
         userName: mqtt_username,
         password: mqtt_token,
+
     });
 }
 
@@ -514,8 +520,11 @@ function createModule() {
     ft = document.getElementById('filetype').value;
 
     args = document.getElementById('args').value;
-    env = document.getElementById('env').value;
-    channels = document.getElementById('channels').value;
+
+    env = document.getElementById('env').value;   
+    channels = document.getElementById('channels').value;    
+    peripherals = document.getElementById('peripherals').value;    
+
     parentid = runtime_select.value;
 
     pending_uuid = uuidv4();
@@ -532,7 +541,8 @@ function createModule() {
             filetype: ft,
             args: args,
             env: env,
-            channels: channels
+            channels: channels,
+            peripherals: peripherals
         }
     }
 

@@ -187,8 +187,9 @@ PUBSUB = {
     'mqtt_username': None,
     'mqtt_password': None,
 	'subscribe_topics': [
-		{ 'name': 'reg', 'topic': 'realm/proc/reg', 'on_message': 'on_reg_message'},
-		{ 'name': 'ctl', 'topic': 'realm/proc/control', 'on_message': 'on_ctl_message' },
-		{ 'name': 'dbg', 'topic': 'realm/proc/debug', 'on_message': 'on_dbg_message' }
+		{ 'name': 'reg', 'topic': 'test/proc/reg', 'on_message': 'on_reg_message'},
+		{ 'name': 'ctl', 'topic': 'test/proc/control', 'on_message': 'on_ctl_message' },
+		{ 'name': 'dbg', 'topic': 'test/proc/debug', 'on_message': 'on_dbg_message' },
+    { 'name': 'keepalive', 'topic':    'test/proc/keepalive', 'on_message': 'on_keepalive_message' }
 	]
 }

@@ -1,5 +1,5 @@
-PYTHON3=/usr/local/bin/python3 
-PIP=/usr/local/bin/pip3
+PYTHON3=python3 
+PIP=pip3 
 
 FIXTURES_DIR=arts_api/fixtures
 FNAME=app_`date +%m-%d-%Y_%H%M%S`
