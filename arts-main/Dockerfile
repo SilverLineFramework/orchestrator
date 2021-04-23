@@ -9,7 +9,7 @@ COPY . .
 
 RUN chmod +x wait-for-it.sh
 
-RUN python manage.py makemigrations --noinput
+RUN python manage.py makemigrations --noinput --merge
 RUN python manage.py migrate
 RUN rm -fr public
 RUN python manage.py collectstatic
