@@ -25,5 +25,5 @@ jobs:
              git checkout master
              git pull
              cd ..
-             ./staging.sh stop arts
-             ./staging.sh up --force-recreate --build -d arts
+             ./staging.sh down
+             ./staging.sh up --force-recreate --build -d
