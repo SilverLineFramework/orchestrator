@@ -11,6 +11,9 @@ The first implemenation of channels was a WASI-compatible browser implementation
 int ch_open(const char *chname, int flags, mode_t mode);
 ```
 
+Returns a channel file descriptor; different from open(), a channel has only one file descriptor. 
+Multiple ch_open() calls with the same path will return the same file descriptor.
+
 ```c
 int ch_close(int fd);
 ```
