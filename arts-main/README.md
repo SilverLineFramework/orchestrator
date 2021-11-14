@@ -2,6 +2,7 @@
 
 **Setup:**
 - Create db: ```make migrate```
+- Start the virtualenv - ```source env/bin/activate```
 - Create admin user: ```python manage.py createsuperuser --email admin@example.com --username admin```
 
 **Execute:**
