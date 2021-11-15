@@ -183,13 +183,14 @@ JWT_AUTH = {
 
 # pubsub settings
 PUBSUB = {
-	'mqtt_server': { 'host': 'arena.andrew.cmu.edu', 'port': 1883, 'ws_port': 9001, 'ws_path': '/mqtt'},
-    'mqtt_username': None,
-    'mqtt_password': None,
+    'mqtt_server': { 'host': 'arena-dev1.conix.io', 'port': 8883 },
+    'web_client_mqtt': { 'host': 'arena-dev1.conix.io', 'ws_path': 'mqtt/' },
+    'mqtt_username': 'the_username',
+    'mqtt_password': 'the_token',
 	'subscribe_topics': [
 		{ 'name': 'reg', 'topic': 'test/proc/reg', 'on_message': 'on_reg_message'},
 		{ 'name': 'ctl', 'topic': 'test/proc/control', 'on_message': 'on_ctl_message' },
 		{ 'name': 'dbg', 'topic': 'test/proc/debug', 'on_message': 'on_dbg_message' },
-    { 'name': 'keepalive', 'topic':    'test/proc/keepalive', 'on_message': 'on_keepalive_message' }
+        { 'name': 'keepalive', 'topic':    'test/proc/keepalive', 'on_message': 'on_keepalive_message' }
 	]
 }
