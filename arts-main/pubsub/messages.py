@@ -40,7 +40,6 @@ def __convert_str_attrs(d):
         try:
             attr_str = d[key].replace("'", '"')
             d[key] = json.loads(attr_str)
-            print(key, attr_str, d[key])
         except Exception as _:
             pass
 

@@ -1,12 +1,13 @@
 """MQTT Listener."""
 
+import traceback
+import json
+import pprint
+
+import paho.mqtt.client as mqtt
 from json.decoder import JSONDecodeError
 
 from . import messages
-
-import paho.mqtt.client as mqtt
-import json
-import pprint
 
 
 class MQTTListener(mqtt.Client):
@@ -46,8 +47,8 @@ class MQTTListener(mqtt.Client):
             self.config['mqtt_server']['host'],
             self.config['mqtt_server']['port'], 60)
         for t in self.config['subscribe_topics']:
-            print('Subscribing:', t['topic'])
-            self.subscribe(t['topic'], 0)
+            print('Subscribing:', t)
+            self.subscribe(t, 0)
 
         self.loop_start()
 
@@ -70,11 +71,12 @@ class MQTTListener(mqtt.Client):
             return messages.Error(
                 msg.topic, {"desc": "Invalid JSON", "data": msg.payload})
 
-        handler = self.config['subscribe_topics'].get(msg.topic)
+        handler = self.config['subscribe_topics'].get(decoded.topic)
         if handler:
             try:
                 return getattr(self.view, handler)(decoded)
             except Exception as e:
+                print(traceback.format_exc())
                 return messages.Error(
                     msg.topic, {"desc": "Uncaught exception", "data": str(e)})
         else:
@@ -86,6 +88,8 @@ class MQTTListener(mqtt.Client):
         res = self.__on_message(msg)
         # only publish if not `None`
         if res:
+            print("Publishing response [topic={}]:\n{}".format(
+                str(res.topic), json.dumps(res.payload)))
             self.publish(res.topic, json.dumps(res.payload))
 
     def on_subscribe(self, mqttc, obj, mid, granted_qos):
@@ -94,4 +98,4 @@ class MQTTListener(mqtt.Client):
 
     def on_log(self, mqttc, obj, level, string):
         """Logging callback."""
-        print(string)
+        # print(string)

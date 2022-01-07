@@ -182,16 +182,20 @@ JWT_AUTH = {
 }
 
 # Realm
-REALM = "test"
+REALM = "realm"
 # MQTT Root topic
-MQTT_ROOT = "{}/proc/".format(REALM)
+MQTT_ROOT = "{}/proc".format(REALM)
 # MQTT Host server
-MQTT_HOST = "arena-dev1.conix.io"
+# MQTT_HOST = "arena-dev1.conix.io"
+MQTT_HOST = "localhost"
 # MQTT server port
-MQTT_PORT = 8883
+# MQTT_PORT = 8883
+MQTT_PORT = 1883
 # MQTT Credentials
-MQTT_USERNAME = 'the_username'
-MQTT_PASSWORD = 'the_token'
+# MQTT_USERNAME = 'the_username'
+MQTT_USERNAME = "ARTS"
+# MQTT_PASSWORD = 'the_token'
+MQTT_PASSWORD = ""
 
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
 # settings in settings.py)
@@ -211,4 +215,4 @@ PUBSUB = {
     }
 }
 
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "data")

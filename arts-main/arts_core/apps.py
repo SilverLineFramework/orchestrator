@@ -1,11 +1,6 @@
 from django.apps import AppConfig
-import pubsub.listener as listener
 from django.conf import settings
 import os
-
-from pubsub import MQTTListener, ARTSHandler
-from profile import ProfileCollector
-
 
 class ArtsCoreConfig(AppConfig):
     """Config containing ARTS core logic."""
@@ -16,6 +11,9 @@ class ArtsCoreConfig(AppConfig):
         """Initialize MQTT handler."""
         # check if we are running the main process; start mqtt listener
         if os.environ.get('RUN_MAIN', None) == 'true':
+
+            from pubsub import MQTTListener, ARTSHandler
+            from profile import ProfileCollector
 
             # instantiate scheduler
             import scheduler.lmf as sched

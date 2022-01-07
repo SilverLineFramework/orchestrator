@@ -3,7 +3,7 @@
 """
 from django.core.exceptions import ObjectDoesNotExist
 import scheduler.base as sb
-from arts_core.models import Runtime, Module, Link
+from arts_core.models import Runtime, Module
 
 class LeastModulesFirst(sb.SchedulerBase):
 

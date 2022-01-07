@@ -16,6 +16,9 @@ class FileType(models.TextChoices):
 class Runtime(models.Model):
     """Available ARENA runtimes."""
 
+    INPUT_ATTRS = [
+        "name", "apis", "runtime_type", "max_nmodules", "page_size"]
+
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
         help_text="Runtime UUID.")
@@ -69,6 +72,10 @@ class Runtime(models.Model):
 
 class Module(models.Model):
     """Currently running modules."""
+
+    INPUT_ATTRS = [
+        "name", "filename", "fileid", "filetype", "apis", "args", "env",
+        "channels", "peripherals"]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,

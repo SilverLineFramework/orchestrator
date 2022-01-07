@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Runtime, Module, Link
+from .models import Runtime, Module
 import json
 
 class ModuleListingField(serializers.RelatedField):
@@ -35,17 +35,6 @@ class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Module
         fields = ("type", "uuid", "name", "parent", "filename", "fileid", "filetype", "apis", "args", "env", "channels", "peripherals")
-        
-class LinkSerializer(serializers.ModelSerializer):
-    """
-    Serializes the link data
-    """
-    link_from = serializers.StringRelatedField(many=False)
-    link_to = serializers.StringRelatedField(many=False)
-    
-    class Meta:
-        model = Link
-        fields = ("uuid", "link_from", "link_to")
         
 class TokenSerializer(serializers.Serializer):
     """

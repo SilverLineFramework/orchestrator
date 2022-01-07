@@ -28,15 +28,26 @@ class ARTSHandler():
             db_entry = model.objects.get(pk=uuid.UUID(runtime))
             return db_entry
         except model.DoesNotExist:
-            raise UUIDNotFound(topic, runtime, obj_type=model.type)
+            raise UUIDNotFound(topic, runtime, obj_type=str(model().type))
+
+    def __object_from_dict(self, model, attrs):
+        """Convert attrs to model."""
+        filtered = {k: v for k, v in attrs.items() if k in model.INPUT_ATTRS}
+        if 'uuid' in attrs:
+            filtered['uuid'] = uuid.UUID(attrs['uuid'])
+        return model(**filtered)
 
     def reg(self, msg):
         """Handle registration message."""
-        if msg.payload['type'] != 'arts_req':
+        if msg.payload['type'] == 'arts_resp':
             return None
 
+        print("\nReceived registration message [topic={}]:\n{}".format(
+            str(msg.topic), msg.payload))
+
         if msg.payload['action'] == 'create':
-            db_entry = Runtime.objects.create(**msg.payload['data'])
+            db_entry = self.__object_from_dict(Runtime, msg.payload['data'])
+            db_entry.save()
             return messages.Response(
                 msg.topic, msg.payload['object_id'],
                 RuntimeSerializer(db_entry, many=False).data)
@@ -69,13 +80,21 @@ class ARTSHandler():
             else:
                 msg.payload['data']['apis'] = "WA"
 
-        db_entry = Module(**msg.payload['data'])
-        db_entry.parent = self.scheduler.schedule_new_module(db_entry)
-        db_entry.save()
+        module = self.__object_from_dict(Module, msg.payload['data'])
+        if 'parent' in msg.payload['data']:
+            try:
+                module.parent = self._get_object(
+                    msg.topic, msg.payload['data']['parent']['uuid'],
+                    model=Runtime)
+            except UUIDNotFound as e:
+                return e.message
+        else:
+            module.parent = self.scheduler.schedule_new_module(module)
+        module.save()
 
         return messages.Request(
-            "{}/{}".format(msg.topic, db_entry.parent.uuid), "create",
-            ModuleSerializer(db_entry, many=False).data)
+            "{}/{}".format(msg.topic, module.parent.uuid), "create",
+            ModuleSerializer(module, many=False).data)
 
     def __delete_module(self, msg):
         """Handle delete message."""
@@ -104,6 +123,12 @@ class ARTSHandler():
 
     def control(self, msg):
         """Handle per-module control message."""
+        if msg.payload['type'] == 'arts_resp':
+            return None
+
+        print("\nReceived control message [topic={}]:\n{}".format(
+            str(msg.topic), msg.payload))
+
         if msg.payload['type'] == 'runtime_resp':
             return self.__create_module_ack(msg)
         elif msg.payload['type'] == 'arts_req':
@@ -128,6 +153,6 @@ class ARTSHandler():
 
     def profile(self, msg):
         """Handle profiling message."""
-        print("Profile message")
-        self.profiler.add(msg)
+        self.profiler.add(msg.payload)
         self.profiler.save()
+        return None
