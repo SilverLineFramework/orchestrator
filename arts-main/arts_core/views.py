@@ -13,8 +13,8 @@ from django.http import JsonResponse
 from django.conf import settings
 
 from rest_framework import generics
-from .models import Runtime, Module, Link
-from .serializers import RuntimeSerializer, ModuleSerializer, LinkSerializer, TokenSerializer, UserSerializer #, RuntimeListSerializer
+from .models import Runtime, Module
+from .serializers import RuntimeSerializer, ModuleSerializer, TokenSerializer, UserSerializer
 
 # Get the JWT settings
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER

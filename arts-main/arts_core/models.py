@@ -1,103 +1,123 @@
+"""Core Models."""
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 import uuid
 import json
 
+
 class FileType(models.TextChoices):
+    """File type enum."""
+
     WA = 'WA', _('WASM')
     PY = 'PY', _('PYTHON')
 
 
 class Runtime(models.Model):
-    # runtime uuid
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # name of the runtime
-    name = models.CharField(max_length=255, default='aruntime')
-    # last time the runtime was updated/created
-    updated_at = models.DateTimeField(auto_now=True)
-    # supported APIs
-    apis = models.CharField(max_length=500, default="wasi:snapshot_preview1 wasi:unstable wasi:core wasi:clock wasi:environ wasi:sock wasi:args wasi:fd wasi:path wasi:poll wasi:proc wasi:random wasi:sched wasi:sock python:python3", blank=True)
-    # max number of modules
-    max_nmodules = models.IntegerField(default=3)
-    # keep alive interval (seconds)
-    ka_interval_sec = models.IntegerField(default=60)
-    # last keep alive timestamp
-    ka_ts = models.DateTimeField(auto_now_add=True)
-    # current number of modules
-    nmodules = models.IntegerField(default=0)
-    # WASM pagesize. Default = 64KiB. Memory-constrained embedded runtimes can use smaller page size of 4KiB
-    page_size = models.IntegerField(default=65536)
+    """Available ARENA runtimes."""
+
+    INPUT_KEYS = [
+        "uuid", "name", "apis", "runtime_type", "max_nmodules",
+        "ka_interval_sec", "page_size"]
+
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False,
+        help_text="Runtime UUID.")
+    name = models.CharField(
+        max_length=255, default='runtime',
+        help_text="Runtime short name (len <= 255).")
+    updated_at = models.DateTimeField(
+        auto_now=True, help_text="Last time the runtime was updated/created")
+    apis = models.CharField(
+        max_length=500, blank=True, help_text="Supported APIs.",
+        default=(
+            "wasi:snapshot_preview1 wasi:unstable wasi:core wasi:clock "
+            "wasi:environ wasi:sock wasi:args wasi:fd wasi:path wasi:poll "
+            "wasi:proc wasi:random wasi:sched wasi:sock python:python3"))
+    runtime_type = models.CharField(
+        max_length=16, default="linux",
+        help_text="Runtime type (browser, linux, embedded)")
+    max_nmodules = models.IntegerField(
+        default=3, help_text="Maximum number of modules (todo: replace)")
+    nmodules = models.IntegerField(
+        default=0, help_text="Current number of modules (todo: replace)")
+    ka_interval_sec = models.IntegerField(
+        default=60, help_text="Keepalive interval (seconds)")
+    ka_ts = models.DateTimeField(
+        auto_now_add=True, help_text="Last keepalive timestamp")
+    page_size = models.IntegerField(
+        default=65536, help_text=(
+            "WASM pagesize. Default = 64KiB. Memory-constrained embedded "
+            "runtimes can use smaller page size of 4KiB."))
 
     @property
     def type(self):
         return "runtime"
 
     def save(self, *args, **kwargs):
-        if (isinstance(self.uuid, uuid.UUID) == False):
+        """Save override to check for UUID validity."""
+        if not isinstance(self.uuid, uuid.UUID):
             self.uuid = uuid.uuid4()
 
         super(Runtime, self).save(*args, **kwargs)
 
     def __str__(self):
-        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'apis': str(self.apis), 'max_nmodules': self.max_nmodules, 'nmodules': self.nmodules, 'ka_ts': str(self.ka_ts)})
+        """Debug information."""
+        return str({
+            'type': self.type, 'uuid': str(self.uuid), 'name': self.name,
+            'apis': str(self.apis), 'max_nmodules': self.max_nmodules,
+            'nmodules': self.nmodules, 'ka_ts': str(self.ka_ts)
+        })
+
 
 class Module(models.Model):
-    # module uuid
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # name of the module
-    name = models.CharField(max_length=255, default='amodule')
-    # parent runtime (runtime where the module is installed/running)
-    parent = models.ForeignKey('Runtime', on_delete=models.CASCADE, related_name='children', blank=True, null=True)
-    # program file
-    filename = models.CharField(max_length=255, blank=False, default='afile.wasm')
-    # file id
-    fileid = models.CharField(max_length=255, blank=False, default='afileid')
-    #filetype (PY|WA)
-    filetype = models.CharField(max_length=10, choices=FileType.choices, default=FileType.WA)
-    # APIS required by the module
-    apis = models.CharField(max_length=1000, default='["wasi:snapshot_preview1"]', blank=True)
-    # arguments to pass to the module at startup
-    args = models.CharField(max_length=10000, default='[]', blank=True)
-    # env to pass to the module at startup
-    env = models.CharField(max_length=10000, default='[]', blank=True)
-    # channels
-    channels = models.CharField(max_length=10000, default='[]', blank=True)
-    # peripherals
-    peripherals = models.CharField(max_length=10000, default='[]', blank=True)
+    """Currently running modules."""
+
+    INPUT_KEYS = [
+        "uuid", "name", "filename", "fileid", "filetype", "apis", "args",
+        "env", "channels", "peripherals"]
+
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False,
+        help_text="Module UUID.")
+    name = models.CharField(
+        max_length=255, default='module',
+        help_text="Module short name (len < 255).")
+    parent = models.ForeignKey(
+        'Runtime', on_delete=models.CASCADE, related_name='children',
+        blank=True, null=True,
+        help_text="Parent runtime (runtime where the module is running")
+    filename = models.CharField(
+        max_length=255, blank=False, help_text="Program file (required).")
+    fileid = models.CharField(
+        max_length=255, blank=False, help_text="File ID (required).")
+    filetype = models.CharField(
+        max_length=16, choices=FileType.choices, default=FileType.WA,
+        help_text="File type (PY, WA)")
+    apis = models.TextField(
+        default='["wasi:snapshot_preview1"]', blank=True,
+        help_text="APIs required by the module.")
+    args = models.TextField(
+        default='[]', blank=True,
+        help_text="Arguments to pass to the module at startup.")
+    env = models.TextField(
+        default='[]', blank=True,
+        help_text="Environment path to pass to the module at startup.")
+    channels = models.TextField(
+        default='[]', blank=True, help_text="Channels to open at startup.")
+    peripherals = models.TextField(
+        default='[]', blank=True, help_text="Required peripherals.")
 
     @property
     def type(self):
         return "module"
 
-    def save(self, *args, **kwargs):
-        if (self.parent.nmodules >= self.parent.max_nmodules):
-            raise Exception('Parent reached maximimum number of modules ({})'.format(self.parent.max_nmodules))
-        super(Module, self).save(*args, **kwargs)
-
     def __str__(self):
-        return str({ 'type': self.type, 'uuid':str(self.uuid), 'name': self.name, 'parent': self.parent, 'filename': self.filename, 'apis': self.apis, 'fileid': self.fileid, 'filetype': self.filetype, 'args': self.args, 'env': self.env, 'channels': self.channels })
-
-class Link(models.Model):
-    # link uuid
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    link_from = models.ForeignKey('Module', on_delete=models.CASCADE, related_name='link_from')
-    link_to = models.ForeignKey('Module', on_delete=models.CASCADE, related_name='link_to')
-
-    #def __str__(self):
-    #    return "{}: {} - {}".format(self.uuid, self.link_from, self.link_to)
-
-
-# class APIs():
-#     WASI_SP1 = 'wasi:snapshot_preview1'
-#     WASI_UNSTBL = 'wasi:unstable'
-#     WASI_CORE = 'wasi:core'
-#     WASI_CLOCK = 'wasi:clock'
-#     WASI_ENV = 'wasi:environ'
-#     WASI_SOCK = 'wasi:sock'
-#     WASI_ARGS = 'wasi:args'
-#     WASI_FD = 'wasi:fd'
-#     WASI_PATH = 'wasi:path'
-#     WASI_POLL = 'wasi:poll'
-#     WASI_PROC = 'wasi:proc'
-#     WASI_RND = 'wasi:random'
-#     WASI_SCHED = 'wasi:sched'
+        """Debug information."""
+        return str({
+            'type': self.type, 'uuid': str(self.uuid), 'name': self.name,
+            'parent': self.parent, 'filename': self.filename,
+            'apis': self.apis, 'fileid': self.fileid,
+            'filetype': self.filetype, 'args': self.args, 'env': self.env,
+            'channels': self.channels
+        })

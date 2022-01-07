@@ -181,16 +181,32 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE': None,
 }
 
-# pubsub settings
+# Realm
+REALM = "test"
+# MQTT Root topic
+MQTT_ROOT = "{}/proc/".format(REALM)
+# MQTT Host server
+MQTT_HOST = "arena-dev1.conix.io"
+# MQTT server port
+MQTT_PORT = 8883
+# MQTT Credentials
+MQTT_USERNAME = 'the_username'
+MQTT_PASSWORD = 'the_token'
+
+# TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
+# settings in settings.py)
+
+
+# MQTT pubsub config
 PUBSUB = {
-    'mqtt_server': { 'host': 'arena-dev1.conix.io', 'port': 8883 },
-    'web_client_mqtt': { 'host': 'arena-dev1.conix.io', 'ws_path': 'mqtt/' },
-    'mqtt_username': 'the_username',
-    'mqtt_password': 'the_token',
-	'subscribe_topics': [
-		{ 'name': 'reg', 'topic': 'test/proc/reg', 'on_message': 'on_reg_message'},
-		{ 'name': 'ctl', 'topic': 'test/proc/control', 'on_message': 'on_ctl_message' },
-		{ 'name': 'dbg', 'topic': 'test/proc/debug', 'on_message': 'on_dbg_message' },
-        { 'name': 'keepalive', 'topic':    'test/proc/keepalive', 'on_message': 'on_keepalive_message' }
-	]
+    'mqtt_server': {'host': MQTT_HOST, 'port': MQTT_PORT},
+    'web_client_mqtt': {'host': MQTT_HOST, 'ws_path': 'mqtt/'},
+    'mqtt_credentials': {
+        'username': MQTT_USERNAME,
+        'password': MQTT_PASSWORD
+    },
+    'subscribe_topics': {
+        '{}/{}'.format(MQTT_ROOT, endpoint): endpoint
+        for endpoint in ['reg', 'control', 'debug', 'keepalive', 'profile'] 
+    }
 }
