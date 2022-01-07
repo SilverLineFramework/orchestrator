@@ -4,6 +4,7 @@ from django.conf import settings
 import os
 
 from pubsub import MQTTListener, ARTSHandler
+from profile import ProfileCollector
 
 
 class ArtsCoreConfig(AppConfig):
@@ -19,8 +20,9 @@ class ArtsCoreConfig(AppConfig):
             # instantiate scheduler
             import scheduler.lmf as sched
             scheduler = sched.LeastModulesFirst()
+            profiler = ProfileCollector(dir=settings.DATA_DIR)
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
             self.mqtt_listener = MQTTListener(
-                ARTSHandler(scheduler),
+                ARTSHandler(scheduler, profiler),
                 pubsub_config=settings.PUBSUB, jwt_config=settings.PUBSUB)

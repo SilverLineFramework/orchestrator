@@ -36,9 +36,9 @@ class MQTTListener(mqtt.Client):
         self.view = view
         self.jwt_config = jwt_config
 
-        self._connect_and_subscribe()
+        self.__connect_and_subscribe()
 
-    def _connect_and_subscribe(self):
+    def __connect_and_subscribe(self):
         """Subscribe to control topics."""
         if self.config['mqtt_credentials'] is not None:
             self.username_pw_set(**self.config['mqtt_credentials'])
@@ -62,7 +62,7 @@ class MQTTListener(mqtt.Client):
             payload = payload[1:len(payload) - 1]
         return messages.Message(msg.topic, json.loads(payload))
 
-    def _on_message(self, msg):
+    def __on_message(self, msg):
         """Message handler internals."""
         try:
             decoded = self.__json_decode(msg)
@@ -83,7 +83,7 @@ class MQTTListener(mqtt.Client):
 
     def on_message(self, mqttc, obj, msg):
         """MQTT Message handler."""
-        res = self._on_message(msg)
+        res = self.__on_message(msg)
         # only publish if not `None`
         if res:
             self.publish(res.topic, json.dumps(res.payload))

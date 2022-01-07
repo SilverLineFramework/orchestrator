@@ -210,3 +210,5 @@ PUBSUB = {
         for endpoint in ['reg', 'control', 'debug', 'keepalive', 'profile'] 
     }
 }
+
+DATA_DIR = os.path.join(BASE_DIR, "data")

@@ -18,8 +18,9 @@ class UUIDNotFound(Exception):
 class ARTSHandler():
     """ARTS Message Handler."""
 
-    def __init__(self, scheduler):
+    def __init__(self, scheduler, profiler):
         self.scheduler = scheduler
+        self.profiler = profiler
 
     def _get_object(self, topic, runtime, model=Runtime):
         """Fetch runtime/module by UUID or generate error."""
@@ -29,44 +30,30 @@ class ARTSHandler():
         except model.DoesNotExist:
             raise UUIDNotFound(topic, runtime, obj_type=model.type)
 
-    def _create_runtime(self, msg):
-        """Register new runtime."""
-        obj_data = {}
-        for key in Runtime.INPUT_KEYS:
-            if key in msg.payload['data']:
-                obj_data[key] = msg.payload['data'][key]
-        db_entry = Runtime.objects.create(**obj_data)
-
-        return messages.Response(
-            msg.topic, msg.payload['object_id'],
-            RuntimeSerializer(db_entry, many=False).data)
-
-    def _delete_runtime(self, msg):
-        """Delete existing runtime."""
-        try:
-            runtime = self._get_object(
-                msg.topic, msg.payload['data']['uuid'], model=Runtime)
-        except UUIDNotFound as e:
-            return e.message
-
-        body = RuntimeSerializer(runtime, many=False).data
-        runtime.delete()
-        return messages.Response(msg.topic, msg.payload['object_id'], body)
-
     def reg(self, msg):
         """Handle registration message."""
         if msg.payload['type'] != 'arts_req':
             return None
 
         if msg.payload['action'] == 'create':
-            return self._create_runtime(msg)
+            db_entry = Runtime.objects.create(**msg.payload['data'])
+            return messages.Response(
+                msg.topic, msg.payload['object_id'],
+                RuntimeSerializer(db_entry, many=False).data)
         elif msg.payload['action'] == 'delete':
-            return self._delete_runtime(msg)
+            try:
+                runtime = self._get_object(
+                    msg.topic, msg.payload['data']['uuid'], model=Runtime)
+            except UUIDNotFound as e:
+                return e.message
+            body = RuntimeSerializer(runtime, many=False).data
+            runtime.delete()
+            return messages.Response(msg.topic, msg.payload['object_id'], body)
         else:
             return messages.Error(msg.topic, {
                 "desc": "invalid action", "data": msg.payload['action']})
 
-    def _create_module_ack(self, msg):
+    def __create_module_ack(self, msg):
         """Handle ACK sent after scheduling module.
 
         TODO: Should update a flag if ok and reschedule otherwise; currently
@@ -74,20 +61,15 @@ class ARTSHandler():
         """
         return None
 
-    def _create_module(self, msg):
+    def __create_module(self, msg):
         """Handle create message."""
-        obj_data = {}
-        for key in Module.INPUT_KEYS:
-            if key in msg.payload['data']:
-                obj_data[key] = msg.payload['data']['key']
-
-        if 'apis' not in obj_data:
-            if obj_data.get("filetype") == 'PY':
-                obj_data['apis'] = "PY"
+        if 'apis' not in msg.payload['data']:
+            if msg.payload['data'].get("filetype") == 'PY':
+                msg.payload['data']['apis'] = "PY"
             else:
-                obj_data['apis'] = "WA"
+                msg.payload['data']['apis'] = "WA"
 
-        db_entry = Module(**obj_data)
+        db_entry = Module(**msg.payload['data'])
         db_entry.parent = self.scheduler.schedule_new_module(db_entry)
         db_entry.save()
 
@@ -95,46 +77,40 @@ class ARTSHandler():
             "{}/{}".format(msg.topic, db_entry.parent.uuid), "create",
             ModuleSerializer(db_entry, many=False).data)
 
-    def _delete_module(self, msg):
+    def __delete_module(self, msg):
         """Handle delete message."""
-        if 'send_to_runtime' in msg.payload['data']:
+        data = msg.payload['data']
+        try:
+            module = self._get_object(msg.topic, data['uuid'], model=Module)
+            uuid_current = str(module.parent.uuid)
+        except UUIDNotFound as e:
+            return e.message
+
+        if 'send_to_runtime' in data:
             try:
-                send_rt = self._get_object(
-                    msg.topic, msg.payload['data']['send_to_runtime'],
-                    model=Runtime)
+                module.parent = self._get_object(
+                    msg.topic, data['send_to_runtime'], model=Runtime)
+                module.save()
             except UUIDNotFound as e:
                 return e.message
         else:
             send_rt = None
-
-        try:
-            module = self._get_object(
-                msg.topic, msg.payload['data']['uuid'], model=Module)
-        except UUIDNotFound as e:
-            return e.message
-
-        res = messages.Request(
-            "{}/{}".format(msg.topic, module.parent.uuid), "delete", {
-                "type": "module", "uuid": msg.payload['data']['uuid'],
-                "send_to_runtime": send_rt
-            })
-        if send_rt:
-            module.parent = send_rt
-            module.save()
-        else:
             module.delete()
 
-        return res
+        return messages.Request(
+            "{}/{}".format(msg.topic, uuid_current), "delete", {
+                "type": "module", "uuid": data['uuid'],
+                "send_to_runtime": send_rt})
 
     def control(self, msg):
         """Handle per-module control message."""
         if msg.payload['type'] == 'runtime_resp':
-            return self._create_module_ack(msg)
+            return self.__create_module_ack(msg)
         elif msg.payload['type'] == 'arts_req':
             if msg.payload['action'] == 'create':
-                return self._create_module(msg)
+                return self.__create_module(msg)
             elif msg.payload['action'] == 'delete':
-                return self._delete_module(msg)
+                return self.__delete_module(msg)
             else:
                 return messages.Error(msg.topic, {
                     "desc": "invalid action", "data": msg.payload['action']})
@@ -152,4 +128,6 @@ class ARTSHandler():
 
     def profile(self, msg):
         """Handle profiling message."""
-        pass
+        print("Profile message")
+        self.profiler.add(msg)
+        self.profiler.save()

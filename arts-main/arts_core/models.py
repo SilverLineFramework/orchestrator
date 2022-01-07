@@ -16,10 +16,6 @@ class FileType(models.TextChoices):
 class Runtime(models.Model):
     """Available ARENA runtimes."""
 
-    INPUT_KEYS = [
-        "uuid", "name", "apis", "runtime_type", "max_nmodules",
-        "ka_interval_sec", "page_size"]
-
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
         help_text="Runtime UUID.")
@@ -52,6 +48,7 @@ class Runtime(models.Model):
 
     @property
     def type(self):
+        """Model name for serializers."""
         return "runtime"
 
     def save(self, *args, **kwargs):
@@ -72,10 +69,6 @@ class Runtime(models.Model):
 
 class Module(models.Model):
     """Currently running modules."""
-
-    INPUT_KEYS = [
-        "uuid", "name", "filename", "fileid", "filetype", "apis", "args",
-        "env", "channels", "peripherals"]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -110,6 +103,7 @@ class Module(models.Model):
 
     @property
     def type(self):
+        """Model name for serializers."""
         return "module"
 
     def __str__(self):
