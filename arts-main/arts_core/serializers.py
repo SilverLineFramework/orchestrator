@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Runtime, Module, Link
+from .models import Runtime, Module
 import json
 
 class ModuleListingField(serializers.RelatedField):
@@ -15,7 +15,9 @@ class RuntimeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Runtime
-        fields = ("type", "uuid", "name", "apis", "max_nmodules", "nmodules", "ka_interval_sec", "children")
+        fields = (
+            "type", "uuid", "name", "apis", "max_nmodules", "nmodules",
+            "ka_interval_sec", "children")
 
 class ParentListingField(serializers.RelatedField):
     def to_representation(self, value):
@@ -34,19 +36,10 @@ class ModuleSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Module
-        fields = ("type", "uuid", "name", "parent", "filename", "fileid", "filetype", "apis", "args", "env", "channels", "peripherals")
-        
-class LinkSerializer(serializers.ModelSerializer):
-    """
-    Serializes the link data
-    """
-    link_from = serializers.StringRelatedField(many=False)
-    link_to = serializers.StringRelatedField(many=False)
-    
-    class Meta:
-        model = Link
-        fields = ("uuid", "link_from", "link_to")
-        
+        fields = (
+            "type", "uuid", "name", "parent", "filename", "filetype", "apis",
+            "args", "env", "channels", "peripherals")
+
 class TokenSerializer(serializers.Serializer):
     """
     This serializer serializes the token data

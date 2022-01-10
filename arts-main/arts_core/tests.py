@@ -80,48 +80,7 @@ class ModuleModelTest(APITestCase):
             uuid_obj = uuid.UUID(str(a_mod.uuid), version=4)
         except ValueError:
             self.assertTrue(False)
-            
-class LinkModelTest(APITestCase):
-    def setUp(self):
-        self.a_rt = Runtime.objects.create(
-            name="runtime1"
-        )        
-        self.a_mod1 = Module.objects.create(
-            name="module1",
-            parent=self.a_rt
-        )
-        self.a_mod2 = Module.objects.create(
-            name="module2",
-            parent=self.a_rt
-        )
-        self.a_link = Link.objects.create(
-            uuid=uuid.uuid4(),
-            link_from=self.a_mod1,
-            link_to=self.a_mod2
-        )
-
-    def test_link(self):
-        """"
-        This test ensures that the link created in the setup
-        exists
-        """
-        self.assertEqual(self.a_link.link_from, self.a_mod1)
-        self.assertEqual(self.a_link.link_to, self.a_mod2)
-
-    def test_create_link_with_no_uuid(self):
-        """"
-        This test ensures that a valid uuid is assigned to a link when 
-        created with no uuid 
-        """  
-        a_lnk = Link.objects.create(
-            link_from=self.a_mod1,
-            link_to=self.a_mod2        
-        )
-        try: 
-            uuid_obj = uuid.UUID(str(a_lnk.uuid), version=4)
-        except ValueError:
-            self.assertTrue(False)
-                    
+                   
 # tests for views
 
 class BaseViewTest(APITestCase):
