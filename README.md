@@ -35,7 +35,7 @@ Enter the ```arts-main``` directory.
 - Start the virtualenv: ```source env/bin/activate```
 - (*Optional*) Create admin user: ```python manage.py createsuperuser --email admin@example.com --username admin```
 
-## Config
+### Config
 
 **NOTE**: Configuration files are not required for local execution (must also have ```debug=True```).
 
@@ -71,3 +71,10 @@ Enter the ```arts-main``` directory.
 ### UIs
 - Admin: `http://localhost:8000/admin/`
 - Vizualize: `http://localhost:8000/static/index.html`
+
+## Documentation
+
+ARTS is documented with [Sphinx](https://www.sphinx-doc.org/en/master/index.html) using
+Numpy-style docstrings parsed by [Napoleon](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/).
+
+Run ```./build.sh``` to build.

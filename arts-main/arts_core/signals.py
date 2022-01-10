@@ -5,7 +5,7 @@ Routes app signals; Place to write all app's signal receivers
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.apps import apps
-from .models import Runtime, Module, Link
+from .models import Runtime, Module
 
 ##########
 #TODO: make adding modules using rest also create modules at remote runtimes (pass part of the logic in pubsub.views to the module signal handlers)

@@ -1,3 +1,11 @@
+# Compiled docs
+docs/build/
+docs/source/arts_api/
+docs/source/arts_core/
+docs/source/profile/
+docs/source/pubsub/
+docs/source/scheduler/
+
 # Profile data
 data/
 
