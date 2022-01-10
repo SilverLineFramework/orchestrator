@@ -200,6 +200,7 @@ MQTT_PASSWORD = ""
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
 # settings in settings.py)
 
+MQTT_ERR = "{}/err".format(MQTT_ROOT)
 
 # MQTT pubsub config
 PUBSUB = {

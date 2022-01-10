@@ -1,9 +1,9 @@
 """Core Models."""
 
+import uuid
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-import uuid
-import json
 
 
 class FileType(models.TextChoices):
@@ -11,6 +11,18 @@ class FileType(models.TextChoices):
 
     WA = 'WA', _('WASM')
     PY = 'PY', _('PYTHON')
+
+
+def _default_apis():
+    return [
+        "wasi:snapshot_preview1", "wasi:unstable", "wasi:core",
+        "wasi:clock", "wasi:environ", "wasi:sock", "wasi:args", "wasi:fd",
+        "wasi:path", "wasi:poll", "wasi:proc", "wasi:random", "wasi:sched",
+        "wasi:sock", "python:python3"]
+
+
+def _emptylist():
+    return []
 
 
 class Runtime(models.Model):
@@ -27,12 +39,9 @@ class Runtime(models.Model):
         help_text="Runtime short name (len <= 255).")
     updated_at = models.DateTimeField(
         auto_now=True, help_text="Last time the runtime was updated/created")
-    apis = models.CharField(
+    apis = models.JSONField(
         max_length=500, blank=True, help_text="Supported APIs.",
-        default=(
-            "wasi:snapshot_preview1 wasi:unstable wasi:core wasi:clock "
-            "wasi:environ wasi:sock wasi:args wasi:fd wasi:path wasi:poll "
-            "wasi:proc wasi:random wasi:sched wasi:sock python:python3"))
+        default=_default_apis)
     runtime_type = models.CharField(
         max_length=16, default="linux",
         help_text="Runtime type (browser, linux, embedded)")
@@ -59,15 +68,12 @@ class Runtime(models.Model):
         if not isinstance(self.uuid, uuid.UUID):
             self.uuid = uuid.uuid4()
 
-        super(Runtime, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """Debug information."""
-        return str({
-            'type': self.type, 'uuid': str(self.uuid), 'name': self.name,
-            'apis': str(self.apis), 'max_nmodules': self.max_nmodules,
-            'nmodules': self.nmodules, 'ka_ts': str(self.ka_ts)
-        })
+        return "[{}] {}:{}".format(
+            self.name, self.runtime_type, str(self.uuid))
 
 
 class Module(models.Model):
@@ -87,26 +93,34 @@ class Module(models.Model):
         'Runtime', on_delete=models.CASCADE, related_name='children',
         blank=True, null=True,
         help_text="Parent runtime (runtime where the module is running")
-    filename = models.CharField(
-        max_length=255, blank=False, help_text="Program file (required).")
-    fileid = models.CharField(
-        max_length=255, blank=False, help_text="File ID (required).")
+    filename = models.TextField(
+        blank=False, help_text="Program file (required).")
     filetype = models.CharField(
         max_length=16, choices=FileType.choices, default=FileType.WA,
         help_text="File type (PY, WA)")
-    apis = models.TextField(
-        default='["wasi:snapshot_preview1"]', blank=True,
+    source = models.ForeignKey(
+        'File', on_delete=models.PROTECT, blank=True, null=True,
+        help_text="Source file identifier (for profile tracking)")
+    apis = models.JSONField(
+        default=_emptylist, blank=True,
         help_text="APIs required by the module.")
-    args = models.TextField(
-        default='[]', blank=True,
+    args = models.JSONField(
+        default=_emptylist, blank=True,
         help_text="Arguments to pass to the module at startup.")
-    env = models.TextField(
-        default='[]', blank=True,
+    env = models.JSONField(
+        default=_emptylist, blank=True,
         help_text="Environment path to pass to the module at startup.")
-    channels = models.TextField(
-        default='[]', blank=True, help_text="Channels to open at startup.")
-    peripherals = models.TextField(
-        default='[]', blank=True, help_text="Required peripherals.")
+    channels = models.JSONField(
+        default=_emptylist, blank=True,
+        help_text="Channels to open at startup.")
+    peripherals = models.JSONField(
+        default=_emptylist, blank=True, help_text="Required peripherals.")
+    runtime = models.IntegerField(
+        default=100000, help_text="sched_deadline runtime (microseconds).")
+    period = models.IntegerField(
+        default=1000000, help_text="sched_deadline period (microseconds).")
+    affinity = models.IntegerField(
+        default=2, help_text="sched_deadline affinity.")
 
     @property
     def type(self):
@@ -114,11 +128,22 @@ class Module(models.Model):
         return "module"
 
     def __str__(self):
-        """Debug information."""
-        return str({
-            'type': self.type, 'uuid': str(self.uuid), 'name': self.name,
-            'parent': self.parent, 'filename': self.filename,
-            'apis': self.apis, 'fileid': self.fileid,
-            'filetype': self.filetype, 'args': self.args, 'env': self.env,
-            'channels': self.channels
-        })
+        """Django admin page display row."""
+        return "[{}] {}:{}".format(
+            self.name, self.source.name, str(self.uuid))
+
+
+class File(models.Model):
+    """Module source code."""
+
+    index = models.BigAutoField(primary_key=True, help_text="File ID.")
+    name = models.TextField(blank=False, help_text="Program file.")
+    type = models.CharField(
+        max_length=16, choices=FileType.choices, default=FileType.WA,
+        help_text="Program file type.")
+    # hash = models.BinaryField(help_text="File hash.")
+    # Todo: add hashing infrastructure
+
+    def __str__(self):
+        """Django admin page display row."""
+        return "[{}] {}:{}".format(self.index, self.type, self.name)

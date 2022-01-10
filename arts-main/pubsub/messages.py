@@ -3,6 +3,9 @@
 import collections
 import uuid
 import json
+from dataclasses import dataclass
+
+from django.conf import settings
 
 
 class Result():
@@ -19,12 +22,33 @@ class Action():
     delete = 'delete'
 
 
-Message = collections.namedtuple("ARTSMessage", ["topic", "payload"])
+@dataclass
+class Message:
+    """Pubsub Message container."""
+
+    topic: str
+    payload: dict
+
+    def get(self, *args):
+        """Get attribute, or raise appropriate error.
+
+        Raises
+        ------
+        MissingField
+            Equivalent of ```KeyError```, with appropriate error generation.
+        """
+        try:
+            d = self.payload
+            for p in args:
+                d = d[p]
+            return d
+        except (KeyError, TypeError):
+            raise MissingField(args)
 
 
-def Error(topic, data):
+def Error(data):
     """Error message."""
-    return Message(topic, {
+    return Message(settings.MQTT_ERR, {
         "object_id": str(uuid.uuid4()),
         "action": "error",
         "type": "arts_resp",
@@ -62,3 +86,34 @@ def Request(topic, action, data, convert=True):
         "object_id": str(uuid.uuid4()), "action": action, "type": "arts_req",
         "data": data
     })
+
+
+class ARTSException(Exception):
+    """Base class for ARTS exceptions."""
+
+    def __init__(self, payload):
+        self.message = Error(payload)
+
+
+class UUIDNotFound(ARTSException):
+    """Exception for runtime/module UUID not found."""
+
+    def __init__(self, obj, obj_type="runtime"):
+        super().__init__(
+            {"desc": "invalid {} UUID".format(obj_type), "data": obj})
+
+
+class InvalidArgument(ARTSException):
+    """Exception for invalid argument value."""
+
+    def __init__(self, arg_name, arg_value):
+        super().__init__(
+            {"desc": "invalid {}".format(arg_name), "data": arg_value})
+
+
+class MissingField(ARTSException):
+    """Required field is missing."""
+
+    def __init__(self, path):
+        super().__init__(
+            {"desc": "missing field", "data": "/".join(path)})

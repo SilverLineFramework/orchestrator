@@ -1,5 +1,5 @@
 """Profile data."""
 
-from .collect import ProfileCollector
+from .collect import Collector
 
-__all__ = ["ProfileCollector"]
+__all__ = ["Collector"]

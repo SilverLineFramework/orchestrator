@@ -29,9 +29,7 @@ class MQTTListener(mqtt.Client):
     def __init__(self, view, cid='ARTS', pubsub_config=None, jwt_config=None):
         super().__init__(cid)
 
-        print("Starting MQTT client.")
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(pubsub_config)
+        print("[Setup] Starting MQTT client...")
 
         self.config = pubsub_config
         self.view = view
@@ -46,15 +44,15 @@ class MQTTListener(mqtt.Client):
         self.connect(
             self.config['mqtt_server']['host'],
             self.config['mqtt_server']['port'], 60)
-        for t in self.config['subscribe_topics']:
-            print('Subscribing:', t)
-            self.subscribe(t, 0)
 
+        self.__subscribe_mid = {
+            self.subscribe(t, 0)[1]: t for t in self.config['subscribe_topics']
+        }
         self.loop_start()
 
     def on_connect(self, mqttc, obj, flags, rc):
         """Topic connect callback."""
-        print("rc: {}".format(rc))
+        print("[Setup] Connected: rc={}".format(rc))
 
     def __json_decode(self, msg):
         """Decode JSON MQTT message."""
@@ -64,38 +62,48 @@ class MQTTListener(mqtt.Client):
         return messages.Message(msg.topic, json.loads(payload))
 
     def __on_message(self, msg):
-        """Message handler internals."""
+        """Message handler internals.
+
+        Handlers take a (topic, data) ```Message``` as input, and return either
+        a ```Message``` to send in response, ```None``` for no response, or
+        raise an ```ARTSException``` which should be given as a response.
+        """
         try:
             decoded = self.__json_decode(msg)
         except JSONDecodeError:
             return messages.Error(
-                msg.topic, {"desc": "Invalid JSON", "data": msg.payload})
+                {"desc": "Invalid JSON", "data": msg.payload})
 
         handler = self.config['subscribe_topics'].get(decoded.topic)
         if handler:
             try:
                 return getattr(self.view, handler)(decoded)
+            # ARTS Exceptions are raised by handlers in response to
+            # invalid request data (which has been detected).
+            except messages.ARTSException as e:
+                return e.message
+            # Uncaught exceptions should only be due to programmer error.
             except Exception as e:
                 print(traceback.format_exc())
+                print("Input message: {}".format(str(decoded.payload)))
                 return messages.Error(
-                    msg.topic, {"desc": "Uncaught exception", "data": str(e)})
+                    {"desc": "Uncaught exception", "data": str(e)})
         else:
-            return messages.Error(
-                msg.topic, {"desc": "Invalid topic", "data": msg.topic})
+            return messages.Error({"desc": "Invalid topic", "data": msg.topic})
 
     def on_message(self, mqttc, obj, msg):
         """MQTT Message handler."""
         res = self.__on_message(msg)
         # only publish if not `None`
         if res:
-            print("Publishing response [topic={}]:\n{}".format(
-                str(res.topic), json.dumps(res.payload)))
-            self.publish(res.topic, json.dumps(res.payload))
+            payload = json.dumps(res.payload)
+            print("Response [topic={}]:\n{}".format(str(res.topic), payload))
+            self.publish(res.topic, payload)
 
     def on_subscribe(self, mqttc, obj, mid, granted_qos):
         """Subscribe callback."""
-        print("Subscribed: {} {}".format(mid, granted_qos))
+        print("[Setup] Subscribed: {}".format(self.__subscribe_mid[mid]))
 
     def on_log(self, mqttc, obj, level, string):
         """Logging callback."""
-        # print(string)
+        pass

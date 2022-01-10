@@ -2,6 +2,7 @@ from django.apps import AppConfig
 from django.conf import settings
 import os
 
+
 class ArtsCoreConfig(AppConfig):
     """Config containing ARTS core logic."""
 
@@ -13,12 +14,12 @@ class ArtsCoreConfig(AppConfig):
         if os.environ.get('RUN_MAIN', None) == 'true':
 
             from pubsub import MQTTListener, ARTSHandler
-            from profile import ProfileCollector
+            from profile import Collector
 
             # instantiate scheduler
             import scheduler.lmf as sched
             scheduler = sched.LeastModulesFirst()
-            profiler = ProfileCollector(dir=settings.DATA_DIR)
+            profiler = Collector(dir=settings.DATA_DIR)
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
             self.mqtt_listener = MQTTListener(
