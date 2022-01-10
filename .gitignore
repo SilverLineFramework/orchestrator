@@ -1,6 +1,11 @@
 # Profile data
 data/
 
+# Secrets & Config
+mqtt.json
+credentials.json
+key.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

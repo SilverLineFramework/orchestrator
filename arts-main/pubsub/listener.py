@@ -7,6 +7,8 @@ import pprint
 import paho.mqtt.client as mqtt
 from json.decoder import JSONDecodeError
 
+from django.conf import settings
+
 from . import messages
 
 
@@ -20,18 +22,15 @@ class MQTTListener(mqtt.Client):
         dict keys.
     cid : str
         Client ID for paho MQTT client.
-    pubsub_config : dict
-        Configuration for pubsub topics.
     jwt_config : dict
         JSON Web Token configuration
     """
 
-    def __init__(self, view, cid='ARTS', pubsub_config=None, jwt_config=None):
+    def __init__(self, view, cid='ARTS', jwt_config=None):
         super().__init__(cid)
 
         print("[Setup] Starting MQTT client...")
 
-        self.config = pubsub_config
         self.view = view
         self.jwt_config = jwt_config
 
@@ -39,15 +38,18 @@ class MQTTListener(mqtt.Client):
 
     def __connect_and_subscribe(self):
         """Subscribe to control topics."""
-        if self.config['mqtt_credentials'] is not None:
-            self.username_pw_set(**self.config['mqtt_credentials'])
-        self.connect(
-            self.config['mqtt_server']['host'],
-            self.config['mqtt_server']['port'], 60)
+        self.username_pw_set(
+            username=settings.MQTT_USERNAME,
+            password=settings.MQTT_PASSWORD)
+        self.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
 
         self.__subscribe_mid = {
-            self.subscribe(t, 0)[1]: t for t in self.config['subscribe_topics']
+            self.subscribe(t, 0)[1]: t for t in settings.MQTT_TOPICS
         }
+        self._handler_dispatcher = {
+            k: getattr(self.view, v) for k, v in settings.MQTT_TOPICS.items()
+        }
+
         self.loop_start()
 
     def on_connect(self, mqttc, obj, flags, rc):
@@ -74,10 +76,10 @@ class MQTTListener(mqtt.Client):
             return messages.Error(
                 {"desc": "Invalid JSON", "data": msg.payload})
 
-        handler = self.config['subscribe_topics'].get(decoded.topic)
-        if handler:
+        handler = self._handler_dispatcher.get(decoded.topic)
+        if callable(handler):
             try:
-                return getattr(self.view, handler)(decoded)
+                return handler(decoded)
             # ARTS Exceptions are raised by handlers in response to
             # invalid request data (which has been detected).
             except messages.ARTSException as e:

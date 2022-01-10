@@ -23,5 +23,4 @@ class ArtsCoreConfig(AppConfig):
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
             self.mqtt_listener = MQTTListener(
-                ARTSHandler(scheduler, profiler),
-                pubsub_config=settings.PUBSUB, jwt_config=settings.PUBSUB)
+                ARTSHandler(scheduler, profiler), jwt_config=settings.JWT_AUTH)
