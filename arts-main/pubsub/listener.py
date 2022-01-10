@@ -2,7 +2,6 @@
 
 import traceback
 import json
-import pprint
 
 import paho.mqtt.client as mqtt
 from json.decoder import JSONDecodeError
@@ -39,8 +38,7 @@ class MQTTListener(mqtt.Client):
     def __connect_and_subscribe(self):
         """Subscribe to control topics."""
         self.username_pw_set(
-            username=settings.MQTT_USERNAME,
-            password=settings.MQTT_PASSWORD)
+            username=settings.MQTT_USERNAME, password=settings.MQTT_PASSWORD)
         self.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
 
         self.__subscribe_mid = {

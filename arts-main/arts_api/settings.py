@@ -32,10 +32,10 @@ try:
         _key_file = json.load(f)
     SECRET_KEY = _key_file["key"]
 except (FileNotFoundError, KeyError):
-    if DEBUG:
+    if not DEBUG:
         raise Exception("Secret key file `key.json` not found.")
     else:
-        pass
+        SECRET_KEY = "NOT_A_SECRET_KEY"
 
 # Includes 'localhost' if running in DEBUG=True.
 # https://docs.djangoproject.com/en/4.0/ref/settings/#allowed-hosts
