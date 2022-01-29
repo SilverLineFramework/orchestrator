@@ -39,20 +39,20 @@ programData = {
     prog1: {
         name: 'arena/py/pytestenv',
         filename: 'pytest.py',
-        fileid: 'na',
         filetype: 'PY',
         args: ['arg1', 'arg3'],
         env: ['SCENE=testscene', 'NAMESPACE=testscene'],
         channels: {},
+        peripherals: {},
     },
     prog2: {
         name: 'arena/py/moving-box',
         filename: 'box.py',
-        fileid: 'na',
         filetype: 'PY',
         args: [],
         env: ['SCENE=test', 'NAMESPACE=wiselab', `MQTTH=${location.hostname}`],
         channels: {},
+        peripherals: {},
     },
 };
 
@@ -91,11 +91,11 @@ window.addEventListener('DOMContentLoaded', async function(e) {
         const v = JSON.parse(e.target.value);
         document.getElementById('mname').value = v.name;
         document.getElementById('filename').value = v.filename;
-        document.getElementById('fileid').value = v.fileid;
         document.getElementById('filetype').value = v.filetype;
         document.getElementById('args').value = JSON.stringify(v.args);
         document.getElementById('env').value = JSON.stringify(v.env);
         document.getElementById('channels').value = JSON.stringify(v.channels);
+        document.getElementById('peripherals').value = JSON.stringify(v.peripherals);
     });
     fileSelect.dispatchEvent(new Event('change')); // trigger change event
 
@@ -660,13 +660,13 @@ function uuidv4() {
 function createModule() {
     mname = document.getElementById('mname').value;
     fn = document.getElementById('filename').value;
-    fid = document.getElementById('fileid').value;
     ft = document.getElementById('filetype').value;
 
     try {
         args = JSON.parse(document.getElementById('args').value);
         env = JSON.parse(document.getElementById('env').value);
         channels = JSON.parse(document.getElementById('channels').value);
+        peripherals = JSON.parse(document.getElementById('peripherals').value);
     } catch (err) {
         console.error(err);
     }
@@ -682,11 +682,11 @@ function createModule() {
             type: 'module',
             name: mname,
             filename: fn,
-            fileid: fid,
             filetype: ft,
             args: args,
             env: env,
             channels: channels,
+            peripherals: peripherals,
         },
     };
 
@@ -789,11 +789,11 @@ async function demoMigrateModule() {
             name: 'counter-cwlib',
             uuid: muuid,
             filename: 'cwlib_example.wasm',
-            fileid: 'na',
             filetype: 'WA',
             args: '',
             env: '',
             channels: '',
+            peripherals: '',
             parent: {
                 uuid: rt1uuid,
             },
@@ -856,11 +856,11 @@ function onFileSelectChange(sid) {
     const v = document.getElementById(sid).value;
     document.getElementById('mname').value = v.name;
     document.getElementById('filename').value = v.filename;
-    document.getElementById('fileid').value = v.fileid;
     document.getElementById('filetype').value = v.filetype;
     document.getElementById('args').value = v.args;
     document.getElementById('env').value = v.env;
     document.getElementById('channels').value = v.channels;
+    document.getElementById('peripherals').value = v.peripherals;
 }
 
 function openTab(evt, tabName) {

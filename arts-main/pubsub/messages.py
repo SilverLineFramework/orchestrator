@@ -58,7 +58,7 @@ def Error(data):
 
 def __convert_str_attrs(d):
     """Convert JSON-encoded string attributes into proper objects."""
-    convert_keys = ['apis', 'args', 'env', 'channels', 'peripherals']
+    convert_keys = ['apis', 'args', 'env', 'channels', 'peripherals', "aot_target"]
     # convert array attributes saved as strings into objects
     for key in convert_keys:
         try:
@@ -117,3 +117,10 @@ class MissingField(ARTSException):
     def __init__(self, path):
         super().__init__(
             {"desc": "missing field", "data": "/".join(path)})
+
+class FileNotFound(ARTSException):
+    """WASM file is missing."""
+
+    def __init__(self, path):
+        super().__init__(
+            {"desc": "file not found", "data": path})

@@ -51,7 +51,7 @@ class MQTTListener(mqtt.Client):
         self.loop_start()
 
     def on_connect(self, mqttc, obj, flags, rc):
-        """Topic connect callback."""
+        """Client connect callback."""
         print("[Setup] Connected: rc={}".format(rc))
 
     def __json_decode(self, msg):

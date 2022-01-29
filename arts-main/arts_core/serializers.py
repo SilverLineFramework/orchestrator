@@ -17,7 +17,7 @@ class RuntimeSerializer(serializers.ModelSerializer):
         model = Runtime
         fields = (
             "type", "uuid", "name", "apis", "max_nmodules", "nmodules",
-            "ka_interval_sec", "children")
+            "ka_interval_sec", "children", "aot_target")
 
 class ParentListingField(serializers.RelatedField):
     def to_representation(self, value):
@@ -37,8 +37,8 @@ class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Module
         fields = (
-            "type", "uuid", "name", "parent", "filename", "filetype", "apis",
-            "args", "env", "channels", "peripherals")
+            "type", "uuid", "name", "parent", "filename", "filetype", "wasm", 
+            "apis", "args", "env", "channels", "peripherals")
 
 class TokenSerializer(serializers.Serializer):
     """
