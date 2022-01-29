@@ -1,11 +1,13 @@
 """MQTT message handlers."""
 
 import uuid
+import os
+import base64
 
 from arts_core.models import Runtime, Module, File, FileType
 from arts_core.serializers import ModuleSerializer, RuntimeSerializer
 from . import messages
-
+from wasm_files import file_handler
 
 class ARTSHandler():
     """ARTS Message Handler."""
@@ -81,24 +83,34 @@ class ARTSHandler():
         else:
             return self.scheduler.schedule_new_module(module)
 
-    def __create_module(self, msg):
+    def __create_module(self, msg, send_wasm=False):
         """Handle create message."""
-        data = msg.get('data')
-        if 'apis' not in data:
-            if data.get("filetype") == FileType.PY:
-                data['apis'] = ["python:python3"]
-            else:
-                data['apis'] = ["wasi:snapshot_preview1"]
-        if 'filetype' not in data:
-            if "python" in str(data.get("filename")):
-                data['filetype'] = FileType.PY
-            else:
-                data['filetype'] = FileType.WA
+        if(send_wasm):
+            """ If here, send the WASM file over to the runtime. """
+            module = self._get_object(
+                msg.topic, msg.get('data', 'details', 'uuid'), model=Module)
+            if(module.filetype != FileType.WA):
+                raise messages.FileNotFound(module.filename)
+            module.wasm = file_handler.get_wasm(module.filename)
+            if(module.wasm is None):
+                raise messages.FileNotFound(module.filename)
+        else:
+            data = msg.get('data')
+            if 'apis' not in data:
+                if data.get("filetype") == FileType.PY:
+                    data['apis'] = ["python:python3"]
+                else:
+                    data['apis'] = ["wasi:snapshot_preview1"]
+            if 'filetype' not in data:
+                if "python" in str(data.get("filename")):
+                    data['filetype'] = FileType.PY
+                else:
+                    data['filetype'] = FileType.WA
 
-        module = self.__object_from_dict(Module, data)
-        module.source = self.__create_or_get_file(msg)
-        module.parent = self.__get_runtime_or_schedule(msg, module)
-        module.save()
+            module = self.__object_from_dict(Module, data)
+            module.source = self.__create_or_get_file(msg)
+            module.parent = self.__get_runtime_or_schedule(msg, module)
+            module.save()
 
         return messages.Request(
             "{}/{}".format(msg.topic, module.parent.uuid), "create",
@@ -135,11 +147,16 @@ class ARTSHandler():
             str(msg.topic), msg.payload))
 
         if msg_type == 'runtime_resp':
-            return self.__create_module_ack(msg)
+            result = msg.get('data', 'result')
+            if(result == "no file"):
+                # Send the WASM/AOT file over
+                return self.__create_module(msg, True)
+            else:
+                return self.__create_module_ack(msg)
         elif msg_type == 'arts_req':
             action = msg.get('action')
             if action == 'create':
-                return self.__create_module(msg)
+                return self.__create_module(msg, False)
             elif action == 'delete':
                 return self.__delete_module(msg)
             else:

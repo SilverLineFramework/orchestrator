@@ -235,3 +235,6 @@ MQTT_TOPICS = {
 
 # Directory to save data
 DATA_DIR = os.path.join(ARTS_DIR, "data")
+
+# Directory to save wasm files
+WASM_DIR = "wasm_files/uploads"
