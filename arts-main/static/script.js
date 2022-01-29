@@ -139,11 +139,7 @@ window.addEventListener('DOMContentLoaded', async function(e) {
     cfg = await sendRequest('GET', '/arts-api/v1/config/');
     console.info(cfg);
 
-    cfg.subscribe_topics.forEach((t) => {
-        topic[t.name] = t.topic;
-    });
-
-    document.getElementById('mqtt_conn_str').value = `wss://${cfg.web_client_mqtt.host}/${cfg.web_client_mqtt.ws_path}`;
+    document.getElementById('mqtt_conn_str').value = `wss://${cfg.wc_host}/${cfg.wc_ws_path}`;
 
     if (e.detail) {
         if (e.detail.mqtt_username) {
