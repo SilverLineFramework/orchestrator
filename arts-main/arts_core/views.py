@@ -235,7 +235,5 @@ class RegisterUsers(generics.CreateAPIView):
 
 class PubSubConfig(View):
     def get(self, request, *args, **kwargs):
-        config = settings.PUBSUB
-        config.pop('mqtt_username', None)
-        config.pop('mqtt_password', None)
+        config = settings.WEB_CLIENT_MQTT
         return JsonResponse(config)
