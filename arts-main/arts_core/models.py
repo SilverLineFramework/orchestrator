@@ -29,7 +29,8 @@ class Runtime(models.Model):
     """Available ARENA runtimes."""
 
     INPUT_ATTRS = [
-        "name", "apis", "runtime_type", "max_nmodules", "page_size"]
+        "name", "apis", "runtime_type", "max_nmodules", "page_size",
+        "profile_type"]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -57,6 +58,9 @@ class Runtime(models.Model):
         default=65536, help_text=(
             "WASM pagesize. Default = 64KiB. Memory-constrained embedded "
             "runtimes can use smaller page size of 4KiB."))
+    profile = models.CharField(
+        max_length=16, default="aot",
+        help_text="Profile mode (aot, interp, or none)")
 
     @property
     def type(self):
