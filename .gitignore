@@ -8,6 +8,8 @@ docs/source/scheduler/
 
 # Profile data
 data/
+.ipynb_checkpoints/
+inspect.ipynb
 
 # Secrets & Config
 mqtt.json

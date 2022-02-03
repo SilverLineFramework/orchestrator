@@ -24,7 +24,8 @@ We currently have three runtime environments being worked on to interact with AR
 
 We also maintain a [native runtime](https://github.com/conix-center/arena-runtime-native) for prototyping.
 
-See the [wiki](https://github.com/conix-center/arts/wiki) for additional documentation.
+<!-- markdown-link-check-disable-next-line -->
+See the [Distributed Runtime Wiki](https://github.com/conix-center/distributed-runtime/wiki) for additional documentation.
 
 ## Setup
 
