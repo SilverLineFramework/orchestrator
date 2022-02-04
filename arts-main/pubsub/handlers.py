@@ -85,14 +85,14 @@ class ARTSHandler():
 
     def __create_module(self, msg, send_wasm=False):
         """Handle create message."""
-        if(send_wasm):
+        if send_wasm:
             """ If here, send the WASM file over to the runtime. """
             module = self._get_object(
                 msg.topic, msg.get('data', 'details', 'uuid'), model=Module)
-            if(module.filetype != FileType.WA):
+            if module.filetype != FileType.WA:
                 raise messages.FileNotFound(module.filename)
             module.wasm = file_handler.get_wasm(module.filename)
-            if(module.wasm is None):
+            if module.wasm is None:
                 raise messages.FileNotFound(module.filename)
         else:
             data = msg.get('data')
@@ -148,7 +148,7 @@ class ARTSHandler():
 
         if msg_type == 'runtime_resp':
             result = msg.get('data', 'result')
-            if(result == "no file"):
+            if result == "no file":
                 # Send the WASM/AOT file over
                 return self.__create_module(msg, True)
             else:
