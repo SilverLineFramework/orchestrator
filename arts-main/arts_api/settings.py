@@ -224,9 +224,9 @@ except (FileNotFoundError, KeyError):
 
 # Visualisation info for graph display
 WEB_CLIENT_MQTT = {
-        "wc_host"    : "arena-dev1.conix.io",
-        "wc_ws_path" : "mqtt/"
-        }
+    "wc_host"    : "arena-dev1.conix.io",
+    "wc_ws_path" : "mqtt/"
+}
 
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
 # settings in settings.py)
