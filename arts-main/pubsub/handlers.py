@@ -92,8 +92,6 @@ class ARTSHandler():
             if module.filetype != FileType.WA:
                 raise messages.FileNotFound(module.filename)
             module.wasm = file_handler.get_wasm(module.filename)
-            if module.wasm is None:
-                raise messages.FileNotFound(module.filename)
         else:
             data = msg.get('data')
             if 'apis' not in data:
