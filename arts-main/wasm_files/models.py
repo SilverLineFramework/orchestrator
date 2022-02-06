@@ -1,7 +1,5 @@
 from django.db import models
-from django.conf import settings
 import uuid
-import os
 
 from . import file_handler 
 
