@@ -12,19 +12,7 @@ This repository includes:
 
 You can use the issue tracker to start discussions, suggestions, etc.
 
-## Runtime environments
-
-We currently have three runtime environments being worked on to interact with ARTS:
-<!-- markdown-link-check-disable-next-line -->
- - [Embedded Runtime](https://github.com/conix-center/arena-runtime-zephyr)
-<!-- markdown-link-check-disable-next-line -->
- - [Linux Runtime](https://github.com/conix-center/arena-runtime-linux)
-<!-- markdown-link-check-disable-next-line -->
- - [Browser Runtime](https://github.com/conix-center/arena-runtime-browser)
-
-We also maintain a [native runtime](https://github.com/conix-center/arena-runtime-native) for prototyping.
-
-See the [wiki](https://github.com/conix-center/arts/wiki) for additional documentation.
+See the [ARTS page](https://github.com/conix-center/distributed-runtime/wiki/ARTS) on the [Distributed Runtime Wiki](https://github.com/conix-center/distributed-runtime) for documentation.
 
 ## Setup
 
