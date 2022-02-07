@@ -12,6 +12,7 @@ This repository includes:
 
 You can use the issue tracker to start discussions, suggestions, etc.
 
+<!-- markdown-link-check-disable-next-line -->
 See the [ARTS page](https://github.com/conix-center/distributed-runtime/wiki/ARTS) on the [Distributed Runtime Wiki](https://github.com/conix-center/distributed-runtime) for documentation.
 
 ## Setup
