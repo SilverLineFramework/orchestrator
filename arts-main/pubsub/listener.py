@@ -71,8 +71,6 @@ class MQTTListener(mqtt.Client):
         try:
             decoded = self.__json_decode(msg)
         except JSONDecodeError:
-            import pdb
-            pdb.set_trace()
             return messages.Error(
                 {"desc": "Invalid JSON", "data": msg.payload})
 
