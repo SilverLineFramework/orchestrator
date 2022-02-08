@@ -17,6 +17,7 @@ class BaseProfiler:
 
     def __init__(self, dir="data"):
         self.dir = dir
+        os.makedirs(dir, exist_ok=True)
 
     def _path(self, *args):
         """Compute checkpoint filepath."""
@@ -25,6 +26,10 @@ class BaseProfiler:
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
         return Module.objects.get(pk=module_id).source.index
+
+    def _module_name(self, module_id):
+        """Get source file name."""
+        return Module.objects.get(pk=module_id).source.name
 
     def update(self, module_id=None, runtime_id=None, data=None):
         """Update profile state with a single observation.
