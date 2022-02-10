@@ -1,4 +1,4 @@
-"""arts_api URL Configuration
+"""arts_api URL Configuration.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -27,11 +27,11 @@ urlpatterns = [
     path('arts-admin/', admin.site.urls),
     re_path('arts-api/(?P<version>(v1|v2))/', include('arts_core.urls')),
     path('api-token-auth/', obtain_jwt_token, name='create-token'),
-    path('wasm_files/', wf_views.UploadedFilesView.as_view(), name='wasm_files_list'),   
+    path('wasm_files/', wf_views.UploadedFilesView.as_view(), name='wasm_files_list'),
     path('wasm_files/u/', wf_views.wasm_file_upload, name='wasm_files_upload'),
     path('schema', get_schema_view(
         title="ARTS",
         description="API for ARTS",
         version="1.0.0"
-    ), name='openapi-schema'), 
+    ), name='openapi-schema'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
