@@ -57,8 +57,8 @@ class Runtime(models.Model):
         default=65536, help_text=(
             "WASM pagesize. Default = 64KiB. Memory-constrained embedded "
             "runtimes can use smaller page size of 4KiB."))
-    aot_target = models.CharField(max_length=500, default="{}", blank=True,
-        help_text=(
+    aot_target = models.CharField(
+        max_length=500, default="{}", blank=True, help_text=(
             "AOT target details, including CPU architecture, target ISA "
             "and ABI."))
 
