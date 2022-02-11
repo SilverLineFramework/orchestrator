@@ -38,12 +38,11 @@ class Collector(BaseProfiler):
 
     def update(self, module_id=None, runtime_id=None, data=None):
         """Update profile state."""
-
         file_id = str(self._module_index(module_id))
 
         if file_id not in self.data:
             self.data[file_id] = []
-        
+
         data['module_id'] = module_id
         data['runtime_id'] = runtime_id
         self.data[file_id].append(data)

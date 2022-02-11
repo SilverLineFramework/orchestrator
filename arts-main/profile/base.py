@@ -57,9 +57,7 @@ class BaseProfiler:
         """Save manifest of files to disk."""
         res = {}
         for source in File.objects.all():
-            modules = Module.objects.filter(source=source)
-            res[source.name] = {
-                str(mod.uuid): str(mod.parent.uuid) for mod in modules}
+            res[source.name] = source.index
 
         with open(self._path("manifest.json"), 'w') as f:
             json.dump(res, f, indent=4)
