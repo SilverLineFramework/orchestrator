@@ -31,5 +31,10 @@ clean:
 	rm -rf env
 	find -iname "*.pyc" -delete
 
+reset: clear migrate
+
+clear:
+	rm -r data
+	rm db.sqlite3
 
 FORCE:
