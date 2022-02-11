@@ -18,7 +18,7 @@ class RuntimeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Runtime
         fields = (
-            "uuid", "name", "apis", "runtime_type",
+            "type", "uuid", "name", "apis", "runtime_type",
             "ka_interval_sec", "children", "aot_target")
 
 
@@ -41,7 +41,7 @@ class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Module
         fields = (
-            "uuid", "name", "parent", "filename", "filetype", "wasm",
+            "type", "uuid", "name", "parent", "filename", "filetype", "wasm",
             "apis", "args", "env", "channels", "peripherals")
 
 
