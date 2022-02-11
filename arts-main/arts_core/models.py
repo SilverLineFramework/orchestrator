@@ -29,7 +29,9 @@ class Runtime(models.Model):
     """Available ARENA runtimes."""
 
     INPUT_ATTRS = [
-        "name", "apis", "runtime_type", "max_nmodules", "page_size", "aot_target"]
+        "type", "name", "apis", "runtime_type", "max_nmodules", "page_size",
+        "aot_target"
+    ]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -84,7 +86,7 @@ class Module(models.Model):
     """Currently running modules."""
 
     INPUT_ATTRS = [
-        "name", "filename", "filetype", "apis", "args", "env",
+        "type", "name", "filename", "filetype", "apis", "args", "env",
         "channels", "peripherals"]
 
     uuid = models.UUIDField(
