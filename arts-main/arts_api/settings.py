@@ -214,7 +214,7 @@ REALM = _mqtt_file.get('realm', 'realm')
 MQTT_ROOT = "{}/proc".format(REALM)
 MQTT_HOST = _mqtt_file.get('host', 'localhost')
 MQTT_PORT = _mqtt_file.get('port', 1883)
-SOCKET_PROTOCOL = _mqtt_file.get('socket_server', 'ws')
+SOCKET_PROTOCOL = _mqtt_file.get('socket_protocol', 'ws')
 SOCKET_PORT = _mqtt_file.get('socket_port', 8080)
 SOCKET_PATH = _mqtt_file.get('socket_path', "ws")
 
