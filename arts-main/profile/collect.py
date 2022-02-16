@@ -42,7 +42,7 @@ class Collector(BaseProfiler):
 
         if file_id not in self.data:
             self.data[file_id] = []
-
+        
         data['module_id'] = module_id
         data['runtime_id'] = runtime_id
         self.data[file_id].append(data)
