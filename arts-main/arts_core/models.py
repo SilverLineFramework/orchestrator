@@ -29,7 +29,9 @@ class Runtime(models.Model):
     """Available ARENA runtimes."""
 
     INPUT_ATTRS = [
-        "name", "apis", "runtime_type", "max_nmodules", "page_size", "aot_target"]
+        "name", "apis", "runtime_type", "max_nmodules", "page_size",
+        "aot_target"
+    ]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -57,8 +59,8 @@ class Runtime(models.Model):
         default=65536, help_text=(
             "WASM pagesize. Default = 64KiB. Memory-constrained embedded "
             "runtimes can use smaller page size of 4KiB."))
-    aot_target = models.CharField(max_length=500, default="{}", blank=True,
-        help_text=(
+    aot_target = models.CharField(
+        max_length=500, default="{}", blank=True, help_text=(
             "AOT target details, including CPU architecture, target ISA "
             "and ABI."))
 
@@ -105,7 +107,8 @@ class Module(models.Model):
     source = models.ForeignKey(
         'File', on_delete=models.PROTECT, blank=True, null=True,
         help_text="Source file identifier (for profile tracking)")
-    wasm = models.TextField(default="", blank=True,
+    wasm = models.TextField(
+        default="", blank=True,
         help_text="WASM file contents to send to runtime")
     apis = models.JSONField(
         default=_emptylist, blank=True,

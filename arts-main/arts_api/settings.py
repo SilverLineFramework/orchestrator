@@ -13,12 +13,20 @@ import os
 import json
 import datetime
 
+
+def _load(filename):
+    try:
+        with open(os.path.join(BASE_DIR, filename)) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+
 # --------------------------------------------------------------------------- #
 #                                 Django Core                                 #
 # --------------------------------------------------------------------------- #
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ARTS_DIR = os.path.dirname(BASE_DIR)
 
 
 # --------------------------------- Security -------------------------------- #
@@ -27,11 +35,10 @@ ARTS_DIR = os.path.dirname(BASE_DIR)
 DEBUG = True
 
 # Load key file; forgives errors if running in debug mode.
+_key_file = _load("key.json")
 try:
-    with open(os.path.join(ARTS_DIR, "key.json")) as f:
-        _key_file = json.load(f)
     SECRET_KEY = _key_file["key"]
-except (FileNotFoundError, KeyError):
+except KeyError:
     if not DEBUG:
         raise Exception("Secret key file `key.json` not found.")
     else:
@@ -39,7 +46,11 @@ except (FileNotFoundError, KeyError):
 
 # Includes 'localhost' if running in DEBUG=True.
 # https://docs.djangoproject.com/en/4.0/ref/settings/#allowed-hosts
+_server_file = _load("server.json")
+
 ALLOWED_HOSTS = []
+if "host" in _server_file:
+    ALLOWED_HOSTS.append(_server_file.get("host", "localhost"))
 
 
 # ------------------------------ Server Sources ----------------------------- #
@@ -197,35 +208,25 @@ JWT_AUTH = {
 # --------------------------------------------------------------------------- #
 
 # MQTT Server
-MQTT_FILE = os.path.join(ARTS_DIR, 'mqtt.json')
-try:
-    with open(MQTT_FILE) as f:
-        _mqtt_file = json.load(f)
-    REALM = _mqtt_file['realm']
-    MQTT_ROOT = "{}/proc".format(REALM)
-    MQTT_HOST = _mqtt_file['host']
-    MQTT_PORT = _mqtt_file['port']
-except (FileNotFoundError, KeyError):
-    REALM = "realm"
-    MQTT_ROOT = "realm/proc"
-    MQTT_HOST = "localhost"
-    MQTT_PORT = 1883
+_mqtt_file = _load('mqtt.json')
+
+REALM = _mqtt_file.get('realm', 'realm')
+MQTT_ROOT = "{}/proc".format(REALM)
+MQTT_HOST = _mqtt_file.get('host', 'localhost')
+MQTT_PORT = _mqtt_file.get('port', 1883)
+SOCKET_PROTOCOL = _mqtt_file.get('socket_protocol', 'ws')
+SOCKET_PORT = _mqtt_file.get('socket_port', 8080)
+SOCKET_PATH = _mqtt_file.get('socket_path', "ws")
 
 # MQTT Credentials
-CREDENTIAL_FILE = os.path.join(ARTS_DIR, 'credentials.json')
-try:
-    with open(CREDENTIAL_FILE) as f:
-        _mqtt_credentials = json.load(f)
-    MQTT_USERNAME = _mqtt_credentials['username']
-    MQTT_PASSWORD = _mqtt_credentials['password']
-except (FileNotFoundError, KeyError):
-    MQTT_USERNAME = "ARTS"
-    MQTT_PASSWORD = ""
+_mqtt_credentials = _load('credentials.json')
+MQTT_USERNAME = _mqtt_credentials.get('username', 'arts')
+MQTT_PASSWORD = _mqtt_credentials.get('password', '')
 
 # Visualisation info for graph display
 WEB_CLIENT_MQTT = {
-    "wc_host"    : "arena-dev1.conix.io",
-    "wc_ws_path" : "mqtt/"
+    "wc_host": "{}://{}:{}".format(SOCKET_PROTOCOL, MQTT_HOST, SOCKET_PORT),
+    "wc_ws_path": SOCKET_PATH
 }
 
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
@@ -236,11 +237,11 @@ MQTT_ERR = "{}/err".format(MQTT_ROOT)
 
 MQTT_TOPICS = {
     '{}/{}'.format(MQTT_ROOT, endpoint): endpoint
-    for endpoint in ['reg', 'control', 'debug', 'keepalive', 'profile'] 
+    for endpoint in ['reg', 'control', 'debug', 'keepalive', 'profile']
 }
 
 # Directory to save data
-DATA_DIR = os.path.join(ARTS_DIR, "data")
+DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # Directory to save wasm files
 WASM_DIR = "wasm_files/uploads"

@@ -3,26 +3,30 @@ from django.contrib.auth.models import User
 from .models import Runtime, Module
 import json
 
+
 class ModuleListingField(serializers.RelatedField):
     def to_representation(self, value):
         return { 'type': value.type, 'parent': { 'uuid': str(value.parent.uuid) }, 'name': value.name, 'uuid': str(value.uuid), 'filename': value.filename}
+
 
 class RuntimeSerializer(serializers.ModelSerializer):
     """
     Serializes the runtime data
     """
     children = ModuleListingField(many=True, read_only=True)
-    
+
     class Meta:
         model = Runtime
         fields = (
-            "type", "uuid", "name", "apis", "max_nmodules", "nmodules",
+            "type", "uuid", "name", "apis", "runtime_type",
             "ka_interval_sec", "children", "aot_target")
+
 
 class ParentListingField(serializers.RelatedField):
     def to_representation(self, value):
         return {'uuid': str(value.uuid)}
-    
+
+
 class ModuleSerializer(serializers.ModelSerializer):
     """
     Serializes the module data
@@ -33,12 +37,13 @@ class ModuleSerializer(serializers.ModelSerializer):
     #     slug_field='uuid'
     # )
     parent = ParentListingField(many=False, read_only=True)
-    
+
     class Meta:
         model = Module
         fields = (
-            "type", "uuid", "name", "parent", "filename", "filetype", "wasm", 
+            "type", "uuid", "name", "parent", "filename", "filetype", "wasm",
             "apis", "args", "env", "channels", "peripherals")
+
 
 class TokenSerializer(serializers.Serializer):
     """
@@ -50,4 +55,4 @@ class TokenSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("username", "email")        
+        fields = ("username", "email")

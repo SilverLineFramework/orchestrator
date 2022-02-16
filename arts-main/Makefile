@@ -10,7 +10,7 @@ run: env
 env: env/bin/activate FORCE
 
 env/bin/activate: requirements.txt
-	test -d env || virtualenv env
+	test -d env || python3 -m venv env
 	. env/bin/activate; ${PIP} install -Ur requirements.txt
 	touch env/bin/activate
 
@@ -31,5 +31,10 @@ clean:
 	rm -rf env
 	find -iname "*.pyc" -delete
 
+reset: clear migrate
+
+clear:
+	rm -rf data
+	rm db.sqlite3
 
 FORCE:
