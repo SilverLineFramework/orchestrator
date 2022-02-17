@@ -7,7 +7,7 @@ FNAME=app_`date +%m-%d-%Y_%H%M%S`
 run: env
 	. env/bin/activate; ${PYTHON3} manage.py runserver
 
-env: env/bin/activate FORCE
+env: env/bin/activate
 
 env/bin/activate: requirements.txt
 	test -d env || python3 -m venv env
@@ -35,4 +35,4 @@ reset: clear migrate
 
 clear:
 	rm -rf data
-	rm db.sqlite3
+	rm -f db.sqlite3
