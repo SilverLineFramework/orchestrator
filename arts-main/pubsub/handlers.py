@@ -16,7 +16,7 @@ class ARTSHandler():
         self.scheduler = scheduler
         self.profiler = profiler
 
-    def _get_object(self, topic, rt, model=Runtime):
+    def _get_object(self, rt, model=Runtime):
         """Fetch runtime/module by UUID or generate error."""
         try:
             return model.objects.get(pk=uuid.UUID(rt))
@@ -46,8 +46,7 @@ class ARTSHandler():
                 msg.topic, msg.get('object_id'),
                 RuntimeSerializer(db_entry, many=False).data)
         elif action == 'delete':
-            runtime = self._get_object(
-                msg.topic, msg.get('data', 'uuid'), model=Runtime)
+            runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
             body = RuntimeSerializer(runtime, many=False).data
             runtime.delete()
             return messages.Response(msg.topic, msg.get('object_id'), body)
@@ -79,7 +78,7 @@ class ARTSHandler():
         """Get parent runtime, or allocate target runtime."""
         if 'parent' in msg.get('data'):
             rt = msg.get('data', 'parent', 'uuid')
-            return self._get_object(msg.topic, rt, model=Runtime)
+            return self._get_object(rt, model=Runtime)
         else:
             return self.scheduler.schedule_new_module(module)
 
@@ -88,7 +87,7 @@ class ARTSHandler():
         if send_wasm:
             """ If here, send the WASM file over to the runtime. """
             module = self._get_object(
-                msg.topic, msg.get('data', 'details', 'uuid'), model=Module)
+                msg.get('data', 'details', 'uuid'), model=Module)
             if module.filetype != FileType.WA:
                 raise messages.FileNotFound(module.filename)
             module.wasm = file_handler.get_wasm(module.filename)
@@ -117,13 +116,13 @@ class ARTSHandler():
     def __delete_module(self, msg):
         """Handle delete message."""
         module_id = msg.get('data', 'uuid')
-        module = self._get_object(msg.topic, module_id, model=Module)
+        module = self._get_object(module_id, model=Module)
         uuid_current = str(module.parent.uuid)
 
         data = msg.get('data')
         if 'send_to_runtime' in data:
             send_rt = data['send_to_runtime']
-            module.parent = self._get_object(msg.topic, send_rt, model=Runtime)
+            module.parent = self._get_object(send_rt, model=Runtime)
             module.save()
         else:
             send_rt = None
@@ -133,6 +132,13 @@ class ARTSHandler():
             "{}/{}".format(msg.topic, uuid_current), "delete", {
                 "type": "module", "uuid": module_id,
                 "send_to_runtime": send_rt})
+
+    def __exited_module(self, msg):
+        """Remove module from database."""
+        module_id = msg.get('data', 'uuid')
+        module = self._get_object(module_id, model=Module)
+        module.delete()
+        return None
 
     def control(self, msg):
         """Handle per-module control message."""
@@ -157,6 +163,8 @@ class ARTSHandler():
                 return self.__create_module(msg, False)
             elif action == 'delete':
                 return self.__delete_module(msg)
+            elif action == 'exited':
+                return self.__exited_module(msg)
             else:
                 raise messages.InvalidArgument('action', action)
         else:
