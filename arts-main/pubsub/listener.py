@@ -97,7 +97,7 @@ class MQTTListener(mqtt.Client):
         # only publish if not `None`
         if res:
             payload = json.dumps(res.payload)
-            print("Response [topic={}]:\n{}".format(str(res.topic), payload))
+            print("[Response] {}: {}".format(str(res.topic), payload))
             self.publish(res.topic, payload)
 
     def on_subscribe(self, mqttc, obj, mid, granted_qos):

@@ -49,8 +49,8 @@ class Collector(BaseProfiler):
 
         self.size += 1
 
-        print("[Profile] Received: {}:{} @ {}".format(
-            self._module_name(module_id), module_id, runtime_id))
+        # print("[Profile] Received: {}:{} @ {}".format(
+        #     self._module_name(module_id), module_id, runtime_id))
 
     def save(self):
         """Save state to disk."""
