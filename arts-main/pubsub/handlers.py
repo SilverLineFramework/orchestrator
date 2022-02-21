@@ -35,8 +35,7 @@ class ARTSHandler():
         if msg.get('type') == 'arts_resp':
             return None
 
-        print("\nReceived registration message [topic={}]:\n{}".format(
-            str(msg.topic), msg.payload))
+        print("\n[Registration] {}".format(msg.payload))
 
         action = msg.get('action')
         if action == 'create':
@@ -85,7 +84,7 @@ class ARTSHandler():
     def __create_module(self, msg, send_wasm=False):
         """Handle create message."""
         if send_wasm:
-            """ If here, send the WASM file over to the runtime. """
+            # If here, send the WASM file over to the runtime.
             module = self._get_object(
                 msg.get('data', 'details', 'uuid'), model=Module)
             if module.filetype != FileType.WA:
@@ -147,8 +146,7 @@ class ARTSHandler():
         if msg_type == 'arts_resp':
             return None
 
-        print("\nReceived control message [topic={}]:\n{}".format(
-            str(msg.topic), msg.payload))
+        print("\n[Control] {}".format(msg.payload))
 
         if msg_type == 'runtime_resp':
             result = msg.get('data', 'result')
