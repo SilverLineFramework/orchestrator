@@ -24,6 +24,7 @@ class TraceLoader:
         self.uuids = None
 
     def arrays(self):
+        """Load as dictionary of arrays."""
         if self.data is None:
 
             self.data = {
@@ -47,7 +48,7 @@ class TraceLoader:
         if self.uuids is None:
             self.uuids = [
                 self._to_uuid_str(self.arrays()[s])
-                for s in ['module_id', 'runtime_id']] 
+                for s in ['module_id', 'runtime_id']]
         return self.uuids
 
     def dataframe(self):

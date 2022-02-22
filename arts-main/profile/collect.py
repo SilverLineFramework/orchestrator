@@ -48,7 +48,7 @@ class Collector:
         file_id = "file-{}".format(self._module_index(module_id))
         if file_id not in self.data:
             self.data[file_id] = DataStore(
-                dir=os.path.join(self.dir, file_id), chunk=64)
+                dir=os.path.join(self.dir, file_id), chunk=256)
 
         data_tc = {k: v(data[k]) for k, v in self.DATA_TYPES.items()}
         data_tc['module_id'] = self._as_uint8(module_id)
