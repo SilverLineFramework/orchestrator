@@ -182,5 +182,4 @@ class ARTSHandler():
         self.profiler.update(
             module_id=msg.get("module_id"), runtime_id=msg.get("runtime_id"),
             data=msg.get("data"))
-        self.profiler.save()
         return None
