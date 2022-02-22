@@ -1,14 +1,16 @@
 """Data collector."""
 
 import os
+import uuid
+import atexit
+import numpy as np
 import json
 
-from .base import BaseProfiler
-
 from arts_core.models import Module, File
+from .data_store import DataStore
 
 
-class Collector(BaseProfiler):
+class Collector:
     """Profile data collector.
 
     Saves data as a csv every ```save_every``` iterations, with structure
@@ -18,46 +20,53 @@ class Collector(BaseProfiler):
     ------------
     dir : str
         Directory for saving data.
-    save_every : int
-        How often to write data.
     """
 
-    def __init__(self, dir="data", save_every=10):
+    DATA_TYPES = {
+        'start_time': np.uint64,
+        'end_time': np.uint64,
+        'runtime': np.uint32,
+        'memory': np.uint32,
+        'ch_in': np.uint32,
+        'ch_out': np.uint32,
+        'ch_loopback': np.uint32,
+        'opcodes': lambda x: np.array(x, dtype=np.uint64)
+    }
 
-        super().__init__(dir=dir)
+    def __init__(self, dir="data"):
 
+        self.dir = dir
         self.data = {}
+        atexit.register(self.save)
 
-        for file_id in os.listdir(self._path()):
-            with open(self._path(file_id)) as f:
-                d = json.load(f)
-            self.data[os.path.splitext(file_id)[0]] = d
-
-        self.size = 0
-        self.save_every = save_every
+    def _as_uint8(self, x):
+        """Cast string UUID as dense uint8 buffer."""
+        return np.frombuffer(uuid.UUID(x).bytes, dtype=np.uint8)
 
     def update(self, module_id=None, runtime_id=None, data=None):
         """Update profile state."""
-        file_id = str(self._module_index(module_id))
-
+        file_id = "file-{}".format(self._module_index(module_id))
         if file_id not in self.data:
-            self.data[file_id] = []
+            self.data[file_id] = DataStore(
+                dir=os.path.join(self.dir, file_id), chunk=64)
 
-        data['module_id'] = module_id
-        data['runtime_id'] = runtime_id
-        self.data[file_id].append(data)
+        data_tc = {k: v(data[k]) for k, v in self.DATA_TYPES.items()}
+        data_tc['module_id'] = self._as_uint8(module_id)
+        data_tc['runtime_id'] = self._as_uint8(runtime_id)
+        self.data[file_id].update(data_tc)
 
-        self.size += 1
-
-        # print("[Profile] Received: {}:{} @ {}".format(
-        #     self._module_name(module_id), module_id, runtime_id))
+    def _module_index(self, module_id):
+        """Get source file index for module UUID."""
+        return Module.objects.get(pk=module_id).source.index
 
     def save(self):
-        """Save state to disk."""
-        # if self.size % self.save_every == 0:
-        # print("[Profile] saving data (n={})...".format(self.size))
-        for k, v in self.data.items():
-            with open(self._path(k + ".json"), 'w') as f:
-                json.dump(v, f)
+        """Save chunk and start new."""
+        for _, v in self.data.items():
+            v.save()
 
-        super().save()
+        res = {}
+        for source in File.objects.all():
+            res[source.name] = source.index
+
+        with open(os.path.join(self.dir, "manifest.json"), 'w') as f:
+            json.dump(res, f, indent=4)

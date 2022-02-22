@@ -10,7 +10,6 @@ docs/source/scheduler/
 data/
 *.zip
 .ipynb_checkpoints/
-*.ipynb
 
 # Secrets & Config
 mqtt.json
