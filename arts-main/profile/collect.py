@@ -6,7 +6,7 @@ import atexit
 import numpy as np
 import json
 
-from arts_core.models import Module, File
+from arts_core.models import Module, File, Runtime
 from .data_store import DataStore
 
 
@@ -64,9 +64,10 @@ class Collector:
         for _, v in self.data.items():
             v.save()
 
-        res = {}
-        for source in File.objects.all():
-            res[source.name] = source.index
-
+        manifest = {source.name: source.index for source in File.objects.all()}
         with open(os.path.join(self.dir, "manifest.json"), 'w') as f:
-            json.dump(res, f, indent=4)
+            json.dump(manifest, f, indent=4)
+
+        runtimes = {rt.name: str(rt.uuid) for rt in Runtime.objects.all()}
+        with open(os.path.join(self.dir, "runtimes.json"), 'w') as f:
+            json.dump(runtimes, f, indent=4)
