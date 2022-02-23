@@ -7,7 +7,7 @@ docs/source/pubsub/
 docs/source/scheduler/
 
 # Profile data
-data/
+arts-main/data*
 *.zip
 .ipynb_checkpoints/
 

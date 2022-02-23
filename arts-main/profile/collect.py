@@ -37,6 +37,7 @@ class Collector:
 
         self.dir = dir
         self.data = {}
+        self.runtimes = {}
         atexit.register(self.save)
 
     def _as_uint8(self, x):
@@ -69,5 +70,6 @@ class Collector:
             json.dump(manifest, f, indent=4)
 
         runtimes = {rt.name: str(rt.uuid) for rt in Runtime.objects.all()}
+        self.runtimes.update(runtimes)
         with open(os.path.join(self.dir, "runtimes.json"), 'w') as f:
-            json.dump(runtimes, f, indent=4)
+            json.dump(self.runtimes, f, indent=4)

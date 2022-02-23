@@ -32,8 +32,16 @@ ARTS_DIR = os.path.dirname(BASE_DIR)
 
 # --------------------------------- Security -------------------------------- #
 
+# Includes 'localhost' if running in DEBUG=True.
+# https://docs.djangoproject.com/en/4.0/ref/settings/#allowed-hosts
+_server_file = _load("server.json")
+
+ALLOWED_HOSTS = []
+if "host" in _server_file:
+    ALLOWED_HOSTS.append(_server_file.get("host", "localhost"))
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _server_file.get("debug", True)
 
 # Load key file; forgives errors if running in debug mode.
 _key_file = _load("key.json")
@@ -44,15 +52,6 @@ except KeyError:
         raise Exception("Secret key file `key.json` not found.")
     else:
         SECRET_KEY = "NOT_A_SECRET_KEY"
-
-# Includes 'localhost' if running in DEBUG=True.
-# https://docs.djangoproject.com/en/4.0/ref/settings/#allowed-hosts
-_server_file = _load("server.json")
-
-ALLOWED_HOSTS = []
-if "host" in _server_file:
-    ALLOWED_HOSTS.append(_server_file.get("host", "localhost"))
-
 
 # ------------------------------ Server Sources ----------------------------- #
 

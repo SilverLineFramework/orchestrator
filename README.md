@@ -55,6 +55,14 @@ Enter the ```arts-main``` directory.
     }
     ```
 
+- ```server.json```: server configuration. Default values:
+    ```JSON
+    {
+        "host": "localhost",
+        "debug": true
+    }
+    ```
+
 ## Running ARTS
 
 ### Execute
