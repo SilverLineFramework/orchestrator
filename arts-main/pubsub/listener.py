@@ -4,6 +4,7 @@ import traceback
 import json
 
 import paho.mqtt.client as mqtt
+import ssl
 from json.decoder import JSONDecodeError
 
 from django.conf import settings
@@ -39,6 +40,8 @@ class MQTTListener(mqtt.Client):
         """Subscribe to control topics."""
         self.username_pw_set(
             username=settings.MQTT_USERNAME, password=settings.MQTT_PASSWORD)
+        if settings.MQTT_SSL:
+            self.tls_set(cert_reqs=ssl.CERT_NONE)
         self.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
 
         self.__subscribe_mid = {
