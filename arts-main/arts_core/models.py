@@ -11,14 +11,15 @@ class FileType(models.TextChoices):
 
     WA = 'WA', _('WASM')
     PY = 'PY', _('PYTHON')
+    EXT = 'EXT'
 
 
-def _default_apis():
-    return [
-        "wasi:snapshot_preview1", "wasi:unstable", "wasi:core",
-        "wasi:clock", "wasi:environ", "wasi:sock", "wasi:args", "wasi:fd",
-        "wasi:path", "wasi:poll", "wasi:proc", "wasi:random", "wasi:sched",
-        "wasi:sock", "python:python3"]
+def _default_runtime_apis():
+    return ["wasm", "wasi"]
+
+
+def _default_required_apis():
+    return ["wasm", "wasi"]
 
 
 def _emptylist():
@@ -43,10 +44,10 @@ class Runtime(models.Model):
         auto_now=True, help_text="Last time the runtime was updated/created")
     apis = models.JSONField(
         max_length=500, blank=True, help_text="Supported APIs.",
-        default=_default_apis)
+        default=_default_runtime_apis)
     runtime_type = models.CharField(
         max_length=16, default="linux",
-        help_text="Runtime type (browser, linux, embedded)")
+        help_text="Runtime type (browser, linux, embedded, special)")
     max_nmodules = models.IntegerField(
         default=3, help_text="Maximum number of modules (todo: replace)")
     nmodules = models.IntegerField(
@@ -103,7 +104,7 @@ class Module(models.Model):
         blank=False, help_text="Program file (required).")
     filetype = models.CharField(
         max_length=16, choices=FileType.choices, default=FileType.WA,
-        help_text="File type (PY, WA)")
+        help_text="File type (PY, WA, EXT)")
     source = models.ForeignKey(
         'File', on_delete=models.PROTECT, blank=True, null=True,
         help_text="Source file identifier (for profile tracking)")
@@ -111,7 +112,7 @@ class Module(models.Model):
         default="", blank=True,
         help_text="WASM file contents to send to runtime")
     apis = models.JSONField(
-        default=_emptylist, blank=True,
+        default=_default_required_apis, blank=True,
         help_text="APIs required by the module.")
     args = models.JSONField(
         default=_emptylist, blank=True,
