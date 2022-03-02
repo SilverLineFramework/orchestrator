@@ -118,6 +118,7 @@ class MissingField(ARTSException):
         super().__init__(
             {"desc": "missing field", "data": "/".join(path)})
 
+
 class FileNotFound(ARTSException):
     """WASM file is missing."""
 

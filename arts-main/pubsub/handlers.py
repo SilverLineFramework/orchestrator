@@ -9,6 +9,7 @@ from arts_core.serializers import ModuleSerializer, RuntimeSerializer
 from . import messages
 from wasm_files import file_handler
 
+
 class ARTSHandler():
     """ARTS Message Handler."""
 
@@ -93,10 +94,7 @@ class ARTSHandler():
         else:
             data = msg.get('data')
             if 'apis' not in data:
-                if data.get("filetype") == FileType.PY:
-                    data['apis'] = ["python:python3"]
-                else:
-                    data['apis'] = ["wasi:snapshot_preview1"]
+                data['apis'] = ['wasm', 'wasi']
             if 'filetype' not in data:
                 if "python" in str(data.get("filename")):
                     data['filetype'] = FileType.PY
