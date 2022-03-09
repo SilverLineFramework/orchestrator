@@ -13,9 +13,9 @@ class TraceLoader:
     memory until referenced.
     """
 
-    def __init__(self, dir="data", prefix="aot"):
+    def __init__(self, dir="data"):
 
-        self.sources = [s for s in os.listdir(dir) if s.startswith(prefix)]
+        self.sources = os.listdir(dir)
         self.sources.sort()
         self.chunks = [np.load(os.path.join(dir, s)) for s in self.sources]
         self.size = sum(s['size'] for s in self.chunks)

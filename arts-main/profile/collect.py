@@ -5,6 +5,7 @@ import uuid
 import atexit
 import numpy as np
 import json
+from datetime import datetime
 
 from arts_core.models import Module, File, Runtime
 from .data_store import DataStore
@@ -18,8 +19,9 @@ class Collector:
 
     Keyword Args
     ------------
-    dir : str
-        Directory for saving data.
+    dir : str or None
+        Directory for saving data; will be saved as a subdirectory with the
+        datetime, i.e. "data/%m-%d-%Y %H:%M:%S".
     """
 
     DATA_TYPES = {
@@ -34,7 +36,8 @@ class Collector:
 
     def __init__(self, dir="data"):
 
-        self.dir = dir
+        self.dir = os.path.join(
+            dir, datetime.now().strftime("%m-%d-%Y.%H:%M:%S"))
         self.data = {}
         self.runtimes = {}
         atexit.register(self.save)
