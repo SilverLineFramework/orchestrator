@@ -42,6 +42,8 @@ class ARTSHandler():
         if action == 'create':
             db_entry = self.__object_from_dict(Runtime, msg.get('data'))
             db_entry.save()
+            self.profiler.register_runtime(
+                msg.get('data', 'uuid'), msg.get('data', 'name'))
             return messages.Response(
                 msg.topic, msg.get('object_id'),
                 RuntimeSerializer(db_entry, many=False).data)

@@ -10,11 +10,15 @@ docs/source/scheduler/
 arts-main/data*
 *.zip
 .ipynb_checkpoints/
+*.ipynb
 
 # Secrets & Config
 mqtt.json
 credentials.json
 key.json
+
+# Editor
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

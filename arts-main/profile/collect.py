@@ -30,7 +30,6 @@ class Collector:
         'ch_in': np.uint32,
         'ch_out': np.uint32,
         'ch_loopback': np.uint32,
-        'opcodes': lambda x: np.array(x, dtype=np.uint64)
     }
 
     def __init__(self, dir="data"):
@@ -54,7 +53,15 @@ class Collector:
         data_tc = {k: v(data[k]) for k, v in self.DATA_TYPES.items()}
         data_tc['module_id'] = self._as_uint8(module_id)
         data_tc['runtime_id'] = self._as_uint8(runtime_id)
+
+        if "opcodes" in data:
+            data_tc["opcodes"] = np.array(data["opcodes"], dtype=np.uint64)
+
         self.data[file_id].update(data_tc)
+
+    def register_runtime(self, runtime_id, runtime_name):
+        """Register runtime."""
+        self.runtimes[runtime_name] = runtime_id
 
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
@@ -69,7 +76,5 @@ class Collector:
         with open(os.path.join(self.dir, "manifest.json"), 'w') as f:
             json.dump(manifest, f, indent=4)
 
-        runtimes = {rt.name: str(rt.uuid) for rt in Runtime.objects.all()}
-        self.runtimes.update(runtimes)
         with open(os.path.join(self.dir, "runtimes.json"), 'w') as f:
             json.dump(self.runtimes, f, indent=4)
