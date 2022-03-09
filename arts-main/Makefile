@@ -34,5 +34,4 @@ clean:
 reset: clear migrate
 
 clear:
-	rm -rf data
 	rm -f db.sqlite3
