@@ -128,7 +128,7 @@ class Module(models.Model):
     peripherals = models.JSONField(
         default=_emptylist, blank=True, help_text="Required peripherals.")
     resources = models.JSONField(
-        default=_emptydict, blank=True, help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
+        blank=True, null=True, help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
 
     @property
     def type(self):
