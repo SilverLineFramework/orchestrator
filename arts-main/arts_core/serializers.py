@@ -42,7 +42,7 @@ class ModuleSerializer(serializers.ModelSerializer):
         model = Module
         fields = (
             "type", "uuid", "name", "parent", "filename", "filetype", "wasm",
-            "apis", "args", "env", "channels", "peripherals")
+            "apis", "args", "env", "channels", "peripherals", "resources")
 
 
 class TokenSerializer(serializers.Serializer):
