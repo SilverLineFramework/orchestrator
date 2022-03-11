@@ -25,6 +25,8 @@ def _default_required_apis():
 def _emptylist():
     return []
 
+def _emptydict():
+    return {}
 
 class Runtime(models.Model):
     """Available ARENA runtimes."""
@@ -88,7 +90,7 @@ class Module(models.Model):
 
     INPUT_ATTRS = [
         "name", "filename", "filetype", "apis", "args", "env",
-        "channels", "peripherals"]
+        "channels", "peripherals", "resources"]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -125,12 +127,8 @@ class Module(models.Model):
         help_text="Channels to open at startup.")
     peripherals = models.JSONField(
         default=_emptylist, blank=True, help_text="Required peripherals.")
-    runtime = models.IntegerField(
-        default=100000, help_text="sched_deadline runtime (microseconds).")
-    period = models.IntegerField(
-        default=1000000, help_text="sched_deadline period (microseconds).")
-    affinity = models.IntegerField(
-        default=2, help_text="sched_deadline affinity.")
+    resources = models.JSONField(
+        default=_emptydict, blank=True, help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
 
     @property
     def type(self):
