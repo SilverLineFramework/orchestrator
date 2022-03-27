@@ -215,19 +215,21 @@ MQTT_ROOT = "{}/proc".format(REALM)
 MQTT_HOST = _mqtt_file.get('host', 'localhost')
 MQTT_PORT = _mqtt_file.get('port', 1883)
 MQTT_SSL = _mqtt_file.get('ssl', False)
-SOCKET_PROTOCOL = _mqtt_file.get('socket_protocol', 'ws')
-SOCKET_PORT = _mqtt_file.get('socket_port', 8080)
-SOCKET_PATH = _mqtt_file.get('socket_path', "ws")
 
 # MQTT Credentials
 _mqtt_credentials = _load('credentials.json')
 MQTT_USERNAME = _mqtt_credentials.get('username', 'arts')
 MQTT_PASSWORD = _mqtt_credentials.get('password', '')
 
-# Visualisation info for graph display
+# the orchestrator provides config for web clients at the 'config' endpoint
+WEBSOCKET_HOST = _mqtt_file.get('ws_host', 'localhost')
+WEBSOCKET_PROTOCOL = _mqtt_file.get('ws_protocol', 'wss')
+WEBSOCKET_PORT = _mqtt_file.get('ws_port', '443')
+WEBSOCKET_PATH = _mqtt_file.get('ws_path', "ws")
+
+# web client connection string for graph display
 WEB_CLIENT_MQTT = {
-    "wc_host": "{}://{}:{}".format(SOCKET_PROTOCOL, MQTT_HOST, SOCKET_PORT),
-    "wc_ws_path": SOCKET_PATH
+    "wc_conn_str": "{}://{}:{}/{}".format(WEBSOCKET_PROTOCOL, WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_PATH)
 }
 
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT

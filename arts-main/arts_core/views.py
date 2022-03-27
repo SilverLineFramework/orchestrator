@@ -232,8 +232,9 @@ class RegisterUsers(generics.CreateAPIView):
             status=status.HTTP_201_CREATED
         )
 
-
+# config endpoint provides config for web clients
 class PubSubConfig(View):
     def get(self, request, *args, **kwargs):
         config = settings.WEB_CLIENT_MQTT
+        config['subscribe_topics'] = list(settings.MQTT_TOPICS.items())
         return JsonResponse(config)
