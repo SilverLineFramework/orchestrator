@@ -224,7 +224,7 @@ MQTT_PASSWORD = _mqtt_credentials.get('password', '')
 # the orchestrator provides config for web clients at the 'config' endpoint
 WEBSOCKET_HOST = _mqtt_file.get('ws_host', 'localhost')
 WEBSOCKET_PROTOCOL = _mqtt_file.get('ws_protocol', 'wss')
-WEBSOCKET_PORT = _mqtt_file.get('ws_port', '443')
+WEBSOCKET_PORT = _mqtt_file.get('ws_port', '8080')
 WEBSOCKET_PATH = _mqtt_file.get('ws_path', "ws")
 
 # web client connection string for graph display
