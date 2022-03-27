@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          file: ./arts-main/Dockerfile
+          file: ./Dockerfile
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ github.event.repository.name }}, ${{ secrets.DOCKER_HUB_USERNAME }}/${{ github.event.repository.name }}:${{ steps.get_release.outputs.tag_name }} 
 
       - name: Image digest
