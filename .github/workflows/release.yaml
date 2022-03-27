@@ -1,6 +1,7 @@
 name: Release to Docker Hub
 
 on:
+  workflow_dispatch:
   release:
     types:
       - created
