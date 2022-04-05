@@ -14,14 +14,11 @@ from .data_store import DataStore
 class Collector:
     """Profile data collector.
 
-    Saves data as a csv every ```save_every``` iterations, with structure
-    ``[runtime_id]/[module_id]````
-
     Keyword Args
     ------------
     dir : str or None
         Directory for saving data; will be saved as a subdirectory with the
-        datetime, i.e. "data/%m-%d-%Y %H:%M:%S".
+        datetime, i.e. "data/%Y-%m-%d_%H-%M-%S".
     """
 
     DATA_TYPES = {
@@ -37,9 +34,10 @@ class Collector:
     def __init__(self, dir="data"):
 
         self.dir = os.path.join(
-            dir, datetime.now().strftime("%m-%d-%Y.%H:%M:%S"))
+            dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         self.data = {}
         self.runtimes = {}
+        self.modules = {}
         atexit.register(self.save)
 
     def _as_uint8(self, x):
@@ -64,7 +62,11 @@ class Collector:
 
     def register_runtime(self, runtime_id, runtime_name):
         """Register runtime."""
-        self.runtimes[runtime_name] = runtime_id
+        self.runtimes[runtime_id] = runtime_name
+
+    def register_module(self, module_id, module_name):
+        """Register module."""
+        self.modules[module_id] = module_name
 
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
@@ -75,9 +77,10 @@ class Collector:
         for _, v in self.data.items():
             v.save()
 
-        manifest = {source.name: source.index for source in File.objects.all()}
+        files = {source.name: source.index for source in File.objects.all()}
         with open(os.path.join(self.dir, "manifest.json"), 'w') as f:
-            json.dump(manifest, f, indent=4)
-
-        with open(os.path.join(self.dir, "runtimes.json"), 'w') as f:
-            json.dump(self.runtimes, f, indent=4)
+            json.dump({
+                "files": files,
+                "runtimes": self.runtimes,
+                "modules": self.modules
+            }, f, indent=4)

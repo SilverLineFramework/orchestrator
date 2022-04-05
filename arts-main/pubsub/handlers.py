@@ -1,8 +1,6 @@
 """MQTT message handlers."""
 
 import uuid
-import os
-import base64
 
 from arts_core.models import Runtime, Module, File, FileType
 from arts_core.serializers import ModuleSerializer, RuntimeSerializer
@@ -111,6 +109,8 @@ class ARTSHandler():
             module.source = self.__create_or_get_file(msg)
             module.parent = self.__get_runtime_or_schedule(msg, module)
             module.save()
+            self.profiler.register_module(
+                msg.get('data', 'uuid'), msg.get('data', 'name'))
 
         return messages.Request(
             "{}/{}".format(msg.topic, module.parent.uuid), "create",
