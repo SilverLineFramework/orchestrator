@@ -10,8 +10,6 @@ class LeastModulesFirst(sb.SchedulerBase):
     def __init__(self):
         super(LeastModulesFirst, self).__init__('LeastModulesFirst')
 
-    next_index = 0
-
     @staticmethod
     def on_new_runtime(runtime_instance):
         print("New runtime: ", runtime_instance)
@@ -21,22 +19,32 @@ class LeastModulesFirst(sb.SchedulerBase):
         """
         Returns runtime with the least modules, out of the set of runtimes with apis that match the module
         """
-        supportedRuntimes = Runtime.objects.all()
-        for r in supportedRuntimes:
-            print(r)
 
+        apis = ''
         if (module_instance.apis):
-            for api in module_instance.apis:
-                print(api)
-                supportedRuntimes = supportedRuntimes.filter(apis__contains=api)
+            #supportedRuntimes=Runtime.objects.none()
+            supported_runtime_uuids = []
+            apis = module_instance.apis
+            for r in Runtime.objects.all():
+                include = True
+                for api in module_instance.apis:
+                    print(api, 'in?', r.apis, api in r.apis)
+                    if (not api in r.apis):
+                        include = False
+                        break
+                if (include):
+                    supported_runtime_uuids.append(r.uuid)
+            supported_runtimes = Runtime.objects.filter(uuid__in=supported_runtime_uuids)
+        else:
+            supported_runtimes = Runtime.objects.all()
 
-        if (supportedRuntimes.count() == 0):
+        for r in supported_runtimes:
+            print(apis, 'in runtime', r, r.apis)
+
+        if (supported_runtimes.count() == 0):
             raise Exception('No suitable runtime!')
 
-        #for r in supportedRuntimes:
-        #    print(r)
-
-        leastModulesRuntime = supportedRuntimes.order_by('nmodules')[0]
+        leastModulesRuntime = supported_runtimes.order_by('nmodules')[0]
 
         return leastModulesRuntime
 
