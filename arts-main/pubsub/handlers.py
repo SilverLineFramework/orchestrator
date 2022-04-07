@@ -66,7 +66,10 @@ class ARTSHandler():
     def __create_or_get_file(self, msg):
         """Link existing file entry or create new file entry."""
         if msg.payload['data']['filetype'] == FileType.PY:
-            file = msg.get('data', 'args', 1)
+            try:
+                file = msg.get('data', 'args', 1)
+            except:
+                file = msg.get('data', 'filename')
         else:
             file = msg.get('data', 'filename')
 
@@ -78,11 +81,12 @@ class ARTSHandler():
 
     def __get_runtime_or_schedule(self, msg, module):
         """Get parent runtime, or allocate target runtime."""
+        sched_ret = self.scheduler.schedule_new_module(module)
         if 'parent' in msg.get('data'):
-            rt = msg.get('data', 'parent', 'uuid')
-            return self._get_object(rt, model=Runtime)
-        else:
-            return self.scheduler.schedule_new_module(module)
+            if (msg.payload['data']['parent']):
+                rt = msg.get('data', 'parent', 'uuid')
+                sched_ret = self._get_object(rt, model=Runtime)
+        return sched_ret
 
     def __create_module(self, msg, send_wasm=False):
         """Handle create message."""
