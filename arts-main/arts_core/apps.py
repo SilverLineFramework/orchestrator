@@ -17,7 +17,7 @@ class ArtsCoreConfig(AppConfig):
             from profile import Collector
 
             # instantiate scheduler
-            from scheduler import LeastModulesFirst
+            from scheduler import LeastModulesFirstScheduler
             scheduler = LeastModulesFirst()
             profiler = Collector(dir=settings.DATA_DIR)
 
