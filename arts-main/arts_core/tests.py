@@ -1,13 +1,13 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.views import status
-from .models import Runtime, Module, Link
-from .serializers import RuntimeSerializer, ModuleSerializer, LinkSerializer
+from .models import Runtime, Module
+from .serializers import RuntimeSerializer, ModuleSerializer
 import uuid
 import json
 
 # tests for models
-        
+
 class RuntimeModelTest(APITestCase):
     def setUp(self):
         self.valid_uuid = uuid.uuid4()
@@ -15,7 +15,7 @@ class RuntimeModelTest(APITestCase):
             uuid=self.valid_uuid,
             name="runtime1"
         )
-        
+
     def test_runtime(self):
         """"
         This test ensures that the runtime created in the setup
@@ -25,33 +25,33 @@ class RuntimeModelTest(APITestCase):
 
     def test_create_runtime_with_no_uuid(self):
         """"
-        This test ensures that a valid uuid is assigned to a runtime when 
-        created with no uuid 
+        This test ensures that a valid uuid is assigned to a runtime when
+        created with no uuid
         """
         a_rt = Runtime.objects.create(
             name="runtime1"
         )
         self.assertEqual(a_rt.name, "runtime1")
-        try: 
+        try:
             uuid_obj = uuid.UUID(str(a_rt.uuid), version=4)
         except ValueError:
             self.assertTrue(False)
 
     def test_delete_runtime(self):
         """"
-        This test ensures that a runtime is deleted given a valid uuid 
+        This test ensures that a runtime is deleted given a valid uuid
         """
         a_rt = Runtime.objects.get(uuid=self.valid_uuid)
         a_rt.delete()
         assert(Runtime.objects.all(), [])
 
-            
+
 class ModuleModelTest(APITestCase):
     def setUp(self):
         self.a_rt = Runtime.objects.create(
             uuid=uuid.uuid4(),
             name="runtime1"
-        )        
+        )
         self.a_mod = Module.objects.create(
             uuid=uuid.uuid4(),
             name="module1",
@@ -68,25 +68,25 @@ class ModuleModelTest(APITestCase):
 
     def test_create_module_with_no_uuid(self):
         """"
-        This test ensures that a valid uuid is assigned to a module when 
-        created with no uuid 
+        This test ensures that a valid uuid is assigned to a module when
+        created with no uuid
         """
         a_mod = Module.objects.create(
             name="module1",
             parent=self.a_rt
         )
         self.assertEqual(a_mod.name, "module1")
-        try: 
+        try:
             uuid_obj = uuid.UUID(str(a_mod.uuid), version=4)
         except ValueError:
             self.assertTrue(False)
-                   
+
 # tests for views
 
 class BaseViewTest(APITestCase):
     """
     Setup for view tests
-    """    
+    """
     client = APIClient()
 
     @staticmethod
@@ -98,7 +98,7 @@ class BaseViewTest(APITestCase):
     def create_module(uuid="", name=""):
         if uuid != "" and name != "":
             Module.objects.create(uuid=uuid, name=name)
-            
+
     def setUp(self):
         # add test data (using random UUIDs; see https://docs.python.org/3/library/uuid.html)
         self.create_runtime(uuid.uuid4(), "name1")
@@ -108,7 +108,7 @@ class BaseViewTest(APITestCase):
         self.create_runtime(uuid.uuid4(), "name4")
 
         self.valid_rt_uuid = Runtime.objects.get(name="name1").uuid
-        
+
     def login_client(self, username="", password=""):
         # get a token from DRF
         response = self.client.post(
@@ -131,7 +131,7 @@ class BaseViewTest(APITestCase):
 class GetAllRuntimesTest(BaseViewTest):
     """
     Get all runtimes
-    """    
+    """
     def test_get_all_runtimes(self):
         """
         This test ensures that all runtimes added in the setUp method
@@ -214,4 +214,4 @@ class AddRuntimeTest(BaseViewTest):
         #     response.data["message"],
         #     "Both title and artist are required to add a song"
         # )
-        # self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)        
+        # self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
