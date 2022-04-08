@@ -1,6 +1,6 @@
-from .lmf import LeastModulesFirst
+from .lmf import LeastModulesFirstScheduler
 from .rr import RoundRobinScheduler
 
 __all__ = [
-    "LeastModulesFirst", "RoundRobinScheduler"
+    "LeastModulesFirstScheduler", "RoundRobinScheduler"
 ]
