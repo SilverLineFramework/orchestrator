@@ -12,10 +12,16 @@ class SchedulerTests(TestCase):
         Runtime.objects.create(uuid=uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e01}'), name = 'runtime1', apis =  ["wasi:unstable"], max_nmodules = 10, nmodules = 1)
         Runtime.objects.create(uuid=uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e02}'), name = 'runtime2', apis =  ["wasi:unstable"], max_nmodules = 10, nmodules = 1)
         Runtime.objects.create(uuid=uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e03}'), name = 'runtime3', apis =  ["wasi:unstable"], max_nmodules = 10, nmodules = 1)
+
         # 3 python runtimes
         Runtime.objects.create(name = 'python_runtime1', apis =  ["python:python3"], max_nmodules = 4, nmodules = 2)
         Runtime.objects.create(name = 'python_runtime2', apis =  ["python:python3"], max_nmodules = 10, nmodules = 3)
         Runtime.objects.create(name = 'python_runtime3', apis =  ["python:python3"], max_nmodules = 2, nmodules = 2)
+
+        # 3 wasm runtimes that cannot accept more modules
+        Runtime.objects.create(uuid=uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e04}'), name = 'runtime4', apis =  ["test_maxnmodules"], max_nmodules = 10, nmodules = 10)
+        Runtime.objects.create(uuid=uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e05}'), name = 'runtime5', apis =  ["test_maxnmodules"], max_nmodules = 10, nmodules = 10)
+        Runtime.objects.create(uuid=uuid.UUID('{00010203-0405-0607-0809-0a0b0c0d0e06}'), name = 'runtime6', apis =  ["test_maxnmodules"], max_nmodules = 10, nmodules = 10)
 
         self.lmf_scheduler = LeastModulesFirstScheduler()
         self.rr_scheduler = RoundRobinScheduler()
@@ -42,3 +48,9 @@ class SchedulerTests(TestCase):
 
         runtime = self.rr_scheduler.schedule_new_module(mod)
         self.assertEqual(runtime.name, 'runtime1')
+
+        # test test_maxnmodules (cant be an independent test due to execution order)
+        mod1 = Module.objects.create(name = 'test_module1', filename = "test.wasm", filetype = "WA", apis = ["test_maxnmodules"])
+
+        with self.assertRaises(Exception):
+            runtime = self.rr_scheduler.schedule_new_module(mod1)

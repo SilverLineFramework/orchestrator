@@ -11,6 +11,7 @@ class RoundRobinScheduler(sb.SchedulerBase):
         super(RoundRobinScheduler, self).__init__('RoundRobinScheduler')
 
     next_index = 0
+    rollover = False
 
     @staticmethod
     def on_new_runtime(runtime_instance):
@@ -23,30 +24,38 @@ class RoundRobinScheduler(sb.SchedulerBase):
         Performs basic checks (nmodules and apis) if the runtime can run the module
         """
         next_runtime = None
-        start_index = RoundRobinScheduler.next_index
+        rollover = False
+        start_index = RoundRobinScheduler.next_index + 1
         while next_runtime == None:
             try:
                 next_runtime = Runtime.objects.order_by('uuid')[RoundRobinScheduler.next_index]
                 RoundRobinScheduler.next_index = RoundRobinScheduler.next_index + 1
             except Exception:
                 RoundRobinScheduler.next_index = 0
+                # did we try all runtimes ?
+                if RoundRobinScheduler.rollover == True:
+                    next_runtime = None
+                    break;
+                RoundRobinScheduler.rollover = True
                 next_runtime = Runtime.objects.order_by('uuid')[RoundRobinScheduler.next_index]
                 RoundRobinScheduler.next_index = RoundRobinScheduler.next_index + 1
+
             # next_runtime is our candidate runtime to run the module
             if next_runtime:
                 # next_runtime can have more modules ?
-                if next_runtime.max_nmodules-next_runtime.nmodules > 0:
-                    # next_runtime supports apis needed by module ?
-                    for api in module_instance.apis:
-                        #print(api, 'in?', r.apis, api in r.apis)
-                        if (not api in next_runtime.apis):
-                            next_runtime = None
-                            break
-                else: next_runtime = None
-            # did we just try all runtimes ?
-            if start_index == RoundRobinScheduler.next_index:
-                next_runtime = None
-                break;
+                if next_runtime.max_nmodules-next_runtime.nmodules <= 0:
+                    RoundRobinScheduler.next_index = RoundRobinScheduler.next_index + 1
+                    next_runtime = None
+                    continue
+
+                # next_runtime supports apis needed by module ?
+                for api in module_instance.apis:
+                    #print(next_runtime.name, api, 'in?', next_runtime.apis, api in next_runtime.apis)
+                    if (not api in next_runtime.apis):
+                        RoundRobinScheduler.next_index = RoundRobinScheduler.next_index + 1
+                        next_runtime = None
+                        continue
+
 
         if (next_runtime == None):
             raise Exception('No suitable runtime!')
