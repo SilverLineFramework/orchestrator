@@ -28,7 +28,7 @@ class DataStore:
         """Save chunk and start new."""
         self.chunk_index += 1
         dst = os.path.join(self.dir, "chunk-{}.npz".format(self.chunk_index))
-        np.savez(dst, size=np.uint32(self.index), **self.head)
+        np.savez_compressed(dst, size=np.uint32(self.index), **self.head)
         self.head = {}
         self.index = 0
 

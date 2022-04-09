@@ -229,7 +229,8 @@ WEBSOCKET_PATH = _mqtt_file.get('ws_path', "ws")
 
 # web client connection string for graph display
 WEB_CLIENT_MQTT = {
-    "wc_conn_str": "{}://{}:{}/{}".format(WEBSOCKET_PROTOCOL, WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_PATH)
+    "wc_conn_str": "{}://{}:{}/{}".format(
+        WEBSOCKET_PROTOCOL, WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_PATH)
 }
 
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
@@ -243,8 +244,20 @@ MQTT_TOPICS = {
     for endpoint in ['reg', 'control', 'debug', 'keepalive', 'profile']
 }
 
+# Directory to save wasm files
+WASM_DIR = "wasm_files/uploads"
+
+
+# --------------------------------------------------------------------------- #
+#                                  Profiling                                  #
+# --------------------------------------------------------------------------- #
+
 # Directory to save data
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
-# Directory to save wasm files
-WASM_DIR = "wasm_files/uploads"
+# Chunk sizes
+# Targets a maximum uncompressed size of 2MB.
+# 1 AOT sample = 80 bytes
+# 1 interp sample = 80 bytes + (256 * 8 bytes) = 2128 bytes
+INTERP_CHUNK_SIZE = 1000
+AOT_CHUNK_SIZE = 25000
