@@ -5,9 +5,10 @@ import uuid
 import atexit
 import numpy as np
 import json
+from django.conf import settings
 from datetime import datetime
 
-from arts_core.models import Module, File, Runtime
+from arts_core.models import Module, File
 from .data_store import DataStore
 
 
@@ -44,12 +45,19 @@ class Collector:
         """Cast string UUID as dense uint8 buffer."""
         return np.frombuffer(uuid.UUID(x).bytes, dtype=np.uint8)
 
+    def _chunk_size(self, data):
+        if "opcodes" in data:
+            return settings.INTERP_CHUNK_SIZE
+        else:
+            return settings.AOT_CHUNK_SIZE
+
     def update(self, module_id=None, runtime_id=None, data=None):
         """Update profile state."""
         file_id = "file-{}".format(self._module_index(module_id))
         if file_id not in self.data:
             self.data[file_id] = DataStore(
-                dir=os.path.join(self.dir, file_id), chunk=256)
+                dir=os.path.join(self.dir, file_id),
+                chunk=self._chunk_size(data))
 
         data_tc = {k: v(data[k]) for k, v in self.DATA_TYPES.items()}
         data_tc['module_id'] = self._as_uint8(module_id)
