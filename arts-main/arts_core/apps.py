@@ -18,7 +18,7 @@ class ArtsCoreConfig(AppConfig):
 
             # instantiate scheduler
             from scheduler import LeastModulesFirstScheduler
-            scheduler = LeastModulesFirst()
+            scheduler = LeastModulesFirstScheduler()
             profiler = Collector(dir=settings.DATA_DIR)
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
