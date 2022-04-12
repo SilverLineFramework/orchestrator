@@ -1,9 +1,7 @@
 """Message definitions."""
 
-import collections
 import uuid
 import json
-from dataclasses import dataclass
 
 from django.conf import settings
 
@@ -22,12 +20,12 @@ class Action():
     delete = 'delete'
 
 
-@dataclass
 class Message:
     """Pubsub Message container."""
 
-    topic: str
-    payload: dict
+    def __init__(self, topic, payload):
+        self.topic = topic
+        self.payload = payload
 
     def get(self, *args):
         """Get attribute, or raise appropriate error.
