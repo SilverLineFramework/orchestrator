@@ -187,3 +187,11 @@ class ARTSHandler():
             module_id=msg.get("module_id"), runtime_id=msg.get("runtime_id"),
             data=msg.get("data"))
         return None
+
+    def special(self, msg):
+        """Special instructions."""
+        action = msg.get('action')
+        if action == "save":
+            self.profiler.save()
+        else:
+            raise messages.InvalidArgument('action', action)
