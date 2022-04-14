@@ -211,7 +211,6 @@ JWT_AUTH = {
 _mqtt_file = _load('mqtt.json')
 
 REALM = _mqtt_file.get('realm', 'realm')
-MQTT_ROOT = "{}/proc".format(REALM)
 MQTT_HOST = _mqtt_file.get('host', 'localhost')
 MQTT_PORT = _mqtt_file.get('port', 1883)
 MQTT_SSL = _mqtt_file.get('ssl', False)
@@ -236,12 +235,15 @@ WEB_CLIENT_MQTT = {
 # TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
 # settings in settings.py)
 
+MQTT_ROOT = "{}/proc".format(REALM)
+
 # Error channel
 MQTT_ERR = "{}/err".format(MQTT_ROOT)
-
+# Control topics
+ENDPOINTS = ['reg', 'control', 'debug', 'keepalive', 'profile', 'special']
 MQTT_TOPICS = {
     '{}/{}'.format(MQTT_ROOT, endpoint): endpoint
-    for endpoint in ['reg', 'control', 'debug', 'keepalive', 'profile']
+    for endpoint in ENDPOINTS
 }
 
 # Directory to save wasm files
