@@ -33,13 +33,16 @@ class Collector:
     }
 
     def __init__(self, dir="data"):
+        self.base_dir = dir
+        self._init()
+
+    def _init(self):
 
         self.dir = os.path.join(
-            dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+            self.base_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         self.data = {}
         self.runtimes = {}
         self.modules = {}
-        atexit.register(self.save)
 
     def _as_uint8(self, x):
         """Cast string UUID as dense uint8 buffer."""
@@ -92,3 +95,8 @@ class Collector:
                 "runtimes": self.runtimes,
                 "modules": self.modules
             }, f, indent=4)
+
+    def reset(self):
+        """Reset profiling data and save to new directory."""
+        self.save()
+        self._init()

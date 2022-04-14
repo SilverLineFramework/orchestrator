@@ -193,5 +193,7 @@ class ARTSHandler():
         action = msg.get('action')
         if action == "save":
             self.profiler.save()
+        elif action == "reset":
+            self.profiler.reset()
         else:
             raise messages.InvalidArgument('action', action)
