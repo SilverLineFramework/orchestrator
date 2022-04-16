@@ -33,7 +33,7 @@ class Runtime(models.Model):
 
     INPUT_ATTRS = [
         "name", "apis", "runtime_type", "max_nmodules", "page_size",
-        "aot_target"
+        "aot_target", "resources"
     ]
 
     uuid = models.UUIDField(
@@ -62,6 +62,10 @@ class Runtime(models.Model):
         default=65536, help_text=(
             "WASM pagesize. Default = 64KiB. Memory-constrained embedded "
             "runtimes can use smaller page size of 4KiB."))
+
+    resources = models.JSONField(
+        blank=True, null=True, help_text="Hardware resources available on runtime platform")
+
     aot_target = models.CharField(
         max_length=500, default="{}", blank=True, help_text=(
             "AOT target details, including CPU architecture, target ISA "

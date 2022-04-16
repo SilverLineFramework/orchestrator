@@ -1,0 +1,56 @@
+---
+app-name: house
+
+global-channels:
+  sub:
+    - main/mgmt
+
+modules:
+
+  light-module: 
+    channels:
+      sub: 
+        - door_hall:
+            max_latency: 20
+            min_bandwidth: 40
+        - door_bedroom
+        - door_bathroom
+
+    resources:
+      cpus: 2
+      memory: 1024
+      hardware: 
+        - GPIO: GP-25
+    
+  door-module:
+    channels:
+      pub:
+        - door_hall:
+            max_latency: 30
+            min_bandwidth: 48
+        - door_bedroom
+        - door_bathroom
+        - main/mgmt:
+            max_latency: 5
+            min_bandwidth: 120
+
+    resources:
+      hardware:
+        - GPU
+        - GPIO: GP-24
+
+
+  air-conditioning-module:
+    resources:
+      hardware:
+        - GPU
+
+  another-weird-module:
+    resources:
+      cpus: 10
+
+  my-new-module:
+    resources:
+      cpus: 2
+
+

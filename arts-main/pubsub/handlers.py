@@ -4,6 +4,7 @@ import uuid
 
 from arts_core.models import Runtime, Module, File, FileType
 from arts_core.serializers import ModuleSerializer, RuntimeSerializer
+from mapper.manifest import AppManifest, PlatformManifest
 from . import messages
 from wasm_files import file_handler
 
@@ -14,6 +15,11 @@ class ARTSHandler():
     def __init__(self, scheduler, profiler):
         self.scheduler = scheduler
         self.profiler = profiler
+
+        platform_init = {}
+        platform_init['platform-name'] = 'arts-platform'
+        platform_init['nodes'] = {}
+        self.platform = PlatformManifest(platform_init, is_dict=True)
 
     def _get_object(self, rt, model=Runtime):
         """Fetch runtime/module by UUID or generate error."""
@@ -42,6 +48,11 @@ class ARTSHandler():
             db_entry.save()
             self.profiler.register_runtime(
                 msg.get('data', 'uuid'), msg.get('data', 'name'))
+
+            self.platform.add_node(
+                msg.get('data', 'name'), 10, msg.get('data', 'resources'))
+            self.platform.print_raw()
+            
             return messages.Response(
                 msg.topic, msg.get('object_id'),
                 RuntimeSerializer(db_entry, many=False).data)
@@ -49,6 +60,8 @@ class ARTSHandler():
             runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
             body = RuntimeSerializer(runtime, many=False).data
             runtime.delete()
+            self.platform.remove_node(
+                msg.get('data', 'name'))
             return messages.Response(msg.topic, msg.get('object_id'), body)
         else:
             raise messages.InvalidArgument("action", msg.get('action'))

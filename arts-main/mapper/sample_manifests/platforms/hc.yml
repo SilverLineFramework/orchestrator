@@ -1,0 +1,44 @@
+# Num cores, speed, memory size,
+# Obtain hardware characteristics from 
+---
+platform-name: heterogenous-cluster
+
+nodes:
+
+  nuc:
+    ping: 5
+    resources:
+      cpus: 4
+      memory: 2048
+      hardware:
+        - TSN: ?? 
+
+  rpi:
+    ping: 7
+    resources:
+      cpus: 2
+      memory: 2048
+      hardware:
+        - Lidar: li-01
+        - IMU: imu-0 imu-1
+        - Ultrasonic: us-01
+        - GPIO: GP-25
+
+  lambda:
+    ping: 3
+    resources:
+      cpus: 16
+      memory: 16384
+      hardware:
+        - GPU: Tesla-K20
+
+
+  jetson:
+    ping: 6
+    resources:
+      cpus: 4
+      memory: 4096
+      hardware:
+        - GPU: RTX-950
+        - GPIO: GP-24
+
