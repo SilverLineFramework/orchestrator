@@ -25,7 +25,7 @@ class Collector:
     DATA_TYPES = {
         'start_time': np.uint64,
         'end_time': np.uint64,
-        'runtime': np.uint32,
+        'runtime': np.uint64,
         'memory': np.uint32,
         'ch_in': np.uint32,
         'ch_out': np.uint32,
