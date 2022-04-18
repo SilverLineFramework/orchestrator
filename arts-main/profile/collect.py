@@ -43,6 +43,7 @@ class Collector:
         self.data = {}
         self.runtimes = {}
         self.modules = {}
+        self._files = {}
 
     def _as_uint8(self, x):
         """Cast string UUID as dense uint8 buffer."""
@@ -81,7 +82,10 @@ class Collector:
 
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
-        return Module.objects.get(pk=module_id).source.index
+        if module_id not in self._files:
+            self._files[module_id] = (
+                Module.objects.get(pk=module_id).source.index)
+        return self._files[module_id]
 
     def save(self):
         """Save chunk and start new."""
