@@ -100,6 +100,12 @@ class UUIDNotFound(ARTSException):
         super().__init__(
             {"desc": "invalid {} UUID".format(obj_type), "data": obj})
 
+class DuplicateUUID(ARTSException):
+    """Exception for runtime/module when trying to create a duplicate UUID (expected in per-scene instantiated modules)."""
+
+    def __init__(self, obj, obj_type="runtime"):
+        super().__init__(
+            {"desc": "duplicate {} UUID; request ignored".format(obj_type), "data": obj})
 
 class InvalidArgument(ARTSException):
     """Exception for invalid argument value."""
