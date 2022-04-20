@@ -1,6 +1,7 @@
 """MQTT message handlers."""
 
 import uuid
+from django.db import IntegrityError
 
 from arts_core.models import Runtime, Module, File, FileType
 from arts_core.serializers import ModuleSerializer, RuntimeSerializer
@@ -108,7 +109,13 @@ class ARTSHandler():
             module = self.__object_from_dict(Module, data)
             module.source = self.__create_or_get_file(msg)
             module.parent = self.__get_runtime_or_schedule(msg, module)
-            module.save()
+
+            try:
+                module.save()
+            except IntegrityError as e:
+                if 'UNIQUE constraint' in str(e):
+                    raise messages.DuplicateUUID(data, obj_type='module')
+
             self.profiler.register_module(
                 msg.get('data', 'uuid'), msg.get('data', 'name'))
 
