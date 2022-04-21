@@ -24,8 +24,13 @@ class Collector:
 
     DATA_TYPES = {
         'start_time': np.uint64,
+<<<<<<< HEAD
         'wall_time': np.uint64,
         'cpu_time': np.uint32,
+=======
+        'end_time': np.uint64,
+        'runtime': np.uint64,
+>>>>>>> 9ece207bfd57e5ae8e727a9070be1c7d22b1a044
         'memory': np.uint32,
         'ch_in': np.uint32,
         'ch_out': np.uint32,
@@ -43,6 +48,7 @@ class Collector:
         self.data = {}
         self.runtimes = {}
         self.modules = {}
+        self._files = {}
 
     def _as_uint8(self, x):
         """Cast string UUID as dense uint8 buffer."""
@@ -81,7 +87,10 @@ class Collector:
 
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
-        return Module.objects.get(pk=module_id).source.index
+        if module_id not in self._files:
+            self._files[module_id] = (
+                Module.objects.get(pk=module_id).source.index)
+        return self._files[module_id]
 
     def save(self):
         """Save chunk and start new."""
