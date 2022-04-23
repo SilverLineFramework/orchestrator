@@ -1,4 +1,4 @@
-# ARENA Runtime Supervisor (ARTS)
+# ARENA Runtime Orchestrator
 
 By leveraging a common runtime and carefully integrated resource monitoring, the ARENA Runtime Supervisor (ARTS) can handle very heterogenous compute resources, across compute classes, from small embedded devices to edge servers. It is distinct from several previous frameworks for managing distributed computing in that it focus on adaptation to changing resources and support for highly heterogenous distributed systems found at the edge.
 
