@@ -1,10 +1,14 @@
 """MQTT message handlers."""
 
 import uuid
+import json
+import base64
+from pathlib import Path
 
 from arts_core.models import Runtime, Module, File, FileType
 from arts_core.serializers import ModuleSerializer, RuntimeSerializer
 from mapper.manifest import AppManifest, PlatformManifest
+from mapper.main import ModuleMapper
 from . import messages
 from wasm_files import file_handler
 
@@ -50,7 +54,7 @@ class ARTSHandler():
                 msg.get('data', 'uuid'), msg.get('data', 'name'))
 
             self.platform.add_node(
-                msg.get('data', 'name'), 10, msg.get('data', 'resources'))
+                msg.get('data', 'name'), msg.get('data', 'uuid'), 10, msg.get('data', 'resources'))
             self.platform.print_raw()
             
             return messages.Response(
@@ -60,6 +64,7 @@ class ARTSHandler():
             runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
             body = RuntimeSerializer(runtime, many=False).data
             runtime.delete()
+
             self.platform.remove_node(
                 msg.get('data', 'name'))
             return messages.Response(msg.topic, msg.get('object_id'), body)
@@ -129,6 +134,78 @@ class ARTSHandler():
             "{}/{}".format(msg.topic, module.parent.uuid), "create",
             ModuleSerializer(module, many=False).data)
 
+
+    def __construct_module_data_from_app(self, data, app_name, module_name, node_name):
+        """ Add the following fields to conform to create-module message format:
+                parent
+                filename
+                filetype
+                args
+                env
+                resources
+            Give new uuid for data
+        """
+        node = self.platform.get_node(node_name)
+        module = self.application.get_module(module_name)
+        
+        data['name'] = app_name + "." + module_name
+        data['uuid'] = str(uuid.uuid4())
+        data['parent'] = {}
+        data['parent']['uuid'] = node['uuid']
+        # Note: Filetype is set by default in create_module
+        data['filename'] = module['filename']
+
+        # Set args
+        args = [module['filename']]
+        if 'args' in module:
+            args = args + module['args']
+        data['args'] = args
+        
+        # Set env
+        env = []
+        if 'env' in module:
+            env = env + module['env']
+        data['env'] = env
+
+        return data
+        
+
+
+    def __create_application(self, msg):
+        """Handle create application"""
+        data = msg.get('data')
+        app_name = msg.get('data', 'name')
+        
+        # Decode the app manifest 
+        decoded_manifest_b = bytes(data['filename'], 'utf-8')
+        app_manifest = json.loads(base64.b64decode(decoded_manifest_b).decode())
+        self.application = AppManifest(app_manifest, is_dict=True)
+
+        # Map modules: 0 is a separation optimization pass
+        mapper = ModuleMapper(self.application, self.platform)
+        success = mapper.map_modules(0)
+
+        results = []
+        if success:
+            node2module, module2node = mapper.get_mapping_result()
+            for module_name, node_name in module2node.items():
+                # Add extra fields to call create_module
+                print("Old Message: ", msg.payload)
+
+                new_data = self.__construct_module_data_from_app(data, app_name, module_name, node_name)
+                # Give new UUIDs
+                msg.set(str(uuid.uuid4()), 'object_id');
+                msg.set(new_data, 'data');
+                print("Message: ", msg.payload)
+                results.append(self.__create_module(msg, False))
+
+        else:
+            print("Unable to deploy application")
+            return []
+
+        return results
+
+
     def __delete_module(self, msg):
         """Handle delete message."""
         module_id = msg.get('data', 'uuid')
@@ -174,8 +251,12 @@ class ARTSHandler():
                 return self.__create_module_ack(msg)
         elif msg_type == 'arts_req':
             action = msg.get('action')
+            create_type = msg.get('data', 'type')
             if action == 'create':
-                return self.__create_module(msg, False)
+                if create_type == 'module':
+                    return self.__create_module(msg, False)
+                if create_type == 'application':
+                    return self.__create_application(msg)
             elif action == 'delete':
                 return self.__delete_module(msg)
             elif action == 'exited':

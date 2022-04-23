@@ -5,12 +5,10 @@ import json
 import pprint
 import logging
 from argparse import ArgumentParser, RawTextHelpFormatter
-from pathlib import Path
-import yaml
 from copy import deepcopy
 from enum import IntEnum
 
-from manifest import AppManifest, PlatformManifest
+from mapper.manifest import AppManifest, PlatformManifest
 
 def argsort(seq, reverse=False):
     return sorted(range(len(seq)), key=seq.__getitem__, reverse=reverse)
@@ -64,6 +62,8 @@ class ModuleMapper:
     def _map_module_to_nodes(self, module_resources):
         pass
 
+    def get_mapping_result(self):
+        return self._map_node2module, self._map_module2node
 
     # Pin a module to a given node, and vice versa
     def __pin(self, pin_node, module):
@@ -73,17 +73,17 @@ class ModuleMapper:
 
         # Update running resources
         res_info = self._app.resource_info[module]
-        if "cpus" in res_info:
+        if res_info is not None and "cpus" in res_info:
             self._node_running_resources[pin_node]["cpus"] -= res_info["cpus"]
-        if "memory" in res_info:
+        if res_info is not None and "memory" in res_info:
             self._node_running_resources[pin_node]["memory"] -= res_info["memory"]
 
 
     # Check if node has enough resources to pin a module
     def __pinnable(self, pin_node, module):
         res_info = self._app.resource_info[module]
-        has_cpus = "cpus" in res_info
-        has_mem = "memory" in res_info
+        has_cpus = res_info is not None and "cpus" in res_info
+        has_mem = res_info is not None and "memory" in res_info
 
         if (has_cpus and self._node_running_resources[pin_node]["cpus"] < res_info["cpus"]) or\
             (has_mem and self._node_running_resources[pin_node]["memory"] < res_info["memory"]):
@@ -349,9 +349,11 @@ class ModuleMapper:
                     raise VerifyException
             
             print("Successful verification of mapping!")
+            return True
 
         except VerifyException:
             print("Error in mapping verification")
+            return False
 
 
     # Determine optimal mapping of modules onto nodes
@@ -396,10 +398,8 @@ class ModuleMapper:
                 self.__print_pass_out(count, pass_name)
             count += 1
 
-        self.__verify_mapping()
+        return self.__verify_mapping()
               
-
-        
 
 
 
@@ -447,10 +447,6 @@ if __name__ == '__main__':
     if not isinstance(log_numlevel, int):
         raise ValueError("Invalid log level for input: \'{}\'".format(args.loglevel))
     logging.basicConfig(level=log_numlevel, format="[%(levelname)s | %(filename)s:%(lineno)d] %(message)s")
-
-    #with open(Path('sample_manifests') / 'apps' / args.app) as f:
-    #    app_dict = yaml.safe_load(f)
-    #App = AppManifest(app_dict, is_dict=True)
 
     App = AppManifest(args.app)
     Platform = PlatformManifest(args.platform)

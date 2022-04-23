@@ -99,9 +99,16 @@ class MQTTListener(mqtt.Client):
         res = self.__on_message(msg)
         # only publish if not `None`
         if res:
-            payload = json.dumps(res.payload)
-            print("[Response] {}: {}".format(str(res.topic), payload))
-            self.publish(res.topic, payload)
+            if type(res) is list:
+                for inst in res:
+                    payload = json.dumps(inst.payload)
+                    print("[Response] {}: {}".format(str(inst.topic), payload))
+                    self.publish(inst.topic, payload)
+            else:
+                payload = json.dumps(res.payload)
+                print("[Response] {}: {}".format(str(res.topic), payload))
+                self.publish(res.topic, payload)
+
 
     def on_subscribe(self, mqttc, obj, mid, granted_qos):
         """Subscribe callback."""

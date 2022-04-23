@@ -150,6 +150,9 @@ class AppManifest(Manifest):
         plot(g, **visual_style, layout=layout)
 
 
+    def get_module (self, name):
+        return self._modules[name]
+
 
 class PlatformManifest(Manifest):
 
@@ -167,38 +170,42 @@ class PlatformManifest(Manifest):
 
     def _parse_manifest (self):
         self.platform_name = self._manifest['platform-name']
-        self.nodes = self._manifest['nodes']
+        self._nodes = self._manifest['nodes']
         
         # Vertices of platform graph
-        self.node_names = list(self.nodes.keys())
+        self.node_names = list(self._nodes.keys())
         #print(self._node_names)
         
         self.resource_info = {}
         self.pings = {}
 
-        for name, props in self.nodes.items():
+        for name, props in self._nodes.items():
             self.pings[name] = props['ping']
             self.resource_info[name] = props['resources']
 
 
 
-    def add_node (self, name, ping, resources):
-        if name in self.nodes:
+    def add_node (self, name, uuid, ping, resources):
+        if name in self._nodes:
             return
-        self.nodes[name] = {}
-        self.nodes[name]['ping'] = ping
-        self.nodes[name]['resources'] = resources
+        self._nodes[name] = {}
+        self._nodes[name]['uuid'] = uuid
+        self._nodes[name]['ping'] = ping
+        self._nodes[name]['resources'] = resources
 
         self.resource_info[name] = resources
         self.pings[name] = ping
         self.node_names.append(name)
 
     def remove_node (self, name):
-        if name in self.nodes:
-            self.nodes.pop(name)
+        if name in self._nodes:
+            self._nodes.pop(name)
             self.resource_info.pop(name)
             self.pings.pop(name)
             self.node_names.remove(name)
+
+    def get_node (self, name):
+        return self._nodes[name]
 
 
 

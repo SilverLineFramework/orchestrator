@@ -43,6 +43,17 @@ class Message:
         except (KeyError, TypeError):
             raise MissingField(args)
 
+    def set(self, value, *args):
+        """ Set attribute, or raise appropriate error
+        """
+        try:
+            d = self.payload
+            for p in args[:-1]:
+                d = d[p]
+            d[args[-1]] = value
+        except (KeyError, TypeError):
+            raise MissingField(args)
+
 
 def Error(data):
     """Error message."""
