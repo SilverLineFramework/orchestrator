@@ -67,7 +67,7 @@ class ARTSHandler():
         if msg.payload['data']['filetype'] == FileType.PY:
             try:
                 file = msg.get('data', 'args', 1)
-            except:
+            except messages.MissingField:
                 file = msg.get('data', 'filename')
         else:
             file = msg.get('data', 'filename')
@@ -198,9 +198,14 @@ class ARTSHandler():
     def special(self, msg):
         """Special instructions."""
         action = msg.get('action')
+        payload = msg.get('data')
+
+        if not isinstance(payload, dict):
+            payload = {"metadata": payload}
+
         if action == "save":
-            self.profiler.save()
+            self.profiler.save(payload)
         elif action == "reset":
-            self.profiler.reset()
+            self.profiler.reset(payload)
         else:
             raise messages.InvalidArgument('action', action)

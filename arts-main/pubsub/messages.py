@@ -56,7 +56,8 @@ def Error(data):
 
 def __convert_str_attrs(d):
     """Convert JSON-encoded string attributes into proper objects."""
-    convert_keys = ['apis', 'args', 'env', 'channels', 'peripherals', "aot_target"]
+    convert_keys = [
+        'apis', 'args', 'env', 'channels', 'peripherals', "aot_target"]
     # convert array attributes saved as strings into objects
     for key in convert_keys:
         try:
@@ -94,18 +95,25 @@ class ARTSException(Exception):
 
 
 class UUIDNotFound(ARTSException):
-    """Exception for runtime/module UUID not found."""
+    """Runtime/module UUID not found."""
 
     def __init__(self, obj, obj_type="runtime"):
         super().__init__(
             {"desc": "invalid {} UUID".format(obj_type), "data": obj})
 
+
 class DuplicateUUID(ARTSException):
-    """Exception for runtime/module when trying to create a duplicate UUID (expected in per-scene instantiated modules)."""
+    """Attempted to create a duplicate UUID.
+
+    This is expected in per-scene instantiated modules.
+    """
 
     def __init__(self, obj, obj_type="runtime"):
-        super().__init__(
-            {"desc": "duplicate {} UUID; request ignored".format(obj_type), "data": obj})
+        super().__init__({
+            "desc": "duplicate {} UUID; request ignored".format(obj_type),
+            "data": obj
+        })
+
 
 class InvalidArgument(ARTSException):
     """Exception for invalid argument value."""
@@ -119,13 +127,11 @@ class MissingField(ARTSException):
     """Required field is missing."""
 
     def __init__(self, path):
-        super().__init__(
-            {"desc": "missing field", "data": "/".join(path)})
+        super().__init__({"desc": "missing field", "data": "/".join(path)})
 
 
 class FileNotFound(ARTSException):
     """WASM file is missing."""
 
     def __init__(self, path):
-        super().__init__(
-            {"desc": "file not found", "data": path})
+        super().__init__({"desc": "file not found", "data": path})

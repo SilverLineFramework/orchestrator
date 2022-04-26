@@ -87,7 +87,7 @@ class Collector:
                 Module.objects.get(pk=module_id).source.index)
         return self._files[module_id]
 
-    def save(self):
+    def save(self, metadata):
         """Save chunk and start new."""
         for _, v in self.data.items():
             v.save()
@@ -97,10 +97,11 @@ class Collector:
             json.dump({
                 "files": files,
                 "runtimes": self.runtimes,
-                "modules": self.modules
+                "modules": self.modules,
+                **metadata
             }, f, indent=4)
 
-    def reset(self):
+    def reset(self, metadata):
         """Reset profiling data and save to new directory."""
-        self.save()
+        self.save(metadata)
         self._init()
