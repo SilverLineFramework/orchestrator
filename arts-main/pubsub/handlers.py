@@ -198,14 +198,16 @@ class ARTSHandler():
     def special(self, msg):
         """Special instructions."""
         action = msg.get('action')
-        payload = msg.get('data')
 
-        if not isinstance(payload, dict):
-            payload = {"metadata": payload}
-
-        if action == "save":
-            self.profiler.save(payload)
-        elif action == "reset":
-            self.profiler.reset(payload)
+        if action in {"save", "reset"}:
+            payload = msg.get('data')
+            if not isinstance(payload, dict):
+                payload = {"metadata": payload}
+            if action == "save":
+                self.profiler.save(payload)
+            else:
+                self.profiler.reset(payload)
+        elif action == "echo":
+            return messages.Message("realm/proc/echo", msg.payload)
         else:
             raise messages.InvalidArgument('action', action)
