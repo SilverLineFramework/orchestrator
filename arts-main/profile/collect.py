@@ -30,6 +30,14 @@ class Collector:
         'ch_in': np.uint32,
         'ch_out': np.uint32,
         'ch_loopback': np.uint32,
+        'utime': np.uint32,
+        'stime': np.uint32,
+        'minflt': np.uint32,
+        'majflt': np.uint32,
+        'inblock': np.uint32,
+        'oublock': np.uint32,
+        'nvcsw': np.uint32,
+        'nivcws': np.uint32
     }
 
     def __init__(self, dir="data"):
