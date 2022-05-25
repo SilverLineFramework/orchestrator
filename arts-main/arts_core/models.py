@@ -25,8 +25,10 @@ def _default_required_apis():
 def _emptylist():
     return []
 
+
 def _emptydict():
     return {}
+
 
 class Runtime(models.Model):
     """Available ARENA runtimes."""
@@ -45,8 +47,7 @@ class Runtime(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True, help_text="Last time the runtime was updated/created")
     apis = models.JSONField(
-        max_length=500, blank=True, help_text="Supported APIs.",
-        default=_default_runtime_apis)
+        blank=True, help_text="Supported APIs.", default=_default_runtime_apis)
     runtime_type = models.CharField(
         max_length=16, default="linux",
         help_text="Runtime type (browser, linux, embedded, special)")
@@ -66,6 +67,8 @@ class Runtime(models.Model):
         max_length=500, default="{}", blank=True, help_text=(
             "AOT target details, including CPU architecture, target ISA "
             "and ABI."))
+    metadata = models.JSONField(
+        blank=True, null=True, help_text="Optional metadata")
 
     @property
     def type(self):
@@ -90,7 +93,7 @@ class Module(models.Model):
 
     INPUT_ATTRS = [
         "name", "filename", "filetype", "apis", "args", "env",
-        "channels", "peripherals", "resources"]
+        "channels", "peripherals", "resources", "metadata"]
 
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -128,7 +131,8 @@ class Module(models.Model):
     peripherals = models.JSONField(
         default=_emptylist, blank=True, help_text="Required peripherals.")
     resources = models.JSONField(
-        blank=True, null=True, help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
+        blank=True, null=True,
+        help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
 
     @property
     def type(self):

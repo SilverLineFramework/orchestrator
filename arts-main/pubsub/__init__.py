@@ -1,6 +1,6 @@
 """Pubsub handlers for ARTS."""
 
 from .listener import MQTTListener
-from .handlers import ARTSHandler
+from . import messages
 
-__all__ = ["MQTTListener", "ARTSHandler"]
+__all__ = ["MQTTListener", "messages"]

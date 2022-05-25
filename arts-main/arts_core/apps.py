@@ -13,14 +13,9 @@ class ArtsCoreConfig(AppConfig):
         # check if we are running the main process; start mqtt listener
         if os.environ.get('RUN_MAIN', None) == 'true':
 
-            from pubsub import MQTTListener, ARTSHandler
-            from profile import Collector
-
-            # instantiate scheduler
-            from scheduler import LeastModulesFirstScheduler
-            scheduler = LeastModulesFirstScheduler()
-            profiler = Collector(dir=settings.DATA_DIR)
+            from pubsub import MQTTListener
+            from handlers import message_handlers
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
             self.mqtt_listener = MQTTListener(
-                ARTSHandler(scheduler, profiler), jwt_config=settings.JWT_AUTH)
+                message_handlers(), jwt_config=settings.JWT_AUTH)
