@@ -24,17 +24,17 @@ class Collector:
     def __init__(self, dir="data"):
         self.base_dir = dir
 
+        self.manifest = []
+        self._files = {}
+        self.runtimes = {}
+
+        self._init()
+
+    def _init(self):
         self.dir = os.path.join(
             self.base_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-        # CSV manifest
-        self.manifest = []
-        # Cache of module_id -> file_id mapping
-        self._files = {}
-        # Cache of runtimes and modules
-        self.modules = {}
-        self.runtimes = {}
-        # Actual data traces
         self.data = {}
+        self.modules = {}
 
     def _chunk_size(self, data):
         # Long rows -> includes opcodes -> use INTERP_CHUNK_SIZE
@@ -99,5 +99,4 @@ class Collector:
         """Reset profiling data and save to new directory."""
         print("[Profile] Profile reset received.")
         self.save(metadata)
-        self.data = {}
-        self.modules = {}
+        self._init()
