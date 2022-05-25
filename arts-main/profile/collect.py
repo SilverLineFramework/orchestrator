@@ -1,12 +1,11 @@
 """Data collector."""
 
 import os
-import uuid
-import atexit
-import numpy as np
+import pandas as pd
 import json
-from django.conf import settings
 from datetime import datetime
+
+from django.conf import settings
 
 from arts_core.models import Module, File
 from .data_store import DataStore
@@ -15,101 +14,90 @@ from .data_store import DataStore
 class Collector:
     """Profile data collector.
 
-    Keyword Args
-    ------------
-    dir : str or None
+    Parameters
+    ----------
+    dir : str
         Directory for saving data; will be saved as a subdirectory with the
         datetime, i.e. "data/%Y-%m-%d_%H-%M-%S".
     """
 
-    DATA_TYPES = {
-        'start_time': np.uint64,
-        'wall_time': np.uint64,
-        'cpu_time': np.uint64,
-        'memory': np.uint32,
-        'ch_in': np.uint32,
-        'ch_out': np.uint32,
-        'ch_loopback': np.uint32,
-        'utime': np.uint32,
-        'stime': np.uint32,
-        'minflt': np.uint32,
-        'majflt': np.uint32,
-        'inblock': np.uint32,
-        'oublock': np.uint32,
-        'nvcsw': np.uint32,
-        'nivcws': np.uint32
-    }
-
     def __init__(self, dir="data"):
         self.base_dir = dir
-        self._init()
-
-    def _init(self):
 
         self.dir = os.path.join(
             self.base_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-        self.data = {}
-        self.runtimes = {}
-        self.modules = {}
+        # CSV manifest
+        self.manifest = []
+        # Cache of module_id -> file_id mapping
         self._files = {}
-
-    def _as_uint8(self, x):
-        """Cast string UUID as dense uint8 buffer."""
-        return np.frombuffer(uuid.UUID(x).bytes, dtype=np.uint8)
+        # Cache of runtimes and modules
+        self.modules = {}
+        self.runtimes = {}
+        # Actual data traces
+        self.data = {}
 
     def _chunk_size(self, data):
-        if "opcodes" in data:
+        # Long rows -> includes opcodes -> use INTERP_CHUNK_SIZE
+        if data.shape[1] > 16:
             return settings.INTERP_CHUNK_SIZE
         else:
             return settings.AOT_CHUNK_SIZE
 
-    def update(self, module_id=None, runtime_id=None, data=None):
-        """Update profile state."""
-        file_id = "file-{}".format(self._module_index(module_id))
-        if file_id not in self.data:
-            self.data[file_id] = DataStore(
-                dir=os.path.join(self.dir, file_id),
-                chunk=self._chunk_size(data))
-
-        data_tc = {k: v(data[k]) for k, v in self.DATA_TYPES.items()}
-        data_tc['module_id'] = self._as_uint8(module_id)
-        data_tc['runtime_id'] = self._as_uint8(runtime_id)
-
-        if "opcodes" in data:
-            data_tc["opcodes"] = np.array(data["opcodes"], dtype=np.uint64)
-
-        self.data[file_id].update(data_tc)
-
-    def register_runtime(self, runtime_id, runtime_name):
-        """Register runtime."""
-        self.runtimes[runtime_id] = runtime_name
-
-    def register_module(self, module_id, module_name):
-        """Register module."""
-        self.modules[module_id] = module_name
-
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
         if module_id not in self._files:
-            self._files[module_id] = (
-                Module.objects.get(pk=module_id).source.index)
+            file = Module.objects.get(pk=module_id).source
+            self._files[module_id] = (file.index, file.name)
         return self._files[module_id]
 
-    def save(self, metadata):
-        """Save chunk and start new."""
-        for _, v in self.data.items():
-            v.save()
+    def update(self, data):
+        """Update profile state."""
+        module_id = data['module_id']
+        runtime_id = data['runtime_id']
+        buffer = data['data']
+        file_id, file = self._module_index(module_id)
+        file_id = "file-{}".format(file_id)
 
-        files = {source.name: source.index for source in File.objects.all()}
-        with open(os.path.join(self.dir, "manifest.json"), 'w') as f:
-            json.dump({
-                "files": files,
-                "runtimes": self.runtimes,
-                "modules": self.modules,
-                **metadata
-            }, f, indent=4)
+        if module_id not in self.data:
+            path = os.path.join(self.dir, file_id, module_id)
+            self.data[module_id] = DataStore(
+                path, chunk=self._chunk_size(buffer))
+            self.manifest.append({
+                "runtime_id": runtime_id,
+                "runtime": self.runtimes[runtime_id],
+                "module_id": module_id,
+                "module": self.modules[module_id],
+                "file_id": file_id,
+                "file": file
+            })
+
+        self.data[module_id].update(buffer)
+
+    def create_runtime(self, runtime):
+        """Register runtime name to lookup table."""
+        self.runtimes[str(runtime.uuid)] = runtime.name
+
+    def create_module(self, module):
+        """Register module name to lookup table."""
+        self.modules[str(module.uuid)] = module.name
+
+    def delete_module(self, module):
+        """Delete module: close out data store; should free up memory."""
+        self.data.pop(str(module.uuid)).save()
+
+    def save(self, metadata):
+        """Save current chunks and start new."""
+        for _, ds in self.data.items():
+            ds.save()
+
+        with open(os.path.join(self.dir, "metadata.json"), 'w') as f:
+            json.dump(metadata, f)
+        pd.DataFrame(self.manifest).to_csv(
+            os.path.join(self.dir, "manifest.csv"), index=False)
 
     def reset(self, metadata):
         """Reset profiling data and save to new directory."""
+        print("[Profile] Profile reset received.")
         self.save(metadata)
-        self._init()
+        self.data = {}
+        self.modules = {}

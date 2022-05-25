@@ -1,18 +1,26 @@
+"""Object serialization."""
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Runtime, Module
-import json
 
 
 class ModuleListingField(serializers.RelatedField):
+    """Module nested representation; omits most fields."""
+
     def to_representation(self, value):
-        return { 'type': value.type, 'parent': { 'uuid': str(value.parent.uuid) }, 'name': value.name, 'uuid': str(value.uuid), 'filename': value.filename}
+        return {
+            'type': value.type,
+            'parent': {'uuid': str(value.parent.uuid)},
+            'name': value.name,
+            'uuid': str(value.uuid),
+            'filename': value.filename
+        }
 
 
 class RuntimeSerializer(serializers.ModelSerializer):
-    """
-    Serializes the runtime data
-    """
+    """Runtime full serialization."""
+
     children = ModuleListingField(many=True, read_only=True)
 
     class Meta:
@@ -28,14 +36,7 @@ class ParentListingField(serializers.RelatedField):
 
 
 class ModuleSerializer(serializers.ModelSerializer):
-    """
-    Serializes the module data
-    """
-    # parent = serializers.SlugRelatedField(
-    #     many=False,
-    #     read_only=True,
-    #     slug_field='uuid'
-    # )
+    """Module standalone serialization."""
     parent = ParentListingField(many=False, read_only=True)
 
     class Meta:
@@ -46,13 +47,14 @@ class ModuleSerializer(serializers.ModelSerializer):
 
 
 class TokenSerializer(serializers.Serializer):
-    """
-    This serializer serializes the token data
-    """
+    """JWT Serialization."""
+
     token = serializers.CharField(max_length=255)
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """User Serialization."""
+
     class Meta:
         model = User
         fields = ("username", "email")

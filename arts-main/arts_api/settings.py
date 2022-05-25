@@ -258,8 +258,8 @@ WASM_DIR = "wasm_files/uploads"
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # Chunk sizes
-# Targets a maximum uncompressed size of 2MB.
-# 1 AOT sample = 80 bytes
-# 1 interp sample = 80 bytes + (256 * 8 bytes) = 2128 bytes
-INTERP_CHUNK_SIZE = 1000
-AOT_CHUNK_SIZE = 25000
+# Targets a maximum uncompressed size of ~10MB.
+# 1 AOT sample = 128 bytes
+# 1 interp sample = 128 bytes + (256 * 8 bytes) = 2176 bytes
+INTERP_CHUNK_SIZE = 5 * 1000
+AOT_CHUNK_SIZE = 100 * 1000

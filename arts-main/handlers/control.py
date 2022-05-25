@@ -1,58 +1,21 @@
-"""MQTT message handlers."""
+"""Handler for module control messages."""
 
-import uuid
 from django.db import IntegrityError
 
-from arts_core.models import Runtime, Module, File, FileType
-from arts_core.serializers import ModuleSerializer, RuntimeSerializer
-from . import messages
+from pubsub import messages
 from wasm_files import file_handler
+from arts_core.models import FileType, Runtime, Module, File
+from arts_core.serializers import ModuleSerializer
+
+from .base import BaseHandler
 
 
-class ARTSHandler():
-    """ARTS Message Handler."""
+class Control(BaseHandler):
+    """Runtime control messages."""
 
-    def __init__(self, scheduler, profiler):
+    def __init__(self, scheduler, *args, **kwargs):
         self.scheduler = scheduler
-        self.profiler = profiler
-
-    def _get_object(self, rt, model=Runtime):
-        """Fetch runtime/module by UUID or generate error."""
-        try:
-            return model.objects.get(pk=uuid.UUID(rt))
-        except model.DoesNotExist:
-            raise messages.UUIDNotFound(rt, obj_type=str(model().type))
-
-    def __object_from_dict(self, model, attrs):
-        """Convert attrs to model."""
-        filtered = {k: v for k, v in attrs.items() if k in model.INPUT_ATTRS}
-        if 'uuid' in attrs:
-            filtered['uuid'] = uuid.UUID(attrs['uuid'])
-        return model(**filtered)
-
-    def reg(self, msg):
-        """Handle registration message."""
-        if msg.get('type') == 'arts_resp':
-            return None
-
-        print("\n[Registration] {}".format(msg.payload))
-
-        action = msg.get('action')
-        if action == 'create':
-            db_entry = self.__object_from_dict(Runtime, msg.get('data'))
-            db_entry.save()
-            self.profiler.register_runtime(
-                msg.get('data', 'uuid'), msg.get('data', 'name'))
-            return messages.Response(
-                msg.topic, msg.get('object_id'),
-                RuntimeSerializer(db_entry, many=False).data)
-        elif action == 'delete':
-            runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
-            body = RuntimeSerializer(runtime, many=False).data
-            runtime.delete()
-            return messages.Response(msg.topic, msg.get('object_id'), body)
-        else:
-            raise messages.InvalidArgument("action", msg.get('action'))
+        super().__init__(*args, **kwargs)
 
     def __create_module_ack(self, msg):
         """Handle ACK sent after scheduling module.
@@ -106,7 +69,7 @@ class ARTSHandler():
                 else:
                     data['filetype'] = FileType.WA
 
-            module = self.__object_from_dict(Module, data)
+            module = self._object_from_dict(Module, data)
             module.source = self.__create_or_get_file(msg)
             module.parent = self.__get_runtime_or_schedule(msg, module)
 
@@ -116,8 +79,7 @@ class ARTSHandler():
                 if 'UNIQUE constraint' in str(e):
                     raise messages.DuplicateUUID(data, obj_type='module')
 
-            self.profiler.register_module(
-                msg.get('data', 'uuid'), msg.get('data', 'name'))
+            self.callback("create_module", module)
 
         return messages.Request(
             "{}/{}".format(msg.topic, module.parent.uuid), "create",
@@ -133,9 +95,11 @@ class ARTSHandler():
         if 'send_to_runtime' in data:
             send_rt = data['send_to_runtime']
             module.parent = self._get_object(send_rt, model=Runtime)
+            self.callback("migrate_module", module)
             module.save()
         else:
             send_rt = None
+            self.callback("delete_module", module)
             module.delete()
 
         return messages.Request(
@@ -147,10 +111,11 @@ class ARTSHandler():
         """Remove module from database."""
         module_id = msg.get('data', 'uuid')
         module = self._get_object(module_id, model=Module)
+        self.callback("exited_module", module)
         module.delete()
         return None
 
-    def control(self, msg):
+    def handle(self, msg):
         """Handle per-module control message."""
         # arts_resp -> is a message we sent, should be ignored
         msg_type = msg.get('type')
@@ -178,36 +143,3 @@ class ARTSHandler():
                 raise messages.InvalidArgument('action', action)
         else:
             raise messages.InvalidArgument('type', msg_type)
-
-    def keepalive(self, msg):
-        """Handle keepalive message."""
-        return None
-
-    def debug(self, msg):
-        """Handle debug message."""
-        print(str(msg.payload))
-        return None
-
-    def profile(self, msg):
-        """Handle profiling message."""
-        self.profiler.update(
-            module_id=msg.get("module_id"), runtime_id=msg.get("runtime_id"),
-            data=msg.get("data"))
-        return None
-
-    def special(self, msg):
-        """Special instructions."""
-        action = msg.get('action')
-
-        if action in {"save", "reset"}:
-            payload = msg.get('data')
-            if not isinstance(payload, dict):
-                payload = {"metadata": payload}
-            if action == "save":
-                self.profiler.save(payload)
-            else:
-                self.profiler.reset(payload)
-        elif action == "echo":
-            return messages.Message("realm/proc/echo", msg.payload)
-        else:
-            raise messages.InvalidArgument('action', action)

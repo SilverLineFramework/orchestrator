@@ -5,7 +5,6 @@ import json
 
 import paho.mqtt.client as mqtt
 import ssl
-from json.decoder import JSONDecodeError
 
 from django.conf import settings
 
@@ -17,7 +16,7 @@ class MQTTListener(mqtt.Client):
 
     Parameters
     ----------
-    view : ARTSHandler
+    handlers : dict (str -> pubsub.BaseHandler)
         Routes topic messages to methods named according to the config topic
         dict keys.
     cid : str
@@ -26,12 +25,12 @@ class MQTTListener(mqtt.Client):
         JSON Web Token configuration
     """
 
-    def __init__(self, view, cid='ARTS', jwt_config=None):
+    def __init__(self, handlers, cid='ARTS', jwt_config=None):
         super().__init__(cid)
 
         print("[Setup] Starting MQTT client...")
 
-        self.view = view
+        self.handlers = handlers
         self.jwt_config = jwt_config
 
         self.__connect_and_subscribe()
@@ -48,7 +47,7 @@ class MQTTListener(mqtt.Client):
             self.subscribe(t, 0)[1]: t for t in settings.MQTT_TOPICS
         }
         self._handler_dispatcher = {
-            k: getattr(self.view, v) for k, v in settings.MQTT_TOPICS.items()
+            k: self.handlers[v] for k, v in settings.MQTT_TOPICS.items()
         }
 
         self.loop_start()
@@ -56,13 +55,6 @@ class MQTTListener(mqtt.Client):
     def on_connect(self, mqttc, obj, flags, rc):
         """Client connect callback."""
         print("[Setup] Connected: rc={}".format(rc))
-
-    def __json_decode(self, msg):
-        """Decode JSON MQTT message."""
-        payload = str(msg.payload.decode("utf-8", "ignore"))
-        if (payload[0] == "'"):
-            payload = payload[1:len(payload) - 1]
-        return messages.Message(msg.topic, json.loads(payload))
 
     def __on_message(self, msg):
         """Message handler internals.
@@ -72,27 +64,24 @@ class MQTTListener(mqtt.Client):
         raise an ```ARTSException``` which should be given as a response.
         """
         try:
-            decoded = self.__json_decode(msg)
-        except JSONDecodeError:
-            return messages.Error(
-                {"desc": "Invalid JSON", "data": msg.payload})
-
-        handler = self._handler_dispatcher.get(decoded.topic)
-        if callable(handler):
-            try:
-                return handler(decoded)
-            # ARTS Exceptions are raised by handlers in response to
-            # invalid request data (which has been detected).
-            except messages.ARTSException as e:
-                return e.message
-            # Uncaught exceptions should only be due to programmer error.
-            except Exception as e:
-                print(traceback.format_exc())
-                print("Input message: {}".format(str(decoded.payload)))
-                return messages.Error(
-                    {"desc": "Uncaught exception", "data": str(e)})
-        else:
+            handler = self._handler_dispatcher.get(msg.topic)
+        except KeyError:
             return messages.Error({"desc": "Invalid topic", "data": msg.topic})
+
+        try:
+            decoded = handler.decode(msg)
+            return handler.handle(decoded)
+        # ARTS Exceptions are raised by handlers in response to
+        # invalid request data (which has been detected).
+        except messages.ARTSException as e:
+            return e.message
+        # Uncaught exceptions here must be caused by some programmer error
+        # or unchecked edge case, so are always returned.
+        except Exception as e:
+            print(traceback.format_exc())
+            print("Input message: {}".format(str(decoded.payload)))
+            return messages.Error(
+                {"desc": "Uncaught exception", "data": str(e)})   
 
     def on_message(self, mqttc, obj, msg):
         """MQTT Message handler."""
