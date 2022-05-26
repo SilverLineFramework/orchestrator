@@ -8,6 +8,7 @@ from datetime import datetime
 from django.conf import settings
 
 from arts_core.models import Module
+from pubsub.messages import InvalidArgument
 from .data_store import DataStore
 
 
@@ -24,8 +25,7 @@ class Collector:
     def __init__(self, dir="data"):
         self.base_dir = dir
 
-        # File and runtime id cache are never reset.
-        self._files = {}
+        # Runtime id cache is never reset.
         self.runtimes = {}
 
         self._init()
@@ -47,28 +47,30 @@ class Collector:
 
     def _module_index(self, module_id):
         """Get source file index for module UUID."""
-        if module_id not in self._files:
+        try:
             file = Module.objects.get(pk=module_id).source
-            self._files[module_id] = (file.index, file.name)
-        return self._files[module_id]
+            return file.index, file.name
+        except Module.DoesNotExist:
+            raise InvalidArgument("module_id", module_id)
 
     def update(self, data):
         """Update profile state."""
-        module_id = data['module_id']
-        runtime_id = data['runtime_id']
-        buffer = data['data']
-        file_id, file = self._module_index(module_id)
-        file_id = "file-{}".format(file_id)
+        module_id = data.get('module_id')
+        runtime_id = data.get('runtime_id')
+        buffer = data.get('data')
 
         if module_id not in self.data:
+            file_id, file = self._module_index(module_id)
+            file_id = "file-{}".format(file_id)
+
             path = os.path.join(self.dir, file_id, module_id)
             self.data[module_id] = DataStore(
                 path, chunk=self._chunk_size(buffer))
             self.manifest.append({
                 "runtime_id": runtime_id,
-                "runtime": self.runtimes[runtime_id],
+                "runtime": self.runtimes.get(runtime_id),
                 "module_id": module_id,
-                "module": self.modules[module_id],
+                "module": self.modules.get(module_id),
                 "file_id": file_id,
                 "file": file
             })
@@ -99,6 +101,5 @@ class Collector:
 
     def reset(self, metadata):
         """Reset profiling data and save to new directory."""
-        print("[Profile] Profile reset received.")
         self.save(metadata)
         self._init()
