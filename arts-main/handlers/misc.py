@@ -36,10 +36,13 @@ class Special(BaseHandler):
             if not isinstance(payload, dict):
                 payload = {"metadata": payload}
             if action == "save":
+                print("[Save] {}".format(msg.payload))
                 self.callback("save", payload)
             else:
+                print("[Reset] {}".format(msg.payload))
                 self.callback("reset", payload)
         elif action == "echo":
+            print("[Echo] {}".format(msg.payload))
             return messages.Message("realm/proc/echo", msg.payload)
         else:
             raise messages.InvalidArgument('action', action)

@@ -15,7 +15,7 @@ class Registration(BaseHandler):
         if msg.get('type') == 'arts_resp':
             return None
 
-        print("\n[Registration] {}".format(msg.payload))
+        print("[Registration] {}".format(msg.payload))
 
         action = msg.get('action')
         if action == 'create':

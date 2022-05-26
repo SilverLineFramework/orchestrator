@@ -122,7 +122,7 @@ class Control(BaseHandler):
         if msg_type == 'arts_resp':
             return None
 
-        print("\n[Control] {}".format(msg.payload))
+        print("[Control] {}".format(msg.payload))
 
         if msg_type == 'runtime_resp':
             result = msg.get('data', 'result')
