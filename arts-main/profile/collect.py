@@ -7,7 +7,7 @@ from datetime import datetime
 
 from django.conf import settings
 
-from arts_core.models import Module, File
+from arts_core.models import Module
 from .data_store import DataStore
 
 
@@ -24,15 +24,17 @@ class Collector:
     def __init__(self, dir="data"):
         self.base_dir = dir
 
-        self.manifest = []
+        # File and runtime id cache are never reset.
         self._files = {}
         self.runtimes = {}
 
         self._init()
 
     def _init(self):
+        """Attributes cleared on every reset call."""
         self.dir = os.path.join(
             self.base_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        self.manifest = []
         self.data = {}
         self.modules = {}
 
