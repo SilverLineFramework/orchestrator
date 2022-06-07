@@ -240,7 +240,11 @@ MQTT_ROOT = "{}/proc".format(REALM)
 # Error channel
 MQTT_ERR = "{}/err".format(MQTT_ROOT)
 # Control topics
-ENDPOINTS = ['reg', 'control', 'debug', 'keepalive', 'profile', 'special']
+ENDPOINTS = [
+    'reg', 'control', 'debug', 'keepalive',
+    'profile', 'cpufreq',
+    'special'
+]
 MQTT_TOPICS = {
     '{}/{}'.format(MQTT_ROOT, endpoint): endpoint
     for endpoint in ENDPOINTS
@@ -263,3 +267,6 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 # 1 interp sample = 128 bytes + (256 * 8 bytes) = 2176 bytes
 INTERP_CHUNK_SIZE = 5 * 1000
 AOT_CHUNK_SIZE = 100 * 1000
+
+# CPU Frequency time series (8 bytes per entry)
+CPUFREQ_CHUNK_SIZE = 1000 * 1000

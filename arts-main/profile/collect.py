@@ -27,6 +27,8 @@ class Collector:
 
         # Runtime id cache is never reset.
         self.runtimes = {}
+        # CPU Frequency time series
+        self.cpufreq = {}
 
         self._init()
 
@@ -76,6 +78,17 @@ class Collector:
             })
 
         self.data[module_id].update(buffer)
+    
+    def update_cpufreq(self, data):
+        """Update CPU frequency."""
+        runtime_id = data.get('runtime_id')
+        buffer = data.get('data')
+
+        if runtime_id not in self.cpufreq:
+            path = os.path.join(self.dir, "cpufreq", runtime_id)
+            self.data[runtime_id] = DataStore(
+                path, chunk=settings.CPUFREQ_CHUNK_SIZE)
+        self.data[runtime_id].update(buffer)
 
     def create_runtime(self, runtime):
         """Register runtime name to lookup table."""
@@ -92,6 +105,8 @@ class Collector:
     def save(self, metadata):
         """Save current chunks and start new."""
         for _, ds in self.data.items():
+            ds.save()
+        for _, ds in self.cpufreq.items():
             ds.save()
 
         with open(os.path.join(self.dir, "metadata.json"), 'w') as f:

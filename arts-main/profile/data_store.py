@@ -23,11 +23,11 @@ class DataStore:
         self.chunk_index = 0
         self.chunk = chunk
         self.dir = dir
-        os.makedirs(os.path.dirname(self.dir), exist_ok=True)
 
     def save(self):
         """Save chunk and start new."""
         dst = self.dir + "_{}.npz".format(self.chunk_index)
+        os.makedirs(os.path.dirname(self.dir), exist_ok=True)
         np.savez_compressed(dst, data=np.vstack(self.head))
         self.head = []
         self.size = 0

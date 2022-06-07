@@ -1,12 +1,13 @@
 """Handler entry point."""
 
+from re import M
 from scheduler import LeastModulesFirstScheduler
 from profile import Collector
 from django.conf import settings
 
 from .registration import Registration
 from .control import Control
-from .profile import Profile
+from .profile import Profile, CPUFreq
 from .misc import Keepalive, Debug, Special
 
 
@@ -22,7 +23,8 @@ def message_handlers():
         "exited_module": [profiler.delete_module],
         "save": [profiler.save],
         "reset": [profiler.reset],
-        "profile": [profiler.update]
+        "profile": [profiler.update],
+        "cpufreq": [profiler.update_cpufreq]
     }
 
     return {
@@ -31,5 +33,6 @@ def message_handlers():
         "keepalive": Keepalive(callbacks),
         "debug": Debug(callbacks),
         "special": Special(callbacks),
-        "profile": Profile(callbacks)
+        "profile": Profile(callbacks),
+        "cpufreq": CPUFreq(callbacks)
     }

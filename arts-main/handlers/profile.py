@@ -34,3 +34,28 @@ class Profile(BaseHandler):
     def handle(self, msg):
         """Save profiling data."""
         self.callback("profile", msg.payload)
+
+
+class CPUFreq(BaseHandler):
+    """CPUFreq time series messages."""
+
+    @staticmethod
+    def decode(msg):
+        """Decode binary cpu frequency time series message.
+        
+        Has the following format:
+        ```
+        *size = (
+            UUID_SIZE               // runtime_id : char[40]
+            + sizeof(uint64_t) * n  // cpu frequency time series);
+        ```
+        """
+        return messages.Message(msg.topic, {
+            "runtime_id": msg.payload[:40].decode().rstrip('\0'),
+            "data": np.frombuffer(
+                msg.payload[40:], dtype=np.int64).reshape(-1, 2)
+        })
+
+    def handle(self, msg):
+        """Save CPU frequency time series."""
+        self.callback("cpufreq", msg.payload)
