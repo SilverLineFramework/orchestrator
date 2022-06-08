@@ -24,13 +24,10 @@ class Collector:
 
     def __init__(self, dir="data"):
         self.base_dir = dir
+        self._init()
 
         # Runtime id cache is never reset.
         self.runtimes = {}
-        # CPU Frequency time series
-        self.cpufreq = {}
-
-        self._init()
 
     def _init(self):
         """Attributes cleared on every reset call."""
@@ -38,6 +35,7 @@ class Collector:
             self.base_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         self.manifest = []
         self.data = {}
+        self.cpufreq = {}
         self.modules = {}
 
     def _chunk_size(self, data):
