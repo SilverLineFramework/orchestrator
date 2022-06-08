@@ -86,9 +86,9 @@ class Collector:
 
         if runtime_id not in self.cpufreq:
             path = os.path.join(self.dir, "cpufreq", runtime_id)
-            self.data[runtime_id] = DataStore(
+            self.cpufreq[runtime_id] = DataStore(
                 path, chunk=settings.CPUFREQ_CHUNK_SIZE)
-        self.data[runtime_id].update(buffer)
+        self.cpufreq[runtime_id].update(buffer)
 
     def create_runtime(self, runtime):
         """Register runtime name to lookup table."""
