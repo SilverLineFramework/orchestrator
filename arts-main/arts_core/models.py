@@ -35,7 +35,7 @@ class Runtime(models.Model):
 
     INPUT_ATTRS = [
         "name", "apis", "runtime_type", "max_nmodules", "page_size",
-        "aot_target"
+        "aot_target", "platform"
     ]
 
     uuid = models.UUIDField(
@@ -69,6 +69,8 @@ class Runtime(models.Model):
             "and ABI."))
     metadata = models.JSONField(
         blank=True, null=True, help_text="Optional metadata")
+    platform = models.JSONField(
+        null=True, help_text="Platform requirements and configuration")
 
     @property
     def type(self):

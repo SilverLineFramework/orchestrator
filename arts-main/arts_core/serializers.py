@@ -27,7 +27,7 @@ class RuntimeSerializer(serializers.ModelSerializer):
         model = Runtime
         fields = (
             "type", "uuid", "name", "apis", "runtime_type",
-            "ka_interval_sec", "children", "aot_target")
+            "ka_interval_sec", "children", "aot_target", "platform")
 
 
 class ParentListingField(serializers.RelatedField):
