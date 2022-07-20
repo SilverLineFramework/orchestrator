@@ -76,7 +76,7 @@ class Collector:
             })
 
         self.data[module_id].update(buffer)
-    
+
     def update_cpufreq(self, data):
         """Update CPU frequency."""
         runtime_id = data.get('runtime_id')
@@ -98,7 +98,11 @@ class Collector:
 
     def delete_module(self, module):
         """Delete module: close out data store; should free up memory."""
-        self.data.pop(str(module.uuid)).save()
+        try:
+            self.data.pop(str(module.uuid)).save()
+        except KeyError:
+            # No data received from module yet, so entry has not been created
+            pass
 
     def save(self, metadata):
         """Save current chunks and start new."""
