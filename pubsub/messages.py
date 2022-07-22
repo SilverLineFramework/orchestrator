@@ -46,7 +46,7 @@ class Message:
 
 def Error(data):
     """Error message."""
-    return Message(settings.MQTT_ERR, {
+    return Message(settings.MQTT_LOG, {
         "object_id": str(uuid.uuid4()),
         "action": "error",
         "type": "arts_resp",

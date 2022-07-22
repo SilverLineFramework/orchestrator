@@ -33,6 +33,8 @@ def _uuidstr():
 class Runtime(models.Model):
     """Available SilverLine runtimes."""
 
+    TYPE = "Runtime"
+
     INPUT_ATTRS = [
         "uuid", "name", "apis", "runtime_type", "max_nmodules", "page_size",
         "aot_target"]
@@ -80,6 +82,8 @@ class Runtime(models.Model):
 
 class Module(models.Model):
     """Currently running modules."""
+
+    TYPE = "Module"
 
     INPUT_ATTRS = [
         "uuid", "name", "filename", "filetype", "apis", "args", "env",

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import json
 import datetime
+import logging
 
 
 def _load(filename):
@@ -235,8 +236,8 @@ WEB_CLIENT_MQTT = {
 
 MQTT_ROOT = "{}/proc".format(REALM)
 
-# Error channel
-MQTT_ERR = "{}/err".format(MQTT_ROOT)
+# Logging / error channel
+MQTT_LOG = "{}/log/orchestrator".format(REALM)
 # Control topics
 ENDPOINTS = ['reg', 'control', 'keepalive']
 MQTT_TOPICS = {
@@ -244,20 +245,4 @@ MQTT_TOPICS = {
     for endpoint in ENDPOINTS
 }
 
-
-# --------------------------------------------------------------------------- #
-#                                  Profiling                                  #
-# --------------------------------------------------------------------------- #
-
-# Directory to save data
-DATA_DIR = os.path.join(BASE_DIR, "data")
-
-# Chunk sizes
-# Targets a maximum uncompressed size of ~10MB.
-# 1 AOT sample = 128 bytes
-# 1 interp sample = 128 bytes + (256 * 8 bytes) = 2176 bytes
-INTERP_CHUNK_SIZE = 5 * 1000
-AOT_CHUNK_SIZE = 100 * 1000
-
-# CPU Frequency time series (8 bytes per entry)
-CPUFREQ_CHUNK_SIZE = 1000 * 1000
+logging.basicConfig(level=logging.DEBUG)

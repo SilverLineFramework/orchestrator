@@ -6,11 +6,8 @@ docs/source/profile/
 docs/source/pubsub/
 docs/source/scheduler/
 
-# Profile data
-arts-main/data*
-*.zip
-.ipynb_checkpoints/
-*.ipynb
+# Logging
+log.txt
 
 # Secrets & Config
 mqtt.json

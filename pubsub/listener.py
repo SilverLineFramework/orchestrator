@@ -2,6 +2,7 @@
 
 import traceback
 import json
+import logging
 
 import paho.mqtt.client as mqtt
 import ssl
@@ -28,7 +29,9 @@ class MQTTListener(mqtt.Client):
     def __init__(self, handlers, cid='orchestrator', jwt_config=None):
         super().__init__(cid)
 
-        print("[Setup] Starting MQTT client...")
+        self._setup = logging.getLogger(name="setup")
+        self._req = logging.getLogger(name="request")
+        self._resp = logging.getLogger(name="response")
 
         self.handlers = handlers
         self.jwt_config = jwt_config
@@ -37,6 +40,8 @@ class MQTTListener(mqtt.Client):
 
     def __connect_and_subscribe(self):
         """Subscribe to control topics."""
+        self._setup.info("Starting MQTT client...")
+
         self.username_pw_set(
             username=settings.MQTT_USERNAME, password=settings.MQTT_PASSWORD)
         if settings.MQTT_SSL:
@@ -54,7 +59,7 @@ class MQTTListener(mqtt.Client):
 
     def on_connect(self, mqttc, obj, flags, rc):
         """Client connect callback."""
-        print("[Setup] Connected: rc={}".format(rc))
+        self._setup.info("Connected: rc={}".format(rc))
 
     def __on_message(self, msg):
         """Message handler internals.
@@ -78,8 +83,8 @@ class MQTTListener(mqtt.Client):
         # Uncaught exceptions here must be caused by some programmer error
         # or unchecked edge case, so are always returned.
         except Exception as e:
-            print(traceback.format_exc())
-            print("Input message: {}".format(str(decoded.payload)))
+            logging.error(traceback.format_exc())
+            logging.error("Caused by: {}".format(str(decoded.payload)))
             return messages.Error(
                 {"desc": "Uncaught exception", "data": str(e)})
 
@@ -89,13 +94,15 @@ class MQTTListener(mqtt.Client):
         # only publish if not `None`
         if res:
             payload = json.dumps(res.payload)
-            print("[Response] {}: {}".format(str(res.topic), payload))
+            if res.topic == settings.MQTT_LOG:
+                self._resp.warning(
+                    "{}:{}".format(str(res.topic), payload))
+            else:
+                self._resp.info(
+                    "{}:{}".format(str(res.topic), payload))
             self.publish(res.topic, payload)
 
     def on_subscribe(self, mqttc, obj, mid, granted_qos):
         """Subscribe callback."""
-        print("[Setup] Subscribed: {}".format(self.__subscribe_mid[mid]))
-
-    def on_log(self, mqttc, obj, level, string):
-        """Logging callback."""
-        pass
+        self._setup.debug(
+            "Subscribed: {}".format(self.__subscribe_mid[mid]))
