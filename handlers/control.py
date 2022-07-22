@@ -1,6 +1,7 @@
 """Handler for module control messages."""
 
 from django.db import IntegrityError
+from django.forms.models import model_to_dict
 
 from pubsub import messages
 from api.models import FileType, Runtime, Module
@@ -25,12 +26,13 @@ class Control(BaseHandler):
 
     def __get_runtime_or_schedule(self, msg, module):
         """Get parent runtime, or allocate target runtime."""
-        sched_ret = self.scheduler.schedule_new_module(module)
-        if 'parent' in msg.get('data'):
-            if (msg.payload['data']['parent']):
-                rt = msg.get('data', 'parent')
-                sched_ret = self._get_object(rt, model=Runtime)
-        return sched_ret
+        # sched_ret = self.scheduler.schedule_new_module(module)
+        # if 'parent' in msg.get('data'):
+        #     if (msg.payload['data']['parent']):
+        #        rt = msg.get('data', 'parent')
+        #        sched_ret = self._get_object(rt, model=Runtime)
+        # return sched_ret
+        return self._get_object(msg.get('data', 'parent'), model=Runtime)
 
     def __create_module(self, msg):
         """Handle create message."""
@@ -41,7 +43,6 @@ class Control(BaseHandler):
             data['filetype'] = FileType.WA
 
         module = self._object_from_dict(Module, data)
-        module.source = self.__create_or_get_file(msg)
         module.parent = self.__get_runtime_or_schedule(msg, module)
 
         try:
@@ -50,16 +51,15 @@ class Control(BaseHandler):
             if 'UNIQUE constraint' in str(e):
                 raise messages.DuplicateUUID(data, obj_type='module')
 
-        self.callback("create_module", module)
-
         return messages.Request(
-            "{}/{}".format(msg.topic, module.parent), "create", dict(module))
+            "{}/{}".format(msg.topic, module.parent.uuid),
+            "create", {"type": "module", **model_to_dict(module)})
 
     def __delete_module(self, msg):
         """Handle delete message."""
         module_id = msg.get('data', 'uuid')
         module = self._get_object(module_id, model=Module)
-        uuid_current = str(module.parent)
+        uuid_current = module.parent.uuid
         module.alive = False
         module.save()
 

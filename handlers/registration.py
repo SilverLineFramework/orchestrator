@@ -3,7 +3,7 @@
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from api.models import Runtime
+from api.models import Runtime, Module
 
 from .base import BaseHandler
 
@@ -22,10 +22,6 @@ class Registration(BaseHandler):
         if action == 'create':
             runtime = self._object_from_dict(Runtime, msg.get('data'))
             runtime.save()
-
-            print(runtime.uuid)
-            print(model_to_dict(runtime))
-
             return messages.Response(
                 msg.topic, msg.get('object_id'), model_to_dict(runtime))
 
@@ -33,6 +29,12 @@ class Registration(BaseHandler):
             runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
             runtime.alive = False
             runtime.save()
+
+            # Also mark all related modules as dead
+            for mod in Module.objects.filter(parent=runtime):
+                mod.alive = False
+                mod.save()
+
             return messages.Response(
                 msg.topic, msg.get('object_id'), model_to_dict(runtime))
 
