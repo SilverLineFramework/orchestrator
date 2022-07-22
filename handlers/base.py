@@ -52,6 +52,4 @@ class BaseHandler:
     def _object_from_dict(model, attrs):
         """Convert attrs to model."""
         filtered = {k: v for k, v in attrs.items() if k in model.INPUT_ATTRS}
-        if 'uuid' in attrs:
-            filtered['uuid'] = uuid.UUID(attrs['uuid'])
         return model(**filtered)

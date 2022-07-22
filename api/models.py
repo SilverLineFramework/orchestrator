@@ -34,12 +34,12 @@ class Runtime(models.Model):
     """Available SilverLine runtimes."""
 
     INPUT_ATTRS = [
-        "name", "apis", "runtime_type", "max_nmodules", "page_size",
+        "uuid", "name", "apis", "runtime_type", "max_nmodules", "page_size",
         "aot_target"]
-    OUTPUT_ATTRS = ["uuid", "name", "runtime_type", "aot_target"]
+    OUTPUT_SHORT = ["uuid", "name", "runtime_type", "aot_target"]
 
     uuid = models.CharField(
-        primary_key=True, max_length=64, default=_uuidstr, editable=False,
+        primary_key=True, max_length=64, default=_uuidstr,
         help_text="Runtime UUID.")
     name = models.CharField(
         max_length=255, default='runtime',
@@ -68,11 +68,6 @@ class Runtime(models.Model):
     alive = models.BooleanField(
         default=True, help_text="Set to False after runtime exits.")
 
-    @property
-    def type(self):
-        """Model name for serializers."""
-        return "runtime"
-
     def natural_key(self):
         """Makes objects with RT as foreign key use UUID when serialized."""
         return self.uuid
@@ -87,12 +82,12 @@ class Module(models.Model):
     """Currently running modules."""
 
     INPUT_ATTRS = [
-        "name", "filename", "filetype", "apis", "args", "env",
+        "uuid", "name", "filename", "filetype", "apis", "args", "env",
         "channels", "peripherals", "resources", "metadata"]
-    OUTPUT_ATTRS = ["uuid", "name", "parent", "filename"]
+    OUTPUT_SHORT = ["uuid", "name", "parent", "filename"]
 
-    uuid = models.UUIDField(
-        primary_key=True, max_length=64, default=_uuidstr, editable=False,
+    uuid = models.CharField(
+        primary_key=True, max_length=64, default=_uuidstr,
         help_text="Module UUID.")
     name = models.CharField(
         max_length=255, default='module',
@@ -125,11 +120,6 @@ class Module(models.Model):
         help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
     alive = models.BooleanField(
         default=True, help_text="Set to False after runtime exits.")
-
-    @property
-    def type(self):
-        """Model name for serializers."""
-        return "module"
 
     def __str__(self):
         """Django admin page display row."""

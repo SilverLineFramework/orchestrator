@@ -58,7 +58,6 @@ except KeyError:
 # Application definition
 INSTALLED_APPS = [
     'api.apps.apiConfig',
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -76,7 +75,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'api.urls'
+ROOT_URLCONF = 'orchestrator.urls'
 
 TEMPLATES = [
     {
