@@ -1,5 +1,6 @@
 """Runtime registration."""
 
+import logging
 from django.forms.models import model_to_dict
 
 from pubsub import messages
@@ -11,12 +12,15 @@ from .base import BaseHandler
 class Registration(BaseHandler):
     """Runtime registration."""
 
+    def __init__(self):
+        self._log = logging.getLogger("registration")
+
     def handle(self, msg):
         """Handle registration message."""
         if msg.get('type') == 'arts_resp':
             return None
 
-        print("[Registration] {}".format(msg.payload))
+        self._log.info(msg.payload)
 
         action = msg.get('action')
         if action == 'create':

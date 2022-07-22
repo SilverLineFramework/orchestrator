@@ -46,7 +46,7 @@ class BaseHandler:
         try:
             return model.objects.get(uuid=rt)
         except model.DoesNotExist:
-            raise messages.UUIDNotFound(rt, obj_type=str(model().type))
+            raise messages.UUIDNotFound(rt, obj_type=str(model.TYPE))
 
     @staticmethod
     def _object_from_dict(model, attrs):

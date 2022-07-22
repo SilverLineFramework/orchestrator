@@ -1,5 +1,7 @@
 """Handler for module control messages."""
 
+import logging
+
 from django.db import IntegrityError
 from django.forms.models import model_to_dict
 
@@ -13,6 +15,7 @@ class Control(BaseHandler):
     """Runtime control messages."""
 
     def __init__(self, scheduler, *args, **kwargs):
+        self._log = logging.getLogger("control")
         self.scheduler = scheduler
         super().__init__(*args, **kwargs)
 
@@ -80,7 +83,7 @@ class Control(BaseHandler):
         if msg_type == 'arts_resp':
             return None
 
-        print("[Control] {}".format(msg.payload))
+        self._log.info(msg.payload)
 
         if msg_type == 'runtime_resp':
             return self.__create_module_ack(msg)
