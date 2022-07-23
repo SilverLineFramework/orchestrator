@@ -78,22 +78,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'orchestrator.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(os.path.dirname(__file__), 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
 WSGI_APPLICATION = 'orchestrator.wsgi.application'
 
 
@@ -107,100 +91,6 @@ DATABASES = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-
-# Password validation
-# https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': (
-        'django.contrib.auth.password_validation.'
-        'UserAttributeSimilarityValidator')},
-    {'NAME':
-        'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME':
-        'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME':
-        'django.contrib.auth.password_validation.NumericPasswordValidator'}
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.0/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
-
-STATIC_URL = '/static/'
-
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
-# Static root
-STATIC_ROOT = "./public"
-
-# Rest framework
-REST_FRAMEWORK = {
-    # When you enable API versioning, the request.version attribute will
-    # contain a string that corresponds to the version requested in the
-    # incoming client request.
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
-    # Permission settings
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ],
-    # Authentication settings
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-}
-
-# JWT settings
-JWT_AUTH = {
-    'JWT_ENCODE_HANDLER':
-        'rest_framework_jwt.utils.jwt_encode_handler',
-
-    'JWT_DECODE_HANDLER':
-        'rest_framework_jwt.utils.jwt_decode_handler',
-
-    'JWT_PAYLOAD_HANDLER':
-        'rest_framework_jwt.utils.jwt_payload_handler',
-
-    'JWT_PAYLOAD_GET_USER_ID_HANDLER':
-        'rest_framework_jwt.utils.jwt_get_user_id_from_payload_handler',
-
-    'JWT_RESPONSE_PAYLOAD_HANDLER':
-        'rest_framework_jwt.utils.jwt_response_payload_handler',
-
-    'JWT_SECRET_KEY': SECRET_KEY,
-    'JWT_GET_USER_SECRET_KEY': None,
-    'JWT_PUBLIC_KEY': None,
-    'JWT_PRIVATE_KEY': None,
-    'JWT_ALGORITHM': 'HS256',
-    'JWT_VERIFY': True,
-    'JWT_VERIFY_EXPIRATION': True,
-    'JWT_LEEWAY': 0,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=300),
-    'JWT_AUDIENCE': None,
-    'JWT_ISSUER': None,
-
-    'JWT_ALLOW_REFRESH': False,
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
-
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
-    'JWT_AUTH_COOKIE': None,
-}
-
 
 # --------------------------------------------------------------------------- #
 #                                     MQTT                                    #
@@ -219,30 +109,12 @@ _mqtt_credentials = _load('credentials.json')
 MQTT_USERNAME = _mqtt_credentials.get('username', 'arts')
 MQTT_PASSWORD = _mqtt_credentials.get('password', '')
 
-# the orchestrator provides config for web clients at the 'config' endpoint
-WEBSOCKET_HOST = _mqtt_file.get('ws_host', 'localhost')
-WEBSOCKET_PROTOCOL = _mqtt_file.get('ws_protocol', 'wss')
-WEBSOCKET_PORT = _mqtt_file.get('ws_port', '8080')
-WEBSOCKET_PATH = _mqtt_file.get('ws_path', "ws")
+MQTT_ROOT = "/".join([REALM, "proc"])
+MQTT_LOG = "/".join([MQTT_ROOT, "log", "orchestrator"])
 
-# web client connection string for graph display
-WEB_CLIENT_MQTT = {
-    "wc_conn_str": "{}://{}:{}/{}".format(
-        WEBSOCKET_PROTOCOL, WEBSOCKET_HOST, WEBSOCKET_PORT, WEBSOCKET_PATH)
-}
-
-# TODO: generate mqtt_password (aka mqtt_token) using self.jwt_config (JWT
-# settings in settings.py)
-
-MQTT_ROOT = "{}/proc".format(REALM)
-
-# Logging / error channel
-MQTT_LOG = "{}/log/orchestrator".format(REALM)
-# Control topics
-ENDPOINTS = ['reg', 'control', 'keepalive']
 MQTT_TOPICS = {
-    '{}/{}'.format(MQTT_ROOT, endpoint): endpoint
-    for endpoint in ENDPOINTS
+    topic: '/'.join([MQTT_ROOT, topic])
+    for topic in ["reg", "control", "keepalive"]
 }
 
 logging.basicConfig(level=logging.DEBUG)
