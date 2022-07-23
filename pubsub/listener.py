@@ -10,6 +10,7 @@ import ssl
 from django.conf import settings
 
 from . import messages
+from handlers import HANDLERS
 
 
 class MQTTListener(mqtt.Client):
@@ -17,66 +18,49 @@ class MQTTListener(mqtt.Client):
 
     Parameters
     ----------
-    handlers : dict (str -> pubsub.BaseHandler)
-        Routes topic messages to methods named according to the config topic
-        dict keys.
     cid : str
         Client ID for paho MQTT client.
-    jwt_config : dict
-        JSON Web Token configuration
     """
 
-    def __init__(self, handlers, cid='orchestrator', jwt_config=None):
+    def __init__(self, cid='orchestrator'):
         super().__init__(cid)
 
         self._setup = logging.getLogger(name="setup")
         self._req = logging.getLogger(name="request")
         self._resp = logging.getLogger(name="response")
 
-        self.handlers = handlers
-        self.jwt_config = jwt_config
-
-        self.__connect_and_subscribe()
-
-    def __connect_and_subscribe(self):
-        """Subscribe to control topics."""
         self._setup.info("Starting MQTT client...")
-
         self.username_pw_set(
             username=settings.MQTT_USERNAME, password=settings.MQTT_PASSWORD)
         if settings.MQTT_SSL:
             self.tls_set(cert_reqs=ssl.CERT_NONE)
         self.connect(settings.MQTT_HOST, settings.MQTT_PORT, 60)
-
-        self.__subscribe_mid = {
-            self.subscribe(t, 0)[1]: t for t in settings.MQTT_TOPICS
-        }
-        self._handler_dispatcher = {
-            k: self.handlers[v] for k, v in settings.MQTT_TOPICS.items()
-        }
-
         self.loop_start()
 
-    def on_connect(self, mqttc, obj, flags, rc):
-        """Client connect callback."""
-        self._setup.info("Connected: rc={}".format(rc))
-
-    def __on_message(self, msg):
-        """Message handler internals.
+    def handle_message(self, handler):
+        """Message handler decorator.
 
         Handlers take a (topic, data) ```Message``` as input, and return either
         a ```Message``` to send in response, ```None``` for no response, or
         raise an ```SLException``` which should be given as a response.
         """
-        try:
-            handler = self._handler_dispatcher.get(msg.topic)
-        except KeyError:
-            return messages.Error({"desc": "Invalid topic", "data": msg.topic})
+        def inner(client, userdata, msg):
+            res = self._handle_message(handler, msg)
+            if res:
+                payload = json.dumps(res.payload)
+                log_msg = "{}:{}".format(str(res.topic), payload)
+                if res.topic == settings.MQTT_LOG:
+                    self._resp.warning(log_msg)
+                else:
+                    self._resp.info(log_msg)
+                self.publish(res.topic, payload)
+        return inner
 
+    def _handle_message(self, handler, msg):
         try:
             decoded = handler.decode(msg)
             return handler.handle(decoded)
-        # ARTS Exceptions are raised by handlers in response to
+        # SLExceptions are raised by handlers in response to
         # invalid request data (which has been detected).
         except messages.SLException as e:
             return e.message
@@ -84,25 +68,24 @@ class MQTTListener(mqtt.Client):
         # or unchecked edge case, so are always returned.
         except Exception as e:
             logging.error(traceback.format_exc())
-            logging.error("Caused by: {}".format(str(decoded.payload)))
+            cause = decoded.payload if decoded else msg.payload
+            logging.error("Caused by: {}".format(str(cause)))
             return messages.Error(
                 {"desc": "Uncaught exception", "data": str(e)})
 
-    def on_message(self, mqttc, obj, msg):
-        """MQTT Message handler."""
-        res = self.__on_message(msg)
-        # only publish if not `None`
-        if res:
-            payload = json.dumps(res.payload)
-            if res.topic == settings.MQTT_LOG:
-                self._resp.warning(
-                    "{}:{}".format(str(res.topic), payload))
-            else:
-                self._resp.info(
-                    "{}:{}".format(str(res.topic), payload))
-            self.publish(res.topic, payload)
+    def on_message(self, client, userdata, msg):
+        """Callback for unrecognized topic."""
+        logging.error("Unrecognized topic: {}.".format(msg.topic))
 
-    def on_subscribe(self, mqttc, obj, mid, granted_qos):
-        """Subscribe callback."""
-        self._setup.debug(
-            "Subscribed: {}".format(self.__subscribe_mid[mid]))
+    def subscribe_callback(self, topic, callback):
+        """Subscribe and add callback."""
+        print(topic)
+        self.subscribe(topic)
+        self.message_callback_add(topic, callback)
+
+    def on_connect(self, mqttc, obj, flags, rc):
+        """Client connect callback."""
+        self._setup.info("Connected: rc={}".format(rc))
+        for topic, callback in HANDLERS.items():
+            self.subscribe_callback(
+                settings.MQTT_TOPICS[topic], self.handle_message(callback()))

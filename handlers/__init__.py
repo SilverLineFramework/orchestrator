@@ -1,5 +1,13 @@
 """Pubsub message handlers."""
 
-from .make_handlers import message_handlers
+from .registration import Registration
+from .control import Control
+from .keepalive import Keepalive
 
-__all__ = ['message_handlers']
+__all__ = ['HANDLERS', 'Registration', 'Control', 'Keepalive']
+
+HANDLERS = {
+    'reg': Registration,
+    'control': Control,
+    'keepalive': Keepalive
+}

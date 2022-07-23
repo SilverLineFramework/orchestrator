@@ -14,8 +14,6 @@ class apiConfig(AppConfig):
         if os.environ.get('RUN_MAIN', None) == 'true':
 
             from pubsub import MQTTListener
-            from handlers import message_handlers
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
-            self.mqtt_listener = MQTTListener(
-                message_handlers(), jwt_config=settings.JWT_AUTH)
+            self.mqtt_listener = MQTTListener()

@@ -14,9 +14,8 @@ from .base import BaseHandler
 class Control(BaseHandler):
     """Runtime control messages."""
 
-    def __init__(self, scheduler, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._log = logging.getLogger("control")
-        self.scheduler = scheduler
         super().__init__(*args, **kwargs)
 
     def __create_module_ack(self, msg):
