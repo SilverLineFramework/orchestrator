@@ -2,12 +2,14 @@ FROM python:3
 
 WORKDIR /usr/src/app
 
-COPY arts-main/requirements.txt ./
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY libsilverline/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-WORKDIR /usr/src/app/arts-main
+WORKDIR /usr/src/app
 
 RUN chmod +x wait-for-it.sh
 RUN chmod +x docker-entrypoint.sh

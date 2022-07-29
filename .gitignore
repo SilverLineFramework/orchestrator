@@ -1,18 +1,18 @@
 # Compiled docs
 docs/build/
-docs/source/arts_api/
-docs/source/arts_core/
-docs/source/profile/
-docs/source/pubsub/
-docs/source/scheduler/
+docs/source/api
+docs/source/handlers
+docs/source/pubsub
 
 # Logging
 log.txt
+log/
 
 # Secrets & Config
 mqtt.json
 credentials.json
 key.json
+mqtt_pwd.txt
 
 # Editor
 .vscode/

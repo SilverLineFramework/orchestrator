@@ -1,6 +1,4 @@
-sphinx-apidoc -f -o source/arts_api ../arts-main/arts_api
-sphinx-apidoc -f -o source/arts_core ../arts-main/arts_core
-sphinx-apidoc -f -o source/pubsub ../arts-main/pubsub
-sphinx-apidoc -f -o source/scheduler ../arts-main/scheduler
-sphinx-apidoc -f -o source/profile ../arts-main/profile
+sphinx-apidoc -f -o source/api ../api
+sphinx-apidoc -f -o source/handlers ../handlers
+sphinx-apidoc -f -o source/pubsub ../pubsub
 make html

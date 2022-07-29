@@ -1,0 +1,3 @@
+[submodule "libsilverline"]
+	path = libsilverline
+	url = git@github.com:SilverLineFramework/libsilverline.git
