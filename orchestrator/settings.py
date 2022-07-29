@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import json
-import datetime
 import logging
 
 
@@ -28,21 +27,22 @@ def _load(filename):
 # --------------------------------------------------------------------------- #
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ARTS_DIR = os.path.dirname(BASE_DIR)
+CONFIG_PATH = "config.json"
+_config = _load(CONFIG_PATH)
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 # --------------------------------- Security -------------------------------- #
 
 # Includes 'localhost' if running in DEBUG=True.
 # https://docs.djangoproject.com/en/4.0/ref/settings/#allowed-hosts
-_server_file = _load("server.json")
-
 ALLOWED_HOSTS = []
-if "host" in _server_file:
-    ALLOWED_HOSTS.append(_server_file.get("host", "localhost"))
+if "http" in _config:
+    ALLOWED_HOSTS.append(_config.get("http", "localhost"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _server_file.get("debug", True)
+DEBUG = _config.get("debug", True)
 
 # Load key file; forgives errors if running in debug mode.
 _key_file = _load("key.json")
@@ -52,6 +52,7 @@ except KeyError:
     if not DEBUG:
         raise Exception("Secret key file `key.json` not found.")
     else:
+        logging.warn("No secret key file was found (ok for debug)")
         SECRET_KEY = "NOT_A_SECRET_KEY"
 
 # ------------------------------ Server Sources ----------------------------- #
@@ -97,17 +98,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # --------------------------------------------------------------------------- #
 
 # MQTT Server
-_mqtt_file = _load('mqtt.json')
-
-REALM = _mqtt_file.get('realm', 'realm')
-MQTT_HOST = _mqtt_file.get('host', 'localhost')
-MQTT_PORT = _mqtt_file.get('port', 1883)
-MQTT_SSL = _mqtt_file.get('ssl', False)
+REALM = _config.get('realm', 'realm')
+MQTT_HOST = _config.get('mqtt', 'localhost')
+MQTT_PORT = _config.get('mqtt_port', 1883)
+MQTT_SSL = _config.get('use_ssl', False)
 
 # MQTT Credentials
-_mqtt_credentials = _load('credentials.json')
-MQTT_USERNAME = _mqtt_credentials.get('username', 'arts')
-MQTT_PASSWORD = _mqtt_credentials.get('password', '')
+MQTT_USERNAME = _config.get('mqtt_username', 'arts')
+MQTT_PASSWORD_FILE = _config.get('pwd', None)
+if MQTT_PASSWORD_FILE:
+    with open(MQTT_PASSWORD_FILE) as f:
+        MQTT_PASSWORD = f.read()
+else:
+    MQTT_PASSWORD = ''
 
 MQTT_ROOT = "/".join([REALM, "proc"])
 MQTT_LOG = "/".join([MQTT_ROOT, "log", "orchestrator"])
@@ -116,5 +119,3 @@ MQTT_TOPICS = {
     topic: '/'.join([MQTT_ROOT, topic])
     for topic in ["reg", "control", "keepalive"]
 }
-
-logging.basicConfig(level=logging.DEBUG)
