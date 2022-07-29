@@ -5,11 +5,9 @@ ARTS Documentation
    :maxdepth: 2
    :caption: Contents:
 
-   arts_api/modules
-   arts_core/modules
+   api/modules
+   handlers/modules
    pubsub/modules
-   scheduler/modules
-   profile/modules
 
 Indices and tables
 ==================

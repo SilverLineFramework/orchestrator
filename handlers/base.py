@@ -1,7 +1,6 @@
 """MQTT message handler."""
 
 import json
-import uuid
 
 from pubsub import messages
 from api.models import Runtime

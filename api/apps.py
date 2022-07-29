@@ -14,6 +14,21 @@ class apiConfig(AppConfig):
         if os.environ.get('RUN_MAIN', None) == 'true':
 
             from pubsub import MQTTListener
+            from handlers import Registration, Control, Keepalive
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
-            self.mqtt_listener = MQTTListener()
+            self.mqtt_listener = MQTTListener(
+                cid="orchestrator",
+                mqtt=settings.MQTT_HOST, mqtt_port=settings.MQTT_PORT,
+                realm=settings.REALM, pwd=settings.MQTT_PASSWORD_FILE,
+                mqtt_username=settings.MQTT_USERNAME,
+                use_ssl=settings.MQTT_SSL, connect=True)
+
+            _handlers = {
+                "reg": Registration,
+                "control": Control,
+                "keepalive": Keepalive
+            }
+            for topic, callback in _handlers.items():
+                self.mqtt_listener.register_callback(
+                    topic, self.mqtt_listener.handle_message(callback()))

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import json
 import logging
+from libsilverline import configure_log
 
 
 def _load(filename):
@@ -23,15 +24,15 @@ def _load(filename):
 
 
 # --------------------------------------------------------------------------- #
-#                                 Django Core                                 #
+#                                    Core                                     #
 # --------------------------------------------------------------------------- #
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = "config.json"
 _config = _load(CONFIG_PATH)
 
-logging.basicConfig(level=logging.DEBUG)
-
+LOG_FILE = _config.get("log_dir", "log/")
+configure_log(LOG_FILE, verbose=2)
 
 # --------------------------------- Security -------------------------------- #
 
@@ -105,12 +106,7 @@ MQTT_SSL = _config.get('use_ssl', False)
 
 # MQTT Credentials
 MQTT_USERNAME = _config.get('mqtt_username', 'arts')
-MQTT_PASSWORD_FILE = _config.get('pwd', None)
-if MQTT_PASSWORD_FILE:
-    with open(MQTT_PASSWORD_FILE) as f:
-        MQTT_PASSWORD = f.read()
-else:
-    MQTT_PASSWORD = ''
+MQTT_PASSWORD_FILE = _config.get('pwd', "mqtt_pwd.txt")
 
 MQTT_ROOT = "/".join([REALM, "proc"])
 MQTT_LOG = "/".join([MQTT_ROOT, "log", "orchestrator"])

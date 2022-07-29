@@ -12,7 +12,7 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../arts-main'))
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 
 
 # -- Django ------------------------------------------------------------------
@@ -20,15 +20,15 @@ sys.path.insert(0, os.path.abspath('../../arts-main'))
 # Django requires setup before any modules with Django dependencies can be
 # installed.
 import django
-os.environ['DJANGO_SETTINGS_MODULE'] = 'arts_api.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'orchestrator.settings'
 django.setup()
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'ARTS'
-copyright = '2022, CONIX'
-author = 'CONIX'
+project = 'Orchestrator'
+copyright = '2022, WiseLab'
+author = 'WiseLab'
 
 
 # -- General configuration ---------------------------------------------------
