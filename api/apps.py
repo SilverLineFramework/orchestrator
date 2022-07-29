@@ -31,4 +31,5 @@ class apiConfig(AppConfig):
             }
             for topic, callback in _handlers.items():
                 self.mqtt_listener.register_callback(
-                    topic, self.mqtt_listener.handle_message(callback()))
+                    self.settings.MQTT_TOPICS[topic],
+                    self.mqtt_listener.handle_message(callback()))
