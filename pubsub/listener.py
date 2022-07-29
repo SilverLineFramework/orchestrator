@@ -6,6 +6,7 @@ import logging
 
 import paho.mqtt.client as mqtt
 import ssl
+import uuid
 
 from django.conf import settings
 
@@ -18,12 +19,12 @@ class MQTTListener(mqtt.Client):
 
     Parameters
     ----------
-    cid : str
+    name : str
         Client ID for paho MQTT client.
     """
 
-    def __init__(self, cid='orchestrator'):
-        super().__init__(cid)
+    def __init__(self, name='orchestrator'):
+        super().__init__("{}:{}".format(name, str(uuid.uuid4())))
 
         self._setup = logging.getLogger(name="setup")
         self._req = logging.getLogger(name="request")
