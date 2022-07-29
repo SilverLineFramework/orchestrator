@@ -28,4 +28,4 @@ reset: clear migrate
 
 clear:
 	rm -f db.sqlite3
-	rm -r log
+	rm -rf log

@@ -32,7 +32,8 @@ CONFIG_PATH = "config.json"
 _config = _load(CONFIG_PATH)
 
 LOG_FILE = _config.get("log_dir", "log/")
-configure_log(LOG_FILE, verbose=2)
+if os.environ.get('RUN_MAIN', None) == 'true':
+    configure_log(LOG_FILE, verbose=2)
 
 # --------------------------------- Security -------------------------------- #
 
