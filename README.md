@@ -33,6 +33,7 @@
     ```json
     {
         "http": "localhost",
+        "http_port": 8000,
         "debug": true,
         "realm": "realm",
         "mqtt": "localhost",
@@ -61,9 +62,9 @@
     mkdir -p log
     ```
 
-- Run server, replacing the address and port as appropriate:
+- Run server:
     ```sh
-    python3 manage.py runserver 127.0.0.1:8000
+    python3 manage.py runserver
     ```
 
 ## Documentation
