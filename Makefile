@@ -2,7 +2,6 @@ PYTHON3=python3
 PIP=pip3
 
 run: env
-	mkdir -p log
 	. env/bin/activate
 	${PYTHON3} manage.py runserver
 
@@ -28,4 +27,3 @@ reset: clear migrate
 
 clear:
 	rm -f db.sqlite3
-	rm -rf log

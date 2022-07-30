@@ -14,6 +14,8 @@ import json
 import logging
 from libsilverline import configure_log
 
+from django.core.management.commands.runserver import Command as runserver
+
 
 def _load(filename):
     try:
@@ -31,9 +33,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = "config.json"
 _config = _load(CONFIG_PATH)
 
-LOG_FILE = _config.get("log_dir", "log/")
+LOG_DIR = os.path.join(_config.get("log_dir", "log"), "orchestrator/")
 if os.environ.get('RUN_MAIN', None) == 'true':
-    configure_log(LOG_FILE, verbose=2)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    configure_log(LOG_DIR, verbose=2)
+
+runserver.default_port = _config.get("http_port", 8000)
+runserver.default_addr = _config.get("http", "localhost")
 
 # --------------------------------- Security -------------------------------- #
 

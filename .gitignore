@@ -13,6 +13,7 @@ mqtt.json
 credentials.json
 key.json
 mqtt_pwd.txt
+config.json
 
 # Editor
 .vscode/
