@@ -37,7 +37,7 @@ class Runtime(models.Model):
 
     INPUT_ATTRS = [
         "uuid", "name", "apis", "runtime_type", "max_nmodules", "page_size",
-        "aot_target"]
+        "aot_target", "platform", "metadata"]
     OUTPUT_SHORT = ["uuid", "name", "runtime_type", "aot_target"]
 
     uuid = models.CharField(
@@ -67,6 +67,8 @@ class Runtime(models.Model):
             "and ABI, i.e. x86_64.tigerlake"))
     metadata = models.JSONField(
         blank=True, null=True, help_text="Optional metadata")
+    platform = models.JSONField(
+        blank=True, null=True, help_text="Platform manifest")
     alive = models.BooleanField(
         default=True, help_text="Set to False after runtime exits.")
 
