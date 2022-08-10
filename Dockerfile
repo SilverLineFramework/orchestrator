@@ -11,7 +11,7 @@ COPY . .
 
 WORKDIR /usr/src/app
 
-RUN chmod +x wait-for-it.sh
+# RUN chmod +x wait-for-it.sh
 RUN chmod +x docker-entrypoint.sh
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
