@@ -23,6 +23,7 @@ jobs:
           script: |
             cd  $TARGET
              git checkout master
+             git submodule update --init --recursive
              git pull
              cd ..
              ./staging.sh down && ./staging.sh up --force-recreate --build -d
