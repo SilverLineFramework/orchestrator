@@ -9,6 +9,8 @@ from api.models import Runtime
 class BaseHandler:
     """Base class for message handlers, including some common utilities."""
 
+    topic = None
+
     @staticmethod
     def decode(msg):
         """Decode MQTT message as JSON."""

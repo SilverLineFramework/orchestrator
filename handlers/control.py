@@ -3,6 +3,7 @@
 import logging
 
 from django.db import IntegrityError
+from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
@@ -15,6 +16,7 @@ class Control(BaseHandler):
     """Runtime control messages."""
 
     def __init__(self, *args, **kwargs):
+        self.topic = settings.MQTT_CONTROL
         self._log = logging.getLogger("control")
         super().__init__(*args, **kwargs)
 
