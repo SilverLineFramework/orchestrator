@@ -31,17 +31,22 @@ class MQTTListener(Client):
         Handlers take a (topic, data) ```Message``` as input, and return either
         a ```Message``` to send in response, ```None``` for no response, or
         raise an ```SLException``` which should be given as a response.
+
+        If multiple responses are to be given, they can be returned as a list.
         """
         def inner(client, userdata, msg):
-            res = self._handle_message(handler, msg)
-            if res:
-                payload = json.dumps(res.payload)
-                log_msg = "{}:{}".format(str(res.topic), payload)
-                if res.topic == settings.MQTT_LOG:
-                    self._resp.warning(log_msg)
-                else:
-                    self._resp.info(log_msg)
-                self.publish(res.topic, payload)
+            results = self._handle_message(handler, msg)
+            if results:
+                if not isinstance(results, list):
+                    results = [results]
+                for res in results:
+                    payload = json.dumps(res.payload)
+                    log_msg = "{}:{}".format(str(res.topic), payload)
+                    if res.topic == settings.MQTT_LOG:
+                        self._resp.warning(log_msg)
+                    else:
+                        self._resp.info(log_msg)
+                    self.publish(res.topic, payload)
         return inner
 
     def _handle_message(self, handler, msg):

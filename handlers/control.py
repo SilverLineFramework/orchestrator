@@ -18,7 +18,7 @@ class Control(BaseHandler):
         self._log = logging.getLogger("control")
         super().__init__(*args, **kwargs)
 
-    def __create_module_ack(self, msg):
+    def create_module_ack(self, msg):
         """Handle ACK sent after scheduling module.
 
         TODO: Should update a flag if ok and reschedule otherwise; currently
@@ -36,7 +36,7 @@ class Control(BaseHandler):
         # return sched_ret
         return self._get_object(msg.get('data', 'parent'), model=Runtime)
 
-    def __create_module(self, msg):
+    def create_module(self, msg):
         """Handle create message."""
         data = msg.get('data')
         if 'apis' not in data:
@@ -57,7 +57,7 @@ class Control(BaseHandler):
             "{}/{}".format(msg.topic, module.parent.uuid),
             "create", {"type": "module", **model_to_dict(module)})
 
-    def __delete_module(self, msg):
+    def delete_module(self, msg):
         """Handle delete message."""
         module_id = msg.get('data', 'uuid')
         module = self._get_object(module_id, model=Module)
@@ -69,7 +69,7 @@ class Control(BaseHandler):
             "{}/{}".format(msg.topic, uuid_current), "delete", {
                 "type": "module", "uuid": module_id})
 
-    def __exited_module(self, msg):
+    def exited_module(self, msg):
         """Remove module from database."""
         module = self._get_object(msg.get('data', 'uuid'), model=Module)
         module.alive = False
@@ -85,15 +85,15 @@ class Control(BaseHandler):
         self._log.info(msg.payload)
 
         if msg_type == 'runtime_resp':
-            return self.__create_module_ack(msg)
+            return self.create_module_ack(msg)
         elif msg_type == 'arts_req':
             action = msg.get('action')
             if action == 'create':
-                return self.__create_module(msg)
+                return self.create_module(msg)
             elif action == 'delete':
-                return self.__delete_module(msg)
+                return self.delete_module(msg)
             elif action == 'exited':
-                return self.__exited_module(msg)
+                return self.exited_module(msg)
             else:
                 raise messages.InvalidArgument('action', action)
         else:
