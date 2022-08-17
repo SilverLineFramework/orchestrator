@@ -117,8 +117,6 @@ MQTT_PASSWORD_FILE = _config.get('pwd', "mqtt_pwd.txt")
 
 MQTT_ROOT = "/".join([REALM, "proc"])
 MQTT_LOG = "/".join([MQTT_ROOT, "log", "orchestrator"])
-
-MQTT_TOPICS = {
-    topic: '/'.join([MQTT_ROOT, topic])
-    for topic in ["reg", "control", "keepalive"]
-}
+MQTT_REG = "/".join([MQTT_ROOT, "reg"])
+MQTT_CONTROL = "/".join([MQTT_ROOT, "control"])
+MQTT_KEEPALIVE = "/".join([MQTT_ROOT, "keepalive"])

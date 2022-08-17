@@ -1,6 +1,7 @@
 """Runtime registration."""
 
 import logging
+from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
@@ -13,6 +14,7 @@ class Registration(BaseHandler):
     """Runtime registration."""
 
     def __init__(self):
+        self.topic = settings.MQTT_REG
         self._log = logging.getLogger("registration")
 
     def create_runtime(self, msg):
@@ -33,9 +35,13 @@ class Registration(BaseHandler):
                 mod.alive = True
                 mod.respawn = False
                 mod.save()
+
             return [
+                messages.Response(
+                    msg.topic, msg.get('object_id'), model_to_dict(runtime))
+            ] + [
                 messages.Request(
-                    "{}/{}".format(msg.topic, runtime.uuid),
+                    "{}/{}".format(settings.MQTT_CONTROL, runtime.uuid),
                     "create", {"type": "module", **model_to_dict(mod)})
                 for mod in modules]
 
@@ -43,8 +49,8 @@ class Registration(BaseHandler):
         except Runtime.DoesNotExist:
             runtime = self._object_from_dict(Runtime, msg.get('data'))
             runtime.save()
-        return messages.Response(
-            msg.topic, msg.get('object_id'), model_to_dict(runtime))
+            return messages.Response(
+                msg.topic, msg.get('object_id'), model_to_dict(runtime))
 
     def delete_runtime(self, msg):
         """Delete runtime."""
@@ -53,10 +59,15 @@ class Registration(BaseHandler):
         runtime.save()
 
         # Also mark all related modules as dead, but with respawn enabled
-        for mod in Module.objects.filter(parent=runtime):
+        killed = Module.objects.filter(parent=runtime)
+        for mod in killed:
             mod.alive = False
             mod.respawn = True
             mod.save()
+        if len(killed) > 0:
+            self._log.warn(
+                "Runtime exited, killing {} modules; may be "
+                "resurrected.".format(len(killed)))
 
         return messages.Response(
             msg.topic, msg.get('object_id'), model_to_dict(runtime))
