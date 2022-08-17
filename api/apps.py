@@ -25,11 +25,11 @@ class apiConfig(AppConfig):
                 use_ssl=settings.MQTT_SSL, connect=True)
 
             _handlers = {
-                "reg": Registration,
-                "control": Control,
-                "keepalive": Keepalive
+                "reg": Registration(),
+                "control": Control(),
+                "keepalive": Keepalive()
             }
             for topic, callback in _handlers.items():
                 self.mqtt_listener.register_callback(
                     settings.MQTT_TOPICS[topic],
-                    self.mqtt_listener.handle_message(callback()))
+                    self.mqtt_listener.handle_message(callback))

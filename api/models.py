@@ -126,6 +126,8 @@ class Module(models.Model):
         help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
     alive = models.BooleanField(
         default=True, help_text="Set to False after runtime exits.")
+    respawn = models.BooleanField(
+        default=False, help_text="Respawn if parent runtime is resurrected")
 
     def __str__(self):
         """Django admin page display row."""
