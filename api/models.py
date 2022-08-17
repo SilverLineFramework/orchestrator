@@ -57,6 +57,8 @@ class Runtime(models.Model):
         default=60, help_text="Keepalive interval (seconds)")
     ka_ts = models.DateTimeField(
         auto_now_add=True, help_text="Last keepalive timestamp")
+    max_nmodules = models.IntegerField(
+        default=100, help_text="Max number of modules suppoprted by runtime")    
     page_size = models.IntegerField(
         default=65536, help_text=(
             "WASM pagesize. Default = 64KiB. Memory-constrained embedded "
