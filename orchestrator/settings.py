@@ -89,6 +89,7 @@ ROOT_URLCONF = 'orchestrator.urls'
 
 WSGI_APPLICATION = 'orchestrator.wsgi.application'
 
+APPEND_SLASH = False
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
