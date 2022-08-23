@@ -7,7 +7,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from api.models import FileType, Runtime, Module
+from api.models import FileType, State, Runtime, Module
 
 from .base import BaseHandler
 
@@ -64,18 +64,23 @@ class Control(BaseHandler):
         module_id = msg.get('data', 'uuid')
         module = self._get_object(module_id, model=Module)
         uuid_current = module.parent.uuid
-        module.alive = False
+        module.status = State.EXITING
         module.save()
 
         return messages.Request(
-            "{}/{}".format(msg.topic, uuid_current), "delete", {
-                "type": "module", "uuid": module_id})
+            "{}/{}".format(msg.topic, uuid_current), "delete",
+            {"type": "module", "uuid": module_id})
 
     def exited_module(self, msg):
         """Remove module from database."""
-        module = self._get_object(msg.get('data', 'uuid'), model=Module)
-        module.alive = False
+        module_id = msg.get('data', 'uuid')
+        module = self._get_object(module_id, model=Module)
+        module.status = State.DEAD
         module.save()
+
+        return messages.Request(
+            settings.MQTT_NOTIF, "exited",
+            {"type": "module", "uuid": module_id})
 
     def handle(self, msg):
         """Handle per-module control message."""
