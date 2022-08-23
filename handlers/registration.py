@@ -59,7 +59,7 @@ class Registration(BaseHandler):
         runtime.save()
 
         # Also mark all related modules as dead, but with respawn enabled
-        killed = Module.objects.filter(parent=runtime)
+        killed = Module.objects.filter(parent=runtime, status=State.ALIVE)
         for mod in killed:
             mod.status = State.KILLED
             mod.save()
