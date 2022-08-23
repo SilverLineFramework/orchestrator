@@ -14,6 +14,15 @@ class FileType(models.TextChoices):
     EXT = 'EXT'
 
 
+class State(models.TextChoices):
+    """Module state enum."""
+
+    ALIVE = 'A', _('ALIVE')
+    DEAD = 'D', _('DEAD')
+    EXITING = 'E', _('EXITING')
+    KILLED = 'K', _('KILLED')
+
+
 def _default_runtime_apis():
     return ["wasm", "wasi"]
 
@@ -71,8 +80,9 @@ class Runtime(models.Model):
         blank=True, null=True, help_text="Optional metadata")
     platform = models.JSONField(
         blank=True, null=True, help_text="Platform manifest")
-    alive = models.BooleanField(
-        default=True, help_text="Set to False after runtime exits.")
+    status = models.CharField(
+        max_length=8, default=State.ALIVE,
+        help_text="Runtime state (A=Alive, D=Dead).")
 
     def natural_key(self):
         """Makes objects with RT as foreign key use UUID when serialized."""
@@ -126,10 +136,10 @@ class Module(models.Model):
     resources = models.JSONField(
         blank=True, null=True,
         help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
-    alive = models.BooleanField(
-        default=True, help_text="Set to False after runtime exits.")
-    respawn = models.BooleanField(
-        default=False, help_text="Respawn if parent runtime is resurrected")
+    status = models.CharField(
+        max_length=8, default=State.ALIVE,
+        help_text="Module state (A=Alive, D=Dead, E=Exiting, "
+        "K=Killed). Killed modules respawn if the parent is resurrected.")
 
     def __str__(self):
         """Django admin page display row."""

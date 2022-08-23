@@ -5,7 +5,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from api.models import Runtime, Module
+from api.models import State, Runtime, Module
 
 from .base import BaseHandler
 
@@ -23,17 +23,17 @@ class Registration(BaseHandler):
         try:
             rt_uuid = msg.get('data', 'uuid')
             runtime = Runtime.objects.get(uuid=rt_uuid)
-            runtime.alive = True
+            runtime.status = State.ALIVE
             runtime.save()
 
-            modules = Module.objects.filter(parent=runtime, respawn=True)
+            modules = Module.objects.filter(
+                parent=runtime, status=State.KILLED)
             self._log.warn("Dead runtime resurrected: {}".format(rt_uuid))
             self._log.warn("Respawning {} modules.".format(len(modules)))
 
             # Respawn dead modules
             for mod in modules:
-                mod.alive = True
-                mod.respawn = False
+                mod.status = State.ALIVE
                 mod.save()
 
             return [
@@ -55,14 +55,13 @@ class Registration(BaseHandler):
     def delete_runtime(self, msg):
         """Delete runtime."""
         runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
-        runtime.alive = False
+        runtime.status = State.DEAD
         runtime.save()
 
         # Also mark all related modules as dead, but with respawn enabled
         killed = Module.objects.filter(parent=runtime)
         for mod in killed:
-            mod.alive = False
-            mod.respawn = True
+            mod.status = State.KILLED
             mod.save()
         if len(killed) > 0:
             self._log.warn(
