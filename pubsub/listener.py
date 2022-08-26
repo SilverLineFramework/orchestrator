@@ -46,7 +46,7 @@ class MQTTListener(Client):
                         self._resp.warning(log_msg)
                     else:
                         self._resp.info(log_msg)
-                    self.publish(res.topic, payload)
+                    self.publish(res.topic, payload, qos=2)
         return inner
 
     def _handle_message(self, handler, msg):
