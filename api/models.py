@@ -23,6 +23,13 @@ class State(models.TextChoices):
     KILLED = 'K', _('KILLED')
 
 
+class FaultCrash(models.TextChoices):
+    """Crash fault tolerance enum."""
+
+    IGNORE = 'ignore'
+    RESTART = 'restart'
+
+
 def _default_runtime_apis():
     return ["wasm", "wasi"]
 
@@ -101,7 +108,7 @@ class Module(models.Model):
 
     INPUT_ATTRS = [
         "uuid", "name", "filename", "filetype", "apis", "args", "env",
-        "channels", "peripherals", "resources", "metadata"]
+        "channels", "peripherals", "resources", "fault_crash", "metadata"]
     OUTPUT_SHORT = ["uuid", "name", "parent", "filename"]
 
     uuid = models.CharField(
@@ -136,6 +143,9 @@ class Module(models.Model):
     resources = models.JSONField(
         blank=True, null=True,
         help_text="Resource reservation (runtime/period with SCHED_DEADLINE)")
+    fault_crash = models.CharField(
+        max_length=16, default=FaultCrash.IGNORE,
+        help_text="Fault handling behavior on crash (ignore or restart).")
     status = models.CharField(
         max_length=8, default=State.ALIVE,
         help_text="Module state (A=Alive, D=Dead, E=Exiting, "
