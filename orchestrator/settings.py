@@ -19,7 +19,7 @@ from django.core.management.commands.runserver import Command as runserver
 
 def _load(filename):
     try:
-        with open(os.path.join(BASE_DIR, filename)) as f:
+        with open(filename) as f:
             return json.load(f)
     except FileNotFoundError:
         return {}
