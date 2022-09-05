@@ -17,7 +17,8 @@ class MQTTListener(Client):
     Parameters
     ----------
     name : str
-        Client ID for paho MQTT client.
+        Client ID for paho MQTT client. MUST be unique -- will cause all sorts
+        of strange errors with no apparent pattern if not unique.
     """
 
     def __init__(self, *args, **kwargs):
@@ -28,11 +29,12 @@ class MQTTListener(Client):
     def handle_message(self, handler):
         """Message handler decorator.
 
-        Handlers take a (topic, data) ```Message``` as input, and return either
-        a ```Message``` to send in response, ```None``` for no response, or
-        raise an ```SLException``` which should be given as a response.
+        Handlers take a (topic, data) ``Message`` as input, and return either
+        a ``Message`` to send in response, ``None`` for no response, or
+        raise an ``SLException`` which should be given as a response.
 
         If multiple responses are to be given, they can be returned as a list.
+        The responses are then published in the order that they are returned.
         """
         def inner(client, userdata, msg):
             results = self._handle_message(handler, msg)

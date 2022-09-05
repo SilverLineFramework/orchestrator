@@ -11,7 +11,6 @@ env/bin/activate: requirements.txt
 	test -d env || python3 -m venv env
 	. env/bin/activate
 	${PIP} install -r requirements.txt
-	${PIP} install -r libsilverline/requirements.txt
 	touch env/bin/activate
 
 migrate: env

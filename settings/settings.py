@@ -67,7 +67,7 @@ except KeyError:
 
 # Application definition
 INSTALLED_APPS = [
-    'api.apps.apiConfig',
+    'orchestrator.apps.orchestratorConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -85,9 +85,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'orchestrator.urls'
+ROOT_URLCONF = 'settings.urls'
 
-WSGI_APPLICATION = 'orchestrator.wsgi.application'
+WSGI_APPLICATION = 'settings.wsgi.application'
 
 APPEND_SLASH = False
 

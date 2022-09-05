@@ -5,12 +5,12 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from api.models import State, Runtime, Module
+from orchestrator.models import State, Runtime, Module
 
-from .base import BaseHandler
+from .base import ControlHandler
 
 
-class Registration(BaseHandler):
+class Registration(ControlHandler):
     """Runtime registration."""
 
     def __init__(self):

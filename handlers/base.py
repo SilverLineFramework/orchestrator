@@ -3,10 +3,10 @@
 import json
 
 from pubsub import messages
-from api.models import Runtime
+from orchestrator.models import Runtime
 
 
-class BaseHandler:
+class ControlHandler:
     """Base class for message handlers, including some common utilities."""
 
     topic = None
