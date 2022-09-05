@@ -4,7 +4,7 @@ For quick setup, use the [SilverLine Services](https://github.com/SilverLineFram
 
 ```sh
 git clone git@github.com:SilverLineFramework/silverline-services.git
-cd silverline-services; make orchestrator
+cd silverline-services; make update; make orchestrator
 ```
 
 ## Manual Setup
