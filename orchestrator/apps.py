@@ -3,10 +3,10 @@ from django.conf import settings
 import os
 
 
-class apiConfig(AppConfig):
+class orchestratorConfig(AppConfig):
     """Config containing core logic."""
 
-    name = 'api'
+    name = 'orchestrator'
 
     def ready(self):
         """Initialize MQTT handler."""

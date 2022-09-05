@@ -7,12 +7,12 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from api.models import FileType, State, Runtime, Module
+from orchestrator.models import FileType, State, Runtime, Module
 
-from .base import BaseHandler
+from .base import ControlHandler
 
 
-class Control(BaseHandler):
+class Control(ControlHandler):
     """Runtime control messages."""
 
     def __init__(self, *args, **kwargs):

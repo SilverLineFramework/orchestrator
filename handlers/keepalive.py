@@ -1,10 +1,10 @@
 """Keepalive handler."""
 
 from django.conf import settings
-from .base import BaseHandler
+from .base import ControlHandler
 
 
-class Keepalive(BaseHandler):
+class Keepalive(ControlHandler):
     """Keepalive message."""
 
     def __init__(self):
