@@ -121,6 +121,10 @@ def _lookup(model, query):
 def search_runtime(request, query):
     """Retrieve runtime details.
 
+    URL Pattern::
+
+        <server>/api/runtimes/<uuid>/
+
     NOTE: returns ``{}`` if no matching runtime is found.
 
     Example
@@ -171,7 +175,11 @@ def search_runtime(request, query):
 
 def search_module(request, query):
     """Retrieve module details.
-    
+
+    URL Pattern::
+
+        <server>/api/modules/<uuid>/
+
     NOTE: returns ``{}`` if no matching module is found.
 
     Example
