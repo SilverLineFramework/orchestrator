@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+RUN git clone https://github.com/SilverLineFramework/libsilverline.git
 COPY libsilverline/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
