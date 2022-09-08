@@ -89,7 +89,7 @@ ROOT_URLCONF = 'settings.urls'
 
 WSGI_APPLICATION = 'settings.wsgi.application'
 
-APPEND_SLASH = False
+APPEND_SLASH = True
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
