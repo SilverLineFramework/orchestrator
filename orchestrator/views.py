@@ -15,6 +15,7 @@ priority:
 import uuid
 from django.forms.models import model_to_dict
 from django.http import JsonResponse
+from django.http import HttpResponseNotFound
 
 from .models import State, Runtime, Module
 
@@ -69,6 +70,8 @@ def list_runtimes(request):
 
     return JsonResponse({"runtimes": list(runtimes.values())})
 
+    
+
 
 def list_modules(request):
     """List all modules; returns only some fields.
@@ -109,14 +112,9 @@ def _lookup(model, query):
             model.objects.filter(name=query, status=State.ALIVE)[0])
     except IndexError:
         pass
-    # 3) Specify by last N digits of UUID
-    try:
-        return model_to_dict(
-            model.objects.filter(uuid__endswith=query, status=State.ALIVE)[0])
-    except IndexError:
-        # Not found
-        return {}
-
+    # 3) Specify by last N digits of UUID; trow exception if fails
+    return model_to_dict(
+        model.objects.filter(uuid__endswith=query, status=State.ALIVE)[0])
 
 def search_runtime(request, query):
     """Retrieve runtime details.
@@ -170,8 +168,10 @@ def search_runtime(request, query):
 
     TODO: add child runtimes.
     """
-    return JsonResponse(_lookup(Runtime, query))
-
+    try:
+        return JsonResponse(_lookup(Runtime, query))
+    except IndexError:
+        return HttpResponseNotFound()
 
 def search_module(request, query):
     """Retrieve module details.
@@ -208,4 +208,7 @@ def search_module(request, query):
         }
 
     """
-    return JsonResponse(_lookup(Module, query))
+    try:
+        return JsonResponse(_lookup(Module, query))
+    except IndexError:
+        return HttpResponseNotFound()
