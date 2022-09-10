@@ -162,4 +162,4 @@ class Module(models.Model):
     def __str__(self):
         """Django admin page display row."""
         return "[{}] {}:{}".format(
-            self.name, self.source.name, str(self.uuid))
+            self.name, self.parent, str(self.uuid))
