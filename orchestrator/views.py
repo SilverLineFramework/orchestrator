@@ -169,9 +169,15 @@ def search_runtime(request, query):
     TODO: add child runtimes.
     """
     try:
-        return JsonResponse(_lookup(Runtime, query))
+        runtime = _lookup(Runtime, query)
     except IndexError:
         return HttpResponseNotFound()
+
+    children = Module.objects.filter(parent=runtime['uuid'])
+    runtime['children'] = [model_to_dict(module) for module in list(children)]
+
+    return JsonResponse(runtime)
+     
 
 def search_module(request, query):
     """Retrieve module details.
