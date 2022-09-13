@@ -37,7 +37,10 @@ def list_runtimes(request):
     -------
     ::
 
-        [
+        {
+            count: 1,
+            start: 0,
+            "results": [
                 {
                     "uuid": "02d1991b-6951-4137-8b54-312998ffeb4c",
                     "name": "test",
@@ -51,7 +54,8 @@ def list_runtimes(request):
                         }
                     ]
                 }
-        ]
+            ]
+        }
 
     """
     runtimes = {rt["uuid"]: rt for rt in _serialize(Runtime)}
@@ -66,10 +70,8 @@ def list_runtimes(request):
         except KeyError:
             pass
 
-    return JsonResponse(list(runtimes.values()), safe=False)
-
-    
-
+    rt_list = list(runtimes.values())
+    return JsonResponse({"count": len(rt_list), "start": 0, "results": rt_list })
 
 def list_modules(request):
     """List all modules; returns only some fields.
@@ -82,19 +84,22 @@ def list_modules(request):
     -------
     ::
 
-        [
+        {
+            count: 1,
+            start: 0,            
+            "modules": [
                 {
                     "uuid": "54c0d836-a23f-4ef7-8c64-4b6f5082b7a7",
                     "name": "module",
                     "parent": "43a664a6-5c99-4b08-9d00-eeabc0d1f7f7",
                     "filename": "wasm/polybench/2mm_s.wasm"
                 }
-        ]
-
+            ]
+        }
 
     """
-    return JsonResponse(_serialize(Module), safe=False)
-
+    mod_list = _serialize(Module)
+    return JsonResponse({"count": len(mod_list), "start": 0, "results": mod_list})
 
 def _lookup(model, query):
     """Lookup runtime / module."""
@@ -171,6 +176,7 @@ def search_runtime(request, query):
         return HttpResponseNotFound()
 
     children = Module.objects.filter(parent=runtime['uuid'])
+
     runtime['children'] = [model_to_dict(module) for module in list(children)]
 
     return JsonResponse(runtime)
