@@ -1,11 +1,14 @@
 # SilverLine Orchestrator
 
-For quick setup, use the [SilverLine Services](https://github.com/SilverLineFramework/silverline-services) installer:
+For quick setup, use the [SilverLine](https://github.com/SilverLineFramework/silverline) installer:
 
 ```sh
-git clone git@github.com:SilverLineFramework/silverline-services.git
-cd silverline-services; make update; make orchestrator
+git clone git@github.com:SilverLineFramework/silverline.git
+cd silverline; make update; make orchestrator
 ```
+
+Orchestrator documentation can be found in the [SilverlLine Documentation Site](https://silverlineframework.github.io/silverline/orchestrator/index.html):
+- [REST API](https://silverlineframework.github.io/silverline/orchestrator/index.html#module-orchestrator.views)
 
 ## Manual Setup
 
