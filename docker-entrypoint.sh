@@ -28,5 +28,7 @@ do
   fi 
 done 
 
+port=$(grep '"http_port"' $config_file | cut -d':' -f2 | sed 's/[^0-9]*//g')
+echo "Starting on port "${port:-8000}
 make migrate
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:${port:-8000}
