@@ -63,11 +63,12 @@ class Control(ControlHandler):
                 # module is running, will error out with a duplicate UUID
                 raise messages.DuplicateUUID(data, obj_type='module')
             else: 
-                module.status = State.ALIVE
-        except messages.UUIDNotFound:
+                module.delete()
+        except messages.UUIDNotFound:        
             # ok, will create a new one
-            module = self._object_from_dict(Module, data)
-                    
+            pass 
+        
+        module = self._object_from_dict(Module, data)          
         module.parent = self.__get_runtime_or_schedule(msg, module)
         
         try:
