@@ -99,7 +99,7 @@ class UUIDNotFound(SLException):
 
     def __init__(self, obj, obj_type="runtime"):
         super().__init__(
-            {"desc": "invalid {} UUID".format(obj_type), "data": obj})
+            {"desc": "invalid {} Name/UUID".format(obj_type), "data": obj})
 
 
 class DuplicateUUID(SLException):
