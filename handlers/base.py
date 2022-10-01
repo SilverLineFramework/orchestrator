@@ -43,7 +43,11 @@ class ControlHandler:
 
     @staticmethod
     def _get_object(rt, model=Runtime):
-        """Fetch runtime/module by UUID or generate error."""
+        """Fetch runtime/module by name or UUID or generate error."""
+        try:
+            return model.objects.get(name=rt)
+        except model.DoesNotExist:
+            pass
         try:
             return model.objects.get(uuid=rt)
         except model.DoesNotExist:
