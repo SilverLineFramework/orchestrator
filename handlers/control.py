@@ -16,8 +16,8 @@ class Control(ControlHandler):
     """Runtime control messages."""
 
     # if parent is not given will default to schedule on this runtime
-    __DFT_RUNTIME_NAME="pyruntime"
-    
+    __DFT_RUNTIME_NAME = "pyruntime"
+
     def __init__(self, *args, **kwargs):
         self.topic = settings.MQTT_CONTROL
         self._log = logging.getLogger("control")
@@ -43,7 +43,7 @@ class Control(ControlHandler):
             parent_id = msg.get('data', 'parent')
         except messages.MissingField:
             return self._get_object(Control.__DFT_RUNTIME_NAME, model=Runtime)
-            
+
         return self._get_object(parent_id, model=Runtime)
 
     def create_module(self, msg):
@@ -54,28 +54,28 @@ class Control(ControlHandler):
         if 'filetype' not in data:
             data['filetype'] = FileType.WA
 
-        module_id = msg.get('data', 'uuid') 
+        module_id = msg.get('data', 'uuid')
 
         module = None
-        try: 
+        try:
             module = self._get_object(module_id, model=Module)
             if module.status == State.ALIVE:
                 # module is running, will error out with a duplicate UUID
                 raise messages.DuplicateUUID(data, obj_type='module')
-            else: 
+            else:
                 module.delete()
-        except messages.UUIDNotFound:        
+        except messages.UUIDNotFound:
             # ok, will create a new one
-            pass 
-        
-        module = self._object_from_dict(Module, data)          
+            pass
+
+        module = self._object_from_dict(Module, data)
         module.parent = self.__get_runtime_or_schedule(msg, module)
-        
+
         try:
             module.save()
         except IntegrityError as e:
             if 'UNIQUE constraint' in str(e):
-                raise messages.DuplicateUUID(data, obj_type='module') # should not happen!
+                raise messages.DuplicateUUID(data, obj_type='module')
 
         return messages.Request(
             "{}/{}".format(msg.topic, module.parent.uuid),

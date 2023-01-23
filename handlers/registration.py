@@ -5,7 +5,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from orchestrator.models import State, Runtime, Module
+from orchestrator.models import State, Runtime, Module, Manager
 
 from .base import ControlHandler
 
@@ -52,9 +52,9 @@ class Registration(ControlHandler):
             return messages.Response(
                 msg.topic, msg.get('object_id'), model_to_dict(runtime))
 
-    def delete_runtime(self, msg):
+    def delete_runtime(self, rtid):
         """Delete runtime."""
-        runtime = self._get_object(msg.get('data', 'uuid'), model=Runtime)
+        runtime = self._get_object(rtid, model=Runtime)
         runtime.status = State.DEAD
         runtime.save()
 
@@ -68,8 +68,26 @@ class Registration(ControlHandler):
                 "Runtime exited, killing {} modules; may be "
                 "resurrected.".format(len(killed)))
 
+    def create_manager(self, msg):
+        """Create runtime manager."""
+        manager = self._object_from_dict(Manager, msg.get('data'))
+        manager.save()
         return messages.Response(
-            msg.topic, msg.get('object_id'), model_to_dict(runtime))
+            msg.topic, msg.get('object_id'), model_to_dict(manager))
+
+    def delete_manager(self, mid):
+        """Delete runtime manager."""
+        manager = self._get_object(mid, model=Manager)
+        manager.status = State.DEAD
+        manager.save()
+
+        # Also kill the runtimes
+        killed = Runtime.objects.filter(parent=manager, status=State.ALIVE)
+        for rt in killed:
+            self.delete_runtime(rt.uuid)
+        if len(killed) > 0:
+            self._log.warn(
+                "Manager exited, killing {} runtimes".format(len(killed)))
 
     def handle(self, msg):
         """Handle registration message."""
@@ -79,9 +97,20 @@ class Registration(ControlHandler):
         self._log.info(msg.payload)
 
         action = msg.get('action')
-        if action == 'create':
-            return self.create_runtime(msg)
-        elif action == 'delete':
-            return self.delete_runtime(msg)
+        objtype = msg.get('data', 'type')
+        if objtype == 'runtime':
+            if action == 'create':
+                return self.create_runtime(msg)
+            elif action == 'delete':
+                return self.delete_runtime(msg.get('data', 'uuid'))
+            else:
+                raise messages.InvalidArgument("action", action)
+        elif objtype == 'manager':
+            if action == 'create':
+                return self.create_manager(msg)
+            elif action == 'delete':
+                return self.delete_manager(msg.get('data', 'uuid'))
+            else:
+                raise messages.InvalidArgument("action", action)
         else:
-            raise messages.InvalidArgument("action", msg.get('action'))
+            raise messages.InvalidArgument("type", objtype)

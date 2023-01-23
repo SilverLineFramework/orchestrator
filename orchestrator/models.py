@@ -46,6 +46,24 @@ def _uuidstr():
     return str(uuid.uuid4())
 
 
+class Manager(models.Model):
+    """SilverLine runtime managers."""
+
+    TYPE = "Manager"
+
+    INPUT_ATTRS = ['uuid', 'name']
+    OUTPUT_SHORT = ['uuid', 'name']
+
+    uuid = models.CharField(primary_key=True, max_length=64, default=_uuidstr)
+    "Manager UUID."
+
+    name = models.CharField(max_length=255, default="manager")
+    "Manager short name (len < 255)."
+    
+    status = models.CharField(max_length=8, default=State.ALIVE)
+    "Manager state (A=Alive, D=Dead)."
+
+
 class Runtime(models.Model):
     """Available SilverLine runtimes."""
 
@@ -96,6 +114,9 @@ class Runtime(models.Model):
 
     status = models.CharField(max_length=8, default=State.ALIVE)
     "Runtime state (A=Alive, D=Dead)."
+
+    parent = models.ForeignKey(Manager, on_delete=models.CASCADE, null=True)
+    "Runtime manager, if applicable."
 
     def natural_key(self):
         """Makes objects with RT as foreign key use UUID when serialized."""

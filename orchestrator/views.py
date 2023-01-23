@@ -71,7 +71,9 @@ def list_runtimes(request):
             pass
 
     rt_list = list(runtimes.values())
-    return JsonResponse({"count": len(rt_list), "start": 0, "results": rt_list })
+    return JsonResponse(
+        {"count": len(rt_list), "start": 0, "results": rt_list})
+
 
 def list_modules(request):
     """List all modules; returns only some fields.
@@ -99,7 +101,9 @@ def list_modules(request):
 
     """
     mod_list = _serialize(Module)
-    return JsonResponse({"count": len(mod_list), "start": 0, "results": mod_list})
+    return JsonResponse(
+        {"count": len(mod_list), "start": 0, "results": mod_list})
+
 
 def _lookup(model, query):
     """Lookup runtime / module."""
@@ -117,6 +121,7 @@ def _lookup(model, query):
     # 3) Specify by last N digits of UUID; trow exception if fails
     return model_to_dict(
         model.objects.filter(uuid__endswith=query, status=State.ALIVE)[0])
+
 
 def search_runtime(request, query):
     """Retrieve runtime details.
@@ -180,7 +185,7 @@ def search_runtime(request, query):
     runtime['children'] = [model_to_dict(module) for module in list(children)]
 
     return JsonResponse(runtime)
-     
+
 
 def search_module(request, query):
     """Retrieve module details.
