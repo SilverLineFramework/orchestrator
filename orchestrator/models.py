@@ -59,7 +59,7 @@ class Manager(models.Model):
 
     name = models.CharField(max_length=255, default="manager")
     "Manager short name (len < 255)."
-    
+
     status = models.CharField(max_length=8, default=State.ALIVE)
     "Manager state (A=Alive, D=Dead)."
 
