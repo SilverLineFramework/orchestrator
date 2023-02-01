@@ -48,7 +48,13 @@ class Registration(ControlHandler):
         # Doesn't exist -> create new
         except Runtime.DoesNotExist:
             runtime = self._object_from_dict(Runtime, msg.get('data'))
+            try:
+                mgr_uuid = msg.get('data', 'parent')
+                runtime.parent = Manager.objects.get(uuid=mgr_uuid)
+            except Manager.DoesNotExist:
+                pass
             runtime.save()
+
             return messages.Response(
                 msg.topic, msg.get('object_id'), model_to_dict(runtime))
 
