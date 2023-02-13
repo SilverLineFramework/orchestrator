@@ -52,6 +52,7 @@ class MQTTListener(Client):
         return inner
 
     def _handle_message(self, handler, msg):
+        decoded = None
         try:
             decoded = handler.decode(msg)
             return handler.handle(decoded)
