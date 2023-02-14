@@ -8,6 +8,14 @@ class orchestratorConfig(AppConfig):
 
     name = 'orchestrator'
 
+    _HEADER = r"""
+       _           _
+      /_\  ___ ___| |_  _ ___
+     / _ \/ -_) _ \ | || (_-<
+    /_/ \_\___\___/_|\_,_/__/
+    Silverline: Orchestrator
+    """
+
     def ready(self):
         """Initialize MQTT handler."""
         # check if we are running the main process; start mqtt listener
@@ -15,6 +23,8 @@ class orchestratorConfig(AppConfig):
 
             from pubsub import MQTTListener
             from handlers import Registration, Control, Keepalive
+
+            print(self._HEADER)
 
             # instantiate mqtt listener (routes messages to the mqtt ctl)
             self.mqtt_listener = MQTTListener(

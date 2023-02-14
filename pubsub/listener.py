@@ -22,8 +22,8 @@ class MQTTListener(Client):
     """
 
     def __init__(self, *args, **kwargs):
-        self._req = logging.getLogger(name="request")
-        self._resp = logging.getLogger(name="response")
+        self.__req = logging.getLogger(name="req")
+        self.__resp = logging.getLogger(name="resp")
         super().__init__(*args, **kwargs)
 
     def handle_message(self, handler):
@@ -45,9 +45,9 @@ class MQTTListener(Client):
                     payload = json.dumps(res.payload)
                     log_msg = "{}:{}".format(str(res.topic), payload)
                     if res.topic == settings.MQTT_LOG:
-                        self._resp.warning(log_msg)
+                        self.__resp.warning(log_msg)
                     else:
-                        self._resp.info(log_msg)
+                        self.__resp.info(log_msg)
                     self.publish(res.topic, payload, qos=2)
         return inner
 
@@ -63,8 +63,8 @@ class MQTTListener(Client):
         # Uncaught exceptions here must be caused by some programmer error
         # or unchecked edge case, so are always returned.
         except Exception as e:
-            logging.error(traceback.format_exc())
+            self.__req.error(traceback.format_exc())
             cause = decoded.payload if decoded else msg.payload
-            logging.error("Caused by: {}".format(str(cause)))
+            self.__req.error("Caused by: {}".format(str(cause)))
             return messages.Error(
                 {"desc": "Uncaught exception", "data": str(e)})
