@@ -6,14 +6,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class FileType(models.TextChoices):
-    """File type enum."""
-
-    WA = 'WA', _('WASM')
-    PY = 'PY', _('PYTHON')
-    EXT = 'EXT'
-
-
 class State(models.TextChoices):
     """Module state enum."""
 
@@ -70,9 +62,9 @@ class Runtime(models.Model):
     TYPE = "Runtime"
 
     INPUT_ATTRS = [
-        "uuid", "name", "apis", "runtime_type", "max_nmodules", "page_size",
-        "aot_target", "platform", "metadata"]
-    OUTPUT_SHORT = ["uuid", "name", "runtime_type", "aot_target"]
+        "uuid", "name", "apis", "runtime_type", "max_nmodules", "platform",
+        "metadata"]
+    OUTPUT_SHORT = ["uuid", "name", "runtime_type"]
 
     uuid = models.CharField(primary_key=True, max_length=64, default=_uuidstr)
     "Runtime UUID."
@@ -84,10 +76,10 @@ class Runtime(models.Model):
     "Last time the runtime was updated/created"
 
     apis = models.JSONField(blank=True, default=_default_runtime_apis)
-    "Supported APIs."
+    "Supported APIs"
 
     runtime_type = models.CharField(max_length=16, default="linux")
-    "Runtime type (browser, linux, embedded, special)"
+    "Runtime type"
 
     ka_interval_sec = models.IntegerField(default=60)
     "Keepalive interval (seconds)"
@@ -95,16 +87,8 @@ class Runtime(models.Model):
     ka_ts = models.DateTimeField(auto_now_add=True)
     "Last keepalive timestamp"
 
-    max_nmodules = models.IntegerField(default=100)
-    "Max number of modules suppoprted by runtime"
-
-    page_size = models.IntegerField(default=65536)
-    "WASM pagesize. Default = 64KiB. Memory-constrained embedded runtimes can "
-    "use smaller page size of 4KiB."
-
-    aot_target = models.CharField(max_length=500, default="{}", blank=True)
-    "AOT target details, including CPU architecture, target ISA and ABI, i.e. "
-    "x86_64.tigerlake"
+    max_nmodules = models.IntegerField(default=128)
+    "Max number of modules supported by runtime"
 
     metadata = models.JSONField(blank=True, null=True)
     "Optional metadata"
@@ -113,7 +97,7 @@ class Runtime(models.Model):
     "Platform manifest"
 
     status = models.CharField(max_length=8, default=State.ALIVE)
-    "Runtime state (A=Alive, D=Dead)."
+    "Runtime state (A=Alive, D=Dead)"
 
     parent = models.ForeignKey(Manager, on_delete=models.CASCADE, null=True)
     "Runtime manager, if applicable."
@@ -134,7 +118,7 @@ class Module(models.Model):
     TYPE = "Module"
 
     INPUT_ATTRS = [
-        "uuid", "name", "filename", "filetype", "apis", "args", "env",
+        "uuid", "name", "filename", "apis", "args", "env",
         "channels", "peripherals", "resources", "fault_crash", "metadata"]
     OUTPUT_SHORT = ["uuid", "name", "parent", "filename"]
 
@@ -151,9 +135,6 @@ class Module(models.Model):
 
     filename = models.TextField(blank=False)
     "Program file (required)."
-
-    filetype = models.CharField(max_length=8, default=FileType.WA)
-    "File type (PY, WA, EXT)"
 
     apis = models.JSONField(default=_default_required_apis, blank=True)
     "APIs required by the module."
@@ -172,9 +153,6 @@ class Module(models.Model):
 
     resources = models.JSONField(blank=True, null=True)
     "Resource reservation (runtime/period with SCHED_DEADLINE)"
-
-    fault_crash = models.CharField(max_length=16, default=FaultCrash.IGNORE)
-    "Fault handling behavior on crash (ignore or restart)."
 
     status = models.CharField(max_length=8, default=State.ALIVE)
     "Module state (A=Alive, D=Dead, E=Exiting, K=Killed). Killed modules "

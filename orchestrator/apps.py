@@ -32,7 +32,7 @@ class orchestratorConfig(AppConfig):
                 mqtt=settings.MQTT_HOST, mqtt_port=settings.MQTT_PORT,
                 realm=settings.REALM, pwd=settings.MQTT_PASSWORD_FILE,
                 mqtt_username=settings.MQTT_USERNAME,
-                use_ssl=settings.MQTT_SSL, connect=True)
+                use_ssl=settings.MQTT_SSL)
 
             for handler in [Registration(), Control(), Keepalive()]:
                 self.mqtt_listener.register_callback(

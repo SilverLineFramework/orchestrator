@@ -57,7 +57,7 @@ def Error(data):
 def __convert_str_attrs(d):
     """Convert JSON-encoded string attributes into proper objects."""
     convert_keys = [
-        'apis', 'args', 'env', 'channels', 'peripherals', "aot_target"]
+        'apis', 'args', 'env', 'channels', 'peripherals', 'metadata']
     # convert array attributes saved as strings into objects
     for key in convert_keys:
         try:

@@ -24,7 +24,7 @@ class MQTTListener(Client):
     def __init__(self, *args, **kwargs):
         self.__req = logging.getLogger(name="req")
         self.__resp = logging.getLogger(name="resp")
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, bridge=True, connect=True, **kwargs)
 
     def handle_message(self, handler):
         """Message handler decorator.

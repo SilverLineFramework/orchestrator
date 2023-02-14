@@ -118,7 +118,7 @@ def _lookup(model, query):
             model.objects.filter(name=query, status=State.ALIVE)[0])
     except IndexError:
         pass
-    # 3) Specify by last N digits of UUID; trow exception if fails
+    # 3) Specify by last N digits of UUID; throw exception if fails
     return model_to_dict(
         model.objects.filter(uuid__endswith=query, status=State.ALIVE)[0])
 
@@ -130,7 +130,7 @@ def search_runtime(request, query):
 
         <server>/api/runtimes/<uuid>/
 
-    NOTE: returns ``{}`` if no matching runtime is found.
+    NOTE: returns 404 if no runtime is found.
 
     Example
     -------
@@ -139,25 +139,17 @@ def search_runtime(request, query):
         {
             "uuid": "02d1991b-6951-4137-8b54-312998ffeb4c",
             "name": "test",
-            "apis": [
-                "wasm",
-                "wasi"
-            ],
+            "apis": ["wasm", "wasi"],
             "runtime_type": "linux",
             "ka_interval_sec": 60,
-            "max_nmodules": 100,
-            "page_size": 65536,
+            "max_nmodules": 128,
             "metadata": null,
-            "aot_target": "x86_64.tigerlake",
             "platform": {
                 "cpu": {
                     "arch": "X86_64",
                     "cores": 8,
                     "class": "tigerlake",
-                    "qos": {
-                        "rt": 0,
-                        "cfs": 0
-                    },
+                    "qos": {"rt": 0, "cfs": 0},
                     "cpufreq": 3368621
                 },
                 "mem": {
@@ -170,19 +162,24 @@ def search_runtime(request, query):
                     "total": 8154243072
                 }
             },
-            "status": "A"
+            "status": "A",
+            "children": [
+                {
+                    "uuid": "413f3dc8-49d8-47d7-810d-9a3ac0d1720c",
+                    "name": "module",
+                    "filename": "wasm/polybench/2mm_s.wasm"
+                }
+            ]
         }
-
-    TODO: add child runtimes.
     """
     try:
         runtime = _lookup(Runtime, query)
     except IndexError:
         return HttpResponseNotFound()
 
-    children = Module.objects.filter(parent=runtime['uuid'])
-
-    runtime['children'] = [model_to_dict(module) for module in list(children)]
+    runtime['children'] = [
+        model_to_dict(module) for module in
+        Module.objects.filter(parent=runtime['uuid'], status=State.ALIVE)]
 
     return JsonResponse(runtime)
 
@@ -194,7 +191,7 @@ def search_module(request, query):
 
         <server>/api/modules/<uuid>/
 
-    NOTE: returns ``{}`` if no matching module is found.
+    NOTE: returns 404 if no matching module is found.
 
     Example
     -------
@@ -206,13 +203,8 @@ def search_module(request, query):
             "parent": "02d1991b-6951-4137-8b54-312998ffeb4c",
             "filename": "wasm/polybench/2mm_s.wasm",
             "filetype": "WA",
-            "apis": [
-                "wasm",
-                "wasi"
-            ],
-            "args": [
-                "wasm/polybench/2mm_s.wasm"
-            ],
+            "apis": ["wasm", "wasi"],
+            "args": ["wasm/polybench/2mm_s.wasm"],
             "env": [],
             "channels": [],
             "peripherals": [],

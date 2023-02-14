@@ -7,7 +7,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 from pubsub import messages
-from orchestrator.models import FileType, State, Runtime, Module
+from orchestrator.models import State, Runtime, Module
 
 from .base import ControlHandler
 
@@ -51,8 +51,6 @@ class Control(ControlHandler):
         data = msg.get('data')
         if 'apis' not in data:
             data['apis'] = ['wasm', 'wasi']
-        if 'filetype' not in data:
-            data['filetype'] = FileType.WA
 
         module_id = msg.get('data', 'uuid')
 
