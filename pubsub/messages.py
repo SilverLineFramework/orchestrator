@@ -5,15 +5,21 @@ import json
 
 from django.conf import settings
 
+from beartype.typing import Union
 
-class Result():
+
+# Valid JSON entry
+JsonData = Union[list, dict, str, tuple, int, float]
+
+
+class Result:
     """Result ok/error enum."""
 
     ok = 'ok'
     err = 'error'
 
 
-class Action():
+class Action:
     """Action create/delete enum."""
 
     create = 'create'
@@ -23,11 +29,11 @@ class Action():
 class Message:
     """Pubsub Message container."""
 
-    def __init__(self, topic, payload):
+    def __init__(self, topic: str, payload: JsonData) -> None:
         self.topic = topic
         self.payload = payload
 
-    def get(self, *args):
+    def get(self, *args: list) -> any:
         """Get attribute, or raise appropriate error.
 
         Raises
@@ -44,7 +50,7 @@ class Message:
             raise MissingField(args)
 
 
-def Error(data):
+def Error(data: JsonData) -> Message:
     """Error message."""
     return Message(settings.MQTT_LOG, {
         "object_id": str(uuid.uuid4()),
@@ -54,7 +60,7 @@ def Error(data):
     })
 
 
-def __convert_str_attrs(d):
+def __convert_str_attrs(d: dict) -> None:
     """Convert JSON-encoded string attributes into proper objects."""
     convert_keys = [
         'apis', 'args', 'env', 'channels', 'peripherals', 'metadata']
@@ -67,8 +73,11 @@ def __convert_str_attrs(d):
             pass
 
 
-def Response(topic, src_uuid, details, result=Result.ok, convert=True):
-    """ARTS Response."""
+def Response(
+    topic: str, src_uuid: str, details: JsonData, result: str = Result.ok,
+    convert: bool = True
+) -> Message:
+    """Orchestrator Response."""
     if convert:
         __convert_str_attrs(details)
     return Message(topic, {
@@ -77,8 +86,10 @@ def Response(topic, src_uuid, details, result=Result.ok, convert=True):
     })
 
 
-def Request(topic, action, data, convert=True):
-    """ARTS Request."""
+def Request(
+    topic: str, action: str, data: JsonData, convert: bool = True
+) -> Message:
+    """Orchestrator Request."""
     if convert:
         __convert_str_attrs(data)
     return Message(topic, {
@@ -90,14 +101,14 @@ def Request(topic, action, data, convert=True):
 class SLException(Exception):
     """Base class for orchestrator exceptions."""
 
-    def __init__(self, payload):
+    def __init__(self, payload: JsonData) -> None:
         self.message = Error(payload)
 
 
 class UUIDNotFound(SLException):
     """Runtime/module UUID not found."""
 
-    def __init__(self, obj, obj_type="runtime"):
+    def __init__(self, obj: JsonData, obj_type: str = "runtime") -> None:
         super().__init__(
             {"desc": "invalid {} Name/UUID".format(obj_type), "data": obj})
 
@@ -108,7 +119,7 @@ class DuplicateUUID(SLException):
     This is expected in per-scene instantiated modules.
     """
 
-    def __init__(self, obj, obj_type="runtime"):
+    def __init__(self, obj: JsonData, obj_type="runtime") -> None:
         super().__init__({
             "desc": "duplicate {} UUID; request ignored".format(obj_type),
             "data": obj
@@ -118,7 +129,7 @@ class DuplicateUUID(SLException):
 class InvalidArgument(SLException):
     """Exception for invalid argument value."""
 
-    def __init__(self, arg_name, arg_value):
+    def __init__(self, arg_name: str, arg_value: JsonData) -> None:
         super().__init__(
             {"desc": "invalid {}".format(arg_name), "data": arg_value})
 
@@ -126,12 +137,12 @@ class InvalidArgument(SLException):
 class MissingField(SLException):
     """Required field is missing."""
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super().__init__({"desc": "missing field", "data": "/".join(path)})
 
 
 class FileNotFound(SLException):
     """WASM file is missing."""
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super().__init__({"desc": "file not found", "data": path})

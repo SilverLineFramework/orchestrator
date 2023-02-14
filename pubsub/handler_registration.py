@@ -1,21 +1,19 @@
 """Runtime registration."""
 
-import logging
 from django.conf import settings
 from django.forms.models import model_to_dict
 
-from pubsub import messages
 from orchestrator.models import State, Runtime, Module, Manager
 
-from .base import ControlHandler
+from . import messages
+from .handler_base import ControlHandler
 
 
 class Registration(ControlHandler):
     """Runtime registration."""
 
-    def __init__(self):
-        self.topic = settings.MQTT_REG
-        self._log = logging.getLogger("registration")
+    NAME = "reg"
+    TOPIC = "proc/reg/#"
 
     def create_runtime(self, msg):
         """Create or resurrect runtime."""
@@ -41,7 +39,7 @@ class Registration(ControlHandler):
                     msg.topic, msg.get('object_id'), model_to_dict(runtime))
             ] + [
                 messages.Request(
-                    "{}/{}".format(settings.MQTT_CONTROL, runtime.uuid),
+                    "/".join([settings.REALM, "proc/control", runtime.uuid]),
                     "create", {"type": "module", **model_to_dict(mod)})
                 for mod in modules]
 
@@ -100,7 +98,7 @@ class Registration(ControlHandler):
         if msg.get('type') == 'arts_resp':
             return None
 
-        self._log.info(msg.payload)
+        self.log.info(msg.payload)
 
         action = msg.get('action')
         objtype = msg.get('data', 'type')

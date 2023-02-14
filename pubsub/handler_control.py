@@ -1,27 +1,22 @@
 """Handler for module control messages."""
 
-import logging
-
 from django.db import IntegrityError
-from django.conf import settings
 from django.forms.models import model_to_dict
 
-from pubsub import messages
 from orchestrator.models import State, Runtime, Module
 
-from .base import ControlHandler
+from .handler_base import ControlHandler
+from . import messages
 
 
 class Control(ControlHandler):
     """Runtime control messages."""
 
+    NAME = "ctrl"
+    TOPIC = "proc/control/#"
+
     # if parent is not given will default to schedule on this runtime
     __DFT_RUNTIME_NAME = "pyruntime"
-
-    def __init__(self, *args, **kwargs):
-        self.topic = settings.MQTT_CONTROL
-        self._log = logging.getLogger("control")
-        super().__init__(*args, **kwargs)
 
     def create_module_ack(self, msg):
         """Handle ACK sent after scheduling module.
@@ -98,10 +93,6 @@ class Control(ControlHandler):
         module.status = State.DEAD
         module.save()
 
-        return messages.Request(
-            settings.MQTT_NOTIF, "exited",
-            {"type": "module", "uuid": module_id})
-
     def handle(self, msg):
         """Handle per-module control message."""
         # arts_resp -> is a message we sent, should be ignored
@@ -109,7 +100,7 @@ class Control(ControlHandler):
         if msg_type == 'arts_resp':
             return None
 
-        self._log.info(msg.payload)
+        self.log.info(msg.payload)
 
         if msg_type == 'runtime_resp':
             return self.create_module_ack(msg)

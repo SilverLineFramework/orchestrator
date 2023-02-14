@@ -1,14 +1,13 @@
 """Keepalive handler."""
 
-from django.conf import settings
-from .base import ControlHandler
+from .handler_base import ControlHandler
 
 
 class Keepalive(ControlHandler):
     """Keepalive message."""
 
-    def __init__(self):
-        self.topic = settings.MQTT_KEEPALIVE
+    NAME = "ka"
+    TOPIC = "proc/keepalive/#"
 
     def handle(self, msg):
         """Handle keepalive message."""

@@ -41,6 +41,9 @@ if os.environ.get('RUN_MAIN', None) == 'true':
 runserver.default_port = _config.get("http_port", 8000)
 runserver.default_addr = _config.get("http", "localhost")
 
+REALM = _config.get('realm', 'realm')
+MQTT_LOG = "/".join([REALM, "proc", "log", "orchestrator"])
+
 # --------------------------------- Security -------------------------------- #
 
 # Includes 'localhost' if running in DEBUG=True.
@@ -101,24 +104,3 @@ DATABASES = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-# --------------------------------------------------------------------------- #
-#                                     MQTT                                    #
-# --------------------------------------------------------------------------- #
-
-# MQTT Server
-REALM = _config.get('realm', 'realm')
-MQTT_HOST = _config.get('mqtt', 'localhost')
-MQTT_PORT = _config.get('mqtt_port', 1883)
-MQTT_SSL = _config.get('use_ssl', False)
-
-# MQTT Credentials
-MQTT_USERNAME = _config.get('mqtt_username', 'arts')
-MQTT_PASSWORD_FILE = _config.get('pwd', "mqtt_pwd.txt")
-
-MQTT_ROOT = "/".join([REALM, "proc"])
-MQTT_LOG = "/".join([MQTT_ROOT, "log", "orchestrator"])
-MQTT_REG = "/".join([MQTT_ROOT, "reg", "#"])
-MQTT_CONTROL = "/".join([MQTT_ROOT, "control", "#"])
-MQTT_KEEPALIVE = "/".join([MQTT_ROOT, "keepalive", "#"])
-MQTT_NOTIF = "/".join([MQTT_ROOT, "notif"])
