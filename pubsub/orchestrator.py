@@ -8,7 +8,6 @@ from django.conf import settings
 from beartype.typing import Optional
 from beartype import beartype
 
-from .messages import Message
 from .client import MQTTClient, MQTTServer
 from .handler_base import ControlHandler
 from .handler_registration import Registration
@@ -18,12 +17,7 @@ from .handler_keepalive import Keepalive
 
 @beartype
 class Orchestrator(MQTTClient):
-    """MQTT Listener class extending libsilverline's Client.
-
-    Parameters
-    ----------
-    name : Orchestrator name.
-    """
+    """MQTT Listener class extending libsilverline's Client."""
 
     _HEADER = r"""
        _           _

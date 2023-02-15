@@ -62,7 +62,7 @@ class Runtime(models.Model):
     TYPE = "Runtime"
 
     INPUT_ATTRS = [
-        "uuid", "name", "apis", "runtime_type", "max_nmodules", "platform",
+        "uuid", "name", "runtime_type", "max_nmodules", "apis", "platform",
         "metadata"]
     OUTPUT_SHORT = ["uuid", "name", "runtime_type"]
 
@@ -72,14 +72,20 @@ class Runtime(models.Model):
     name = models.CharField(max_length=255, default='runtime')
     "Runtime short name (len <= 255)."
 
-    updated_at = models.DateTimeField(auto_now=True)
-    "Last time the runtime was updated/created"
+    runtime_type = models.CharField(max_length=16, default="linux")
+    "Runtime type"
+
+    max_nmodules = models.IntegerField(default=1)
+    "Maximum number of modules supported by the runtime"
 
     apis = models.JSONField(blank=True, default=_default_runtime_apis)
     "Supported APIs"
 
-    runtime_type = models.CharField(max_length=16, default="linux")
-    "Runtime type"
+    platform = models.JSONField(blank=True, null=True)
+    "Platform manifest"
+
+    metadata = models.JSONField(blank=True, null=True)
+    "Optional metadata"
 
     ka_interval_sec = models.IntegerField(default=60)
     "Keepalive interval (seconds)"
@@ -87,14 +93,8 @@ class Runtime(models.Model):
     ka_ts = models.DateTimeField(auto_now_add=True)
     "Last keepalive timestamp"
 
-    max_nmodules = models.IntegerField(default=128)
-    "Max number of modules supported by runtime"
-
-    metadata = models.JSONField(blank=True, null=True)
-    "Optional metadata"
-
-    platform = models.JSONField(blank=True, null=True)
-    "Platform manifest"
+    updated_at = models.DateTimeField(auto_now=True)
+    "Last time the runtime was updated/created"
 
     status = models.CharField(max_length=8, default=State.ALIVE)
     "Runtime state (A=Alive, D=Dead)"
@@ -117,10 +117,8 @@ class Module(models.Model):
 
     TYPE = "Module"
 
-    INPUT_ATTRS = [
-        "uuid", "name", "filename", "apis", "args", "env",
-        "channels", "peripherals", "resources", "fault_crash", "metadata"]
-    OUTPUT_SHORT = ["uuid", "name", "parent", "filename"]
+    INPUT_ATTRS = ["uuid", "name", "file", "apis", "args", "channels"]
+    OUTPUT_SHORT = ["uuid", "name", "parent", "file"]
 
     uuid = models.CharField(primary_key=True, max_length=64, default=_uuidstr)
     "Module UUID."
@@ -133,26 +131,17 @@ class Module(models.Model):
         blank=True, null=True)
     "Parent runtime (runtime where the module is running"
 
-    filename = models.TextField(blank=False)
+    file = models.TextField(blank=False)
     "Program file (required)."
 
     apis = models.JSONField(default=_default_required_apis, blank=True)
     "APIs required by the module."
 
     args = models.JSONField(default=_emptylist, blank=True)
-    "Arguments to pass to the module at startup."
-
-    env = models.JSONField(default=_emptylist, blank=True)
-    "Environment path to pass to the module at startup."
+    "Arguments (argv, environment variables, etc) to pass to the module."
 
     channels = models.JSONField(default=_emptylist, blank=True)
     "Channels to open at startup."
-
-    peripherals = models.JSONField(default=_emptylist, blank=True)
-    "Required peripherals."
-
-    resources = models.JSONField(blank=True, null=True)
-    "Resource reservation (runtime/period with SCHED_DEADLINE)"
 
     status = models.CharField(max_length=8, default=State.ALIVE)
     "Module state (A=Alive, D=Dead, E=Exiting, K=Killed). Killed modules "

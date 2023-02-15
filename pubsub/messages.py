@@ -55,7 +55,7 @@ def Error(data: JsonData) -> Message:
     return Message(settings.MQTT_LOG, {
         "object_id": str(uuid.uuid4()),
         "action": "error",
-        "type": "arts_resp",
+        "type": "resp",
         "data": data
     })
 
@@ -81,7 +81,7 @@ def Response(
     if convert:
         __convert_str_attrs(details)
     return Message(topic, {
-        "object_id": str(src_uuid), "type": "arts_resp",
+        "object_id": str(src_uuid), "type": "resp",
         "data": {"result": result, "details": details}
     })
 

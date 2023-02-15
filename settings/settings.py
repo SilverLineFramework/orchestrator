@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import json
 import logging
-from libsilverline import configure_log
+from .logging import configure_log
 
 from django.core.management.commands.runserver import Command as runserver
 
@@ -36,7 +36,9 @@ _config = _load(CONFIG_PATH)
 LOG_DIR = os.path.join(_config.get("log_dir", "log"), "orchestrator/")
 if os.environ.get('RUN_MAIN', None) == 'true':
     os.makedirs(LOG_DIR, exist_ok=True)
-    configure_log(LOG_DIR, verbose=2)
+    configure_log(LOG_DIR, level=0)
+
+_conf = logging.getLogger("conf")
 
 runserver.default_port = _config.get("http_port", 8000)
 runserver.default_addr = _config.get("http", "localhost")
@@ -63,7 +65,7 @@ except KeyError:
     if not DEBUG:
         raise Exception("Secret key file `key.json` not found.")
     else:
-        logging.warn("No secret key file was found (ok for debug)")
+        _conf.warn("No secret key file was found (ok for debug)")
         SECRET_KEY = "NOT_A_SECRET_KEY"
 
 # ------------------------------ Server Sources ----------------------------- #
@@ -89,9 +91,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'settings.urls'
-
 WSGI_APPLICATION = 'settings.wsgi.application'
-
 APPEND_SLASH = True
 
 # Database
