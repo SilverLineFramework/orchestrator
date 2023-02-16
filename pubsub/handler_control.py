@@ -26,14 +26,15 @@ class Control(ControlHandler):
         """
         return None
 
-    def __get_runtime_or_schedule(self, msg, module):
+    def __get_runtime_or_schedule(self, msg):
         """Get parent runtime, or allocate target runtime."""
         try:
-            parent_id = msg.get('data', 'parent')
+            parent = self._get_object(msg.get('data', 'parent'), model=Runtime)
         except messages.MissingField:
-            return self._get_object(Control.__DFT_RUNTIME_NAME, model=Runtime)
+            parent = self._get_object(
+                Control.__DFT_RUNTIME_NAME, model=Runtime)
 
-        return self._get_object(parent_id, model=Runtime)
+        return parent
 
     def create_module(self, msg):
         """Handle create message."""
@@ -51,12 +52,20 @@ class Control(ControlHandler):
             pass
 
         module = self._object_from_dict(Module, data)
-        module.parent = self.__get_runtime_or_schedule(msg, module)
-        module.save()
+        parent = self.__get_runtime_or_schedule(msg)
+        module.parent = parent
 
-        return messages.Request(
-            "/".join([settings.REALM, "proc/control", module.parent.uuid]),
-            "create", {"type": "module", **model_to_dict(module)})
+        active = Module.objects.filter(parent=parent, status=State.ALIVE)
+        if active.count() >= parent.max_nmodules:
+            module.status = State.QUEUED
+            module.save()
+            self.log.info("Module queued: {}".format(module.uuid))
+        else:
+            module.status = State.ALIVE
+            module.save()
+            return messages.Request(
+                "/".join([settings.REALM, "proc/control", module.parent.uuid]),
+                "create", {"type": "module", **model_to_dict(module)})
 
     def delete_module(self, msg):
         """Handle delete message."""
@@ -75,6 +84,15 @@ class Control(ControlHandler):
         module = self._get_object(module_id, model=Module)
         module.status = State.DEAD
         module.save()
+
+        queue = Module.objects.filter(
+            parent=module.parent, status=State.QUEUED)
+        if queue.count() > 0:
+            head = queue.order_by('index')[0]
+            head.state = State.ALIVE
+            return messages.Request(
+                "/".join([settings.REALM, "proc/control", head.parent.uuid]),
+                "create", {"type": "module", **model_to_dict(head)})
 
     def handle(self, msg):
         """Handle per-module control message."""

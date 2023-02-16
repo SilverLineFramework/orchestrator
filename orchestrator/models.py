@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 class State(models.TextChoices):
     """Module state enum."""
 
+    QUEUED = 'Q', _('QUEUED')
     ALIVE = 'A', _('ALIVE')
     DEAD = 'D', _('DEAD')
     EXITING = 'E', _('EXITING')
@@ -96,7 +97,7 @@ class Runtime(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     "Last time the runtime was updated/created"
 
-    status = models.CharField(max_length=8, default=State.ALIVE)
+    status = models.CharField(max_length=2, default=State.ALIVE)
     "Runtime state (A=Alive, D=Dead)"
 
     parent = models.ForeignKey(Manager, on_delete=models.CASCADE, null=True)
@@ -120,7 +121,10 @@ class Module(models.Model):
     INPUT_ATTRS = ["uuid", "name", "file", "apis", "args", "channels"]
     OUTPUT_SHORT = ["uuid", "name", "parent", "file"]
 
-    uuid = models.CharField(primary_key=True, max_length=64, default=_uuidstr)
+    index = models.AutoField(primary_key=True)
+    "Auto-incrementing primary key used for queuing."
+
+    uuid = models.CharField(max_length=64, default=_uuidstr)
     "Module UUID."
 
     name = models.CharField(max_length=255, default='module')
@@ -143,9 +147,9 @@ class Module(models.Model):
     channels = models.JSONField(default=_emptylist, blank=True)
     "Channels to open at startup."
 
-    status = models.CharField(max_length=8, default=State.ALIVE)
-    "Module state (A=Alive, D=Dead, E=Exiting, K=Killed). Killed modules "
-    "respawn if the parent is resurrected."
+    status = models.CharField(max_length=2, default=State.ALIVE)
+    "Module state (Q=Queued, A=Alive, D=Dead, E=Exiting, K=Killed). Killed "
+    "modules respawn if the parent is resurrected."
 
     def __str__(self):
         """Django admin page display row."""

@@ -33,9 +33,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = "config.json"
 _config = _load(CONFIG_PATH)
 
-LOG_DIR = os.path.join(_config.get("log_dir", "log"), "orchestrator/")
+# LOG_DIR = os.path.join(_config.get("log_dir", "log"), "orchestrator/")
+LOG_DIR = None
 if os.environ.get('RUN_MAIN', None) == 'true':
-    os.makedirs(LOG_DIR, exist_ok=True)
     configure_log(LOG_DIR, level=0)
 
 _conf = logging.getLogger("conf")
