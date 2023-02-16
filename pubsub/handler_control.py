@@ -1,6 +1,7 @@
 """Handler for module control messages."""
 
 from django.forms.models import model_to_dict
+from django.conf import settings
 
 from orchestrator.models import State, Runtime, Module
 
@@ -54,20 +55,19 @@ class Control(ControlHandler):
         module.save()
 
         return messages.Request(
-            "/".join([msg.topic, module.parent.uuid]),
+            "/".join([settings.REALM, "proc/control", module.parent.uuid]),
             "create", {"type": "module", **model_to_dict(module)})
 
     def delete_module(self, msg):
         """Handle delete message."""
         module_id = msg.get('data', 'uuid')
         module = self._get_object(module_id, model=Module)
-        uuid_current = module.parent.uuid
         module.status = State.EXITING
         module.save()
 
         return messages.Request(
-            "/".join([msg.topic, uuid_current]), "delete",
-            {"type": "module", "uuid": module_id})
+            "/".join([settings.REALM, "proc/control", module.parent.uuid]),
+            "delete", {"type": "module", "uuid": module_id})
 
     def exited_module(self, msg):
         """Remove module from database."""
@@ -78,24 +78,15 @@ class Control(ControlHandler):
 
     def handle(self, msg):
         """Handle per-module control message."""
-        # resp -> is a message we sent, should be ignored
-        msg_type = msg.get('type')
-        if msg_type == 'resp':
-            return None
-
         self.log.info(msg.payload)
-
-        if msg_type == 'resp':
-            return self.create_module_ack(msg)
-        elif msg_type == 'req':
-            action = msg.get('action')
-            if action == 'create':
+        match (msg.get('action'), msg.get('type')):
+            case ('create', 'resp'):
+                return self.create_module_ack(msg)
+            case ('create', 'req'):
                 return self.create_module(msg)
-            elif action == 'delete':
+            case ('delete', 'req'):
                 return self.delete_module(msg)
-            elif action == 'exited':
+            case ('exited', 'req'):
                 return self.exited_module(msg)
-            else:
-                raise messages.InvalidArgument('action', action)
-        else:
-            raise messages.InvalidArgument('type', msg_type)
+            case unknown:
+                raise messages.InvalidArgument('action/type', unknown)

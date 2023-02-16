@@ -88,7 +88,7 @@ def list_modules(request):
 
         {
             count: 1,
-            start: 0,            
+            start: 0,
             "modules": [
                 {
                     "uuid": "54c0d836-a23f-4ef7-8c64-4b6f5082b7a7",

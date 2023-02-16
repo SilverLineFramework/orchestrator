@@ -36,8 +36,7 @@ class Orchestrator(MQTTClient):
         """Start orchestrator pubsub interface."""
         print(self._HEADER)
 
-        self.enable_bridge_mode()
-        self.connect(server)
+        self.connect(server, bridge=True)
 
         for handler in [Registration, Control, Keepalive]:
             self.__add_handler(handler())

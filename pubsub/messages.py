@@ -93,7 +93,7 @@ def Request(
     if convert:
         __convert_str_attrs(data)
     return Message(topic, {
-        "object_id": str(uuid.uuid4()), "action": action, "type": "arts_req",
+        "object_id": str(uuid.uuid4()), "action": action, "type": "req",
         "data": data
     })
 

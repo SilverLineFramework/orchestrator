@@ -68,7 +68,7 @@ class Registration(ControlHandler):
             mod.status = State.KILLED
             mod.save()
         if len(killed) > 0:
-            self._log.warn(
+            self.log.warn(
                 "Runtime exited, killing {} modules; may be "
                 "resurrected.".format(len(killed)))
 
@@ -79,9 +79,9 @@ class Registration(ControlHandler):
         return messages.Response(
             msg.topic, msg.get('object_id'), model_to_dict(manager))
 
-    def delete_manager(self, mid):
+    def delete_manager(self, msg):
         """Delete runtime manager."""
-        manager = self._get_object(mid, model=Manager)
+        manager = self._get_object(msg.get('data', 'uuid'), model=Manager)
         manager.status = State.DEAD
         manager.save()
 
@@ -90,7 +90,7 @@ class Registration(ControlHandler):
         for rt in killed:
             self.delete_runtime(rt.uuid)
         if len(killed) > 0:
-            self._log.warn(
+            self.log.warn(
                 "Manager exited, killing {} runtimes".format(len(killed)))
 
     def handle(self, msg):
@@ -99,22 +99,14 @@ class Registration(ControlHandler):
             return None
 
         self.log.info(msg.payload)
-
-        action = msg.get('action')
-        objtype = msg.get('data', 'type')
-        if objtype == 'runtime':
-            if action == 'create':
+        match (msg.get('action'), msg.get('data', 'type')):
+            case ("create", "runtime"):
                 return self.create_runtime(msg)
-            elif action == 'delete':
-                return self.delete_runtime(msg.get('data', 'uuid'))
-            else:
-                raise messages.InvalidArgument("action", action)
-        elif objtype == 'manager':
-            if action == 'create':
+            case ("delete", "runtime"):
+                return self.delete_runtime(msg)
+            case ("create", "manager"):
                 return self.create_manager(msg)
-            elif action == 'delete':
-                return self.delete_manager(msg.get('data', 'uuid'))
-            else:
-                raise messages.InvalidArgument("action", action)
-        else:
-            raise messages.InvalidArgument("type", objtype)
+            case ("delete", "manager"):
+                return self.delete_manager(msg)
+            case unknown:
+                raise messages.InvalidArgument("action/type", unknown)

@@ -1,9 +1,24 @@
-"""Standardized loggging configuration."""
+"""Standardized logging configuration."""
 
 import logging
+from rich.logging import RichHandler
+from rich.text import Text
+from rich.console import Console
+from rich.theme import Theme
 from datetime import datetime
 
 from beartype.typing import Optional
+
+
+class __CustomHandler(RichHandler):
+
+    def get_level_text(self, record: logging.LogRecord) -> Text:
+        """Get level name."""
+        return Text.styled(
+            record.levelname,
+            style=f"logging.level.{record.levelname.lower()}",
+            justify="left"
+        ).append(":" + record.name.ljust(8), style="bold white")
 
 
 def configure_log(log: Optional[str] = None, level: int = 20) -> None:
@@ -14,7 +29,15 @@ def configure_log(log: Optional[str] = None, level: int = 20) -> None:
     log: File to save log to (if not None). Will save to `{log}-{date}.log`.
     verbose: Logging level to use (python convension; 0 is most verbose).
     """
-    handlers = [logging.StreamHandler()]
+    console = Console(theme=Theme({
+        "logging.level.cri": "bold red",
+        "logging.level.err": "bold bright_red",
+        "logging.level.wrn": "bold bright_yellow",
+        "logging.level.inf": "bold green",
+        "logging.level.dbg": "bold cyan"
+    }))
+
+    handlers = [__CustomHandler(console=console, rich_tracebacks=True)]
     if log is not None:
         date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         handlers.append(logging.FileHandler("{}{}.log".format(log, date)))
@@ -27,7 +50,7 @@ def configure_log(log: Optional[str] = None, level: int = 20) -> None:
 
     logging.basicConfig(
         level=level,
-        format="[%(asctime)s] [%(levelname)s:%(name)s] %(message)s",
+        format="%(message)s",
         datefmt="%H:%M:%S",
         handlers=handlers)
 

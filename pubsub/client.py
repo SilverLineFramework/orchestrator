@@ -57,14 +57,21 @@ class MQTTClient(mqtt.Client):
         self.client_id = client_id
         super().__init__(client_id=client_id)
 
-    def connect(self, server: Optional[MQTTServer] = None) -> None:
-        """Connect to MQTT server.
+    def connect(
+        self, server: Optional[MQTTServer] = None, bridge: bool = False
+    ) -> None:
+        """Connect to MQTT server; blocks until connected.
 
         Parameters
         ----------
         server: MQTT broker information. Uses default (localhost:1883, no
             security) if None.
+        bridge: whether MQTT client should be in bridge mode (i.e. return sent
+            messages if subscribed)
         """
+        if bridge:
+            self.enable_bridge_mode()
+
         if server is None:
             server = MQTTServer(
                 host="localhost", port=1883, user="cli", pwd="", ssl=False)
@@ -77,9 +84,9 @@ class MQTTClient(mqtt.Client):
 
         self.on_connect = _on_connect
 
-        self.__log.info(
-            "Connecting MQTT client: {}".format(self.client_id))
-        self.__log.info("SSL: {}".format(server.ssl))
+        self.__log.info("Connecting MQTT client: {}".format(self.client_id))
+        self.__log.info("Server: {}:{} (ssl={})".format(
+            server.host, server.port, server.ssl))
         self.__log.info("Username: {}".format(server.user))
         try:
             self.__log.info("Password file: {}".format(server.pwd))
@@ -87,7 +94,7 @@ class MQTTClient(mqtt.Client):
                 passwd = f.read().rstrip('\n')
         except FileNotFoundError:
             passwd = ""
-            self.__log.warn("No password supplied; using an empty password.")
+            self.__log.warn("No password provided; using an empty password.")
 
         self.username_pw_set(server.user, passwd)
         if server.ssl:
