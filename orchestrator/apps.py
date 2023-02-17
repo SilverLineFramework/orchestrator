@@ -3,6 +3,7 @@
 from django.apps import AppConfig
 from django.conf import settings
 import os
+from libsilverline import MQTTServer
 
 
 class orchestratorConfig(AppConfig):
@@ -13,7 +14,8 @@ class orchestratorConfig(AppConfig):
     def ready(self):
         """Initialize MQTT handler."""
         if os.environ.get('RUN_MAIN', None) == 'true':
-            from pubsub import Orchestrator, MQTTServer
+            from pubsub import Orchestrator
 
-            self.orch = Orchestrator(name="orchestrator")
-            self.orch.start(server=MQTTServer.from_json(settings.CONFIG_PATH))
+            self.orch = Orchestrator(
+                name="orchestrator",
+                server=MQTTServer.from_config(settings.CONFIG_PATH)).start()

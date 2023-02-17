@@ -8,7 +8,7 @@ from django.conf import settings
 from beartype.typing import Optional
 from beartype import beartype
 
-from .client import MQTTClient, MQTTServer
+from libsilverline import MQTTClient, MQTTServer
 from .handler_base import ControlHandler
 from .handler_registration import Registration
 from .handler_control import Control
@@ -27,17 +27,20 @@ class Orchestrator(MQTTClient):
     Silverline: Orchestrator
     """
 
-    def __init__(self, name: str = "orchestrator") -> None:
+    def __init__(
+        self, name: str = "orchestrator", server: Optional[MQTTServer] = None
+    ) -> None:
+        super().__init__(
+            client_id="{}:{}".format(name, uuid.uuid4()),
+            server=server, bridge=True)
+
         self.__log = logging.getLogger(name="resp")
         self.name = name
-        super().__init__(client_id="{}:{}".format(name, uuid.uuid4()))
 
-    def start(self, server: Optional[MQTTServer] = None) -> None:
+    def start(self, ) -> None:
         """Start orchestrator pubsub interface."""
         print(self._HEADER)
-
-        self.connect(server, bridge=True)
-
+        super().start()
         for handler in [Registration, Control, Keepalive]:
             self.__add_handler(handler())
 

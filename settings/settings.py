@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import json
 import logging
-from .logging import configure_log
+from libsilverline import configure_log
 
 from django.core.management.commands.runserver import Command as runserver
 
